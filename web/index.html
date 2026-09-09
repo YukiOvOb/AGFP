@@ -32,6 +32,21 @@
   .orb.c { width: 260px; height: 260px; background: var(--c); top: 55%; left: 8%; animation-delay: -12s; opacity: .35; }
   @keyframes drift { from { transform: translate(0,0) scale(1); } to { transform: translate(60px,-40px) scale(1.12); } }
 
+  /* 语言切换：固定在右上角 */
+  .lang {
+    position: fixed; top: 20px; right: 20px; z-index: 10;
+    display: inline-flex; padding: 4px; border-radius: 999px;
+    background: rgba(255,255,255,.06); border: 1px solid var(--line);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .lang button {
+    appearance: none; border: 0; cursor: pointer; font: inherit; font-size: 13px; font-weight: 600;
+    padding: 7px 14px; border-radius: 999px; color: var(--muted); background: transparent;
+    transition: color .2s, background .2s;
+  }
+  .lang button[aria-pressed="true"] { color: #0b1020; background: linear-gradient(90deg, var(--a), var(--c)); }
+  .lang button:hover:not([aria-pressed="true"]) { color: var(--ink); }
+
   .card {
     position: relative; width: min(680px, 92vw); padding: 56px 48px;
     background: var(--glass); border: 1px solid var(--line); border-radius: 24px;
@@ -76,30 +91,77 @@
 
   footer { margin-top: 36px; font-size: 12px; color: var(--muted); letter-spacing: .04em; }
   footer code { color: var(--ink); opacity: .8; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  /* 切换时文字淡入 */
+  [data-i18n] { transition: opacity .18s; }
+  .swapping [data-i18n] { opacity: 0; }
 </style>
 </head>
 <body>
   <div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>
 
+  <nav class="lang" aria-label="Language">
+    <button type="button" data-lang="zh" aria-pressed="true">中文</button>
+    <button type="button" data-lang="en" aria-pressed="false">EN</button>
+  </nav>
+
   <main class="card">
-    <span class="badge"><i></i> Online · Hong Kong</span>
-    <h1>Welcome to AGFP</h1>
-    <p class="sub">Assignment Grading and Feedback Platform</p>
-    <p class="desc">作业批改与反馈平台。把“收、批、评、改”做成一条流畅的闭环：<br>教师批得快，学生看得懂，反馈可追溯。</p>
+    <span class="badge"><i></i> <span data-i18n="badge">在线 · 香港</span></span>
+    <h1 data-i18n="title">欢迎来到 AGFP</h1>
+    <p class="sub" data-i18n="sub">作业批改与反馈平台</p>
+    <p class="desc" data-i18n="desc">把“收、批、评、改”做成一条流畅的闭环：<br>教师批得快，学生看得懂，反馈可追溯。</p>
 
     <div class="chips">
-      <span class="chip"><b>01</b>作业提交与收集</span>
-      <span class="chip"><b>02</b>智能辅助批改</span>
-      <span class="chip"><b>03</b>结构化反馈</span>
-      <span class="chip"><b>04</b>进度与数据看板</span>
+      <span class="chip"><b>01</b><span data-i18n="c1">作业提交与收集</span></span>
+      <span class="chip"><b>02</b><span data-i18n="c2">智能辅助批改</span></span>
+      <span class="chip"><b>03</b><span data-i18n="c3">结构化反馈</span></span>
+      <span class="chip"><b>04</b><span data-i18n="c4">进度与数据看板</span></span>
     </div>
 
     <div class="cta">
-      <a class="btn primary" href="#">进入平台</a>
+      <a class="btn primary" href="#" data-i18n="enter">进入平台</a>
       <a class="btn ghost" href="https://github.com/YukiOvOb/AGFP" target="_blank" rel="noopener">GitHub</a>
     </div>
 
-    <footer>Deployed automatically from <code>main</code> · agfp.midas.cyou</footer>
+    <footer><span data-i18n="foot">自动部署自</span> <code>main</code> · agfp.midas.cyou</footer>
   </main>
+
+<script>
+  const I18N = {
+    zh: {
+      badge: '在线 · 香港',
+      title: '欢迎来到 AGFP',
+      sub: '作业批改与反馈平台',
+      desc: '把“收、批、评、改”做成一条流畅的闭环：<br>教师批得快，学生看得懂，反馈可追溯。',
+      c1: '作业提交与收集', c2: '智能辅助批改', c3: '结构化反馈', c4: '进度与数据看板',
+      enter: '进入平台', foot: '自动部署自',
+    },
+    en: {
+      badge: 'Online · Hong Kong',
+      title: 'Welcome to AGFP',
+      sub: 'Assignment Grading and Feedback Platform',
+      desc: 'Collect, grade, comment and revise in one smooth loop:<br>faster for teachers, clearer for students, fully traceable.',
+      c1: 'Submission & Collection', c2: 'AI-assisted Grading', c3: 'Structured Feedback', c4: 'Progress Dashboard',
+      enter: 'Enter Platform', foot: 'Deployed automatically from',
+    },
+  };
+  const nodes = document.querySelectorAll('[data-i18n]');
+  const buttons = document.querySelectorAll('.lang button');
+  function apply(lang) {
+    const t = I18N[lang] || I18N.zh;
+    document.body.classList.add('swapping');
+    setTimeout(() => {
+      nodes.forEach(n => { n.innerHTML = t[n.dataset.i18n]; });
+      document.documentElement.lang = lang === 'en' ? 'en' : 'zh-CN';
+      buttons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
+      document.body.classList.remove('swapping');
+    }, 180);
+    try { localStorage.setItem('agfp.lang', lang); } catch (_) {}
+  }
+  buttons.forEach(b => b.addEventListener('click', () => apply(b.dataset.lang)));
+  let initial = 'zh';
+  try { initial = localStorage.getItem('agfp.lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en'); } catch (_) {}
+  if (initial !== 'zh') apply(initial);
+</script>
 </body>
 </html>
