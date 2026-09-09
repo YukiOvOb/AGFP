@@ -11,10 +11,8 @@
 name: CI
 
 on:
+  # PR 不设 paths-ignore：分支保护要求三项检查必须报告，纯文档 PR 也得跑一遍才能合并
   pull_request:
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
   push:
     branches: [main]
     paths-ignore:
