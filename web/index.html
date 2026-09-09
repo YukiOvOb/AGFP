@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AGFP</title>
+<meta name="description" content="AGFP · Assignment Grading and Feedback Platform">
+<style>
+  :root {
+    --bg0: #0b1020; --bg1: #121a33;
+    --ink: #eef2ff; --muted: #9aa6c9;
+    --a: #7c9cff; --b: #b388ff; --c: #5ee7d6;
+    --glass: rgba(255,255,255,.06); --line: rgba(255,255,255,.12);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: "Inter", "PingFang SC", "Microsoft YaHei", -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--ink);
+    background: radial-gradient(1200px 800px at 15% 10%, #1e2a5a 0%, transparent 60%),
+                radial-gradient(1000px 700px at 85% 90%, #2a1a4a 0%, transparent 60%),
+                linear-gradient(160deg, var(--bg0), var(--bg1));
+    overflow: hidden;
+    display: grid; place-items: center;
+  }
+  .orb {
+    position: fixed; border-radius: 50%; filter: blur(70px); opacity: .55; pointer-events: none;
+    animation: drift 18s ease-in-out infinite alternate;
+  }
+  .orb.a { width: 420px; height: 420px; background: var(--a); top: -120px; left: -100px; }
+  .orb.b { width: 360px; height: 360px; background: var(--b); bottom: -120px; right: -80px; animation-delay: -6s; }
+  .orb.c { width: 260px; height: 260px; background: var(--c); top: 55%; left: 8%; animation-delay: -12s; opacity: .35; }
+  @keyframes drift { from { transform: translate(0,0) scale(1); } to { transform: translate(60px,-40px) scale(1.12); } }
+
+  .card {
+    position: relative; width: min(680px, 92vw); padding: 56px 48px;
+    background: var(--glass); border: 1px solid var(--line); border-radius: 24px;
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 30px 80px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08);
+    text-align: center; animation: rise .9s cubic-bezier(.2,.8,.2,1) both;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px;
+    font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+    border: 1px solid var(--line); background: rgba(255,255,255,.04);
+  }
+  .badge i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); box-shadow: 0 0 12px var(--c); animation: pulse 2s infinite; }
+  @keyframes pulse { 50% { opacity: .35; } }
+
+  h1 {
+    margin: 26px 0 8px; font-size: clamp(40px, 8vw, 72px); font-weight: 800; letter-spacing: -.02em; line-height: 1.05;
+    background: linear-gradient(90deg, var(--a), var(--b) 55%, var(--c));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .sub { margin: 0; font-size: clamp(16px, 2.4vw, 20px); color: var(--ink); opacity: .92; font-weight: 500; }
+  .desc { margin: 12px 0 0; color: var(--muted); font-size: 15px; line-height: 1.7; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 30px; }
+  .chip {
+    padding: 10px 16px; border-radius: 14px; font-size: 14px; color: var(--ink);
+    background: rgba(255,255,255,.05); border: 1px solid var(--line); transition: transform .2s, background .2s;
+  }
+  .chip:hover { transform: translateY(-2px); background: rgba(255,255,255,.1); }
+  .chip b { color: var(--c); margin-right: 6px; font-weight: 700; }
+
+  .cta { margin-top: 34px; display: inline-flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .btn {
+    padding: 12px 22px; border-radius: 12px; font-weight: 600; text-decoration: none; font-size: 15px;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .btn.primary { color: #0b1020; background: linear-gradient(90deg, var(--a), var(--c)); box-shadow: 0 10px 30px rgba(124,156,255,.35); }
+  .btn.ghost { color: var(--ink); border: 1px solid var(--line); background: rgba(255,255,255,.04); }
+  .btn:hover { transform: translateY(-2px); }
+
+  footer { margin-top: 36px; font-size: 12px; color: var(--muted); letter-spacing: .04em; }
+  footer code { color: var(--ink); opacity: .8; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+</style>
+</head>
+<body>
+  <div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>
+
+  <main class="card">
+    <span class="badge"><i></i> Online · Hong Kong</span>
+    <h1>Welcome to AGFP</h1>
+    <p class="sub">Assignment Grading and Feedback Platform</p>
+    <p class="desc">作业批改与反馈平台。把“收、批、评、改”做成一条流畅的闭环：<br>教师批得快，学生看得懂，反馈可追溯。</p>
+
+    <div class="chips">
+      <span class="chip"><b>01</b>作业提交与收集</span>
+      <span class="chip"><b>02</b>智能辅助批改</span>
+      <span class="chip"><b>03</b>结构化反馈</span>
+      <span class="chip"><b>04</b>进度与数据看板</span>
+    </div>
+
+    <div class="cta">
+      <a class="btn primary" href="#">进入平台</a>
+      <a class="btn ghost" href="https://github.com/YukiOvOb/AGFP" target="_blank" rel="noopener">GitHub</a>
+    </div>
+
+    <footer>Deployed automatically from <code>main</code> · agfp.midas.cyou</footer>
+  </main>
+</body>
+</html>

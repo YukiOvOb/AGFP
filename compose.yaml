@@ -1,0 +1,10 @@
+# 服务器上由 scripts/deploy.sh 执行：docker compose up -d --build
+# 变量来自同目录 .env（compose 自动加载）：HOST_PORT 默认 8789，只绑 127.0.0.1，由 nginx 反代 https://agfp.midas.cyou
+services:
+  app:
+    build: .
+    image: agfp:latest
+    container_name: agfp
+    ports:
+      - "127.0.0.1:${HOST_PORT:-8789}:8080"
+    restart: unless-stopped
