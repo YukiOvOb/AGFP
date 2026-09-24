@@ -6,3 +6,8 @@ node_modules/
 dist/
 __pycache__/
 *.log
+
+# Java build and local notification database
+**/target/
+.idea/
+*.iml
