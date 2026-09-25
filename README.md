@@ -21,6 +21,17 @@ Shared Equipment Reservation and Maintenance System（共享设备预约与维�
 
 代码按业务模块组织在 `sg.edu.nus.serms` 下：`identity`、`equipment`、`reservation`、`approval`、`loan`、`maintenance`、`notification`、`report`、`audit`、`shared`。
 
+## 测试：每人写好自己的 Test Bench
+
+CI 只能验证已经写好的测试。**每位成员必须为自己负责的用例写好完整的测试台，并和功能代码放在同一个 PR 里提交**，这样每个 PR 在 CI 上都能自己验证自己。
+
+- 位置：`app/src/test/java/sg/edu/nus/serms/<模块>/`
+- 内容：单元测试（领域规则）+ 集成测试（真实 PostgreSQL，Testcontainers）+ Web / 权限测试（MockMvc），覆盖用例的正常流程和所有主要异常流程。
+- 要求：只装 Docker 就能用 `./mvnw verify` 跑完；每个测试自己准备数据，不依赖执行顺序和其他测试。
+- CI：每个 PR 跑全部测试，任何测试失败或 service/domain 覆盖率低于 70% 都不能合并；不允许靠跳过或删除测试让 CI 变绿。
+
+每位成员的测试范围清单见 [docs/tech-stack.md 第 5 节](docs/tech-stack.md#5-测试台test-bench每人负责自己的)。
+
 ## 协作与发布
 
 - 所有改动走 PR。`main` 受分支保护，必须通过 CI 检查（gitleaks、Trivy、依赖审查）才能合并。
