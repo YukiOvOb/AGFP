@@ -14,7 +14,6 @@ jobs:
         env:
           POSTGRES_DB: serms_test
           POSTGRES_USER: serms_test
-          # Disposable CI service credential; never used in any deployed environment.
           POSTGRES_PASSWORD: ci-only-${{ github.run_id }}
         ports:
           - 5432:5432
@@ -25,6 +24,9 @@ jobs:
       SERMS_TEST_JDBC_URL: jdbc:postgresql://localhost:5432/serms_test
       SERMS_TEST_DB_USER: serms_test
       SERMS_TEST_DB_PASSWORD: ci-only-${{ github.run_id }}
+      PGHOST: localhost
+      PGUSER: serms_test
+      PGDATABASE: serms_test
       PGPASSWORD: ci-only-${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
@@ -34,8 +36,15 @@ jobs:
           java-version: '17'
           cache: maven
           cache-dependency-path: database/pom.xml
-      - name: Apply migration to empty PostgreSQL database
-        run: psql -h localhost -U serms_test -d serms_test -v ON_ERROR_STOP=1 -f database/src/main/resources/db/migration/V001__sprint1.sql
+      - name: Verify existing-data upgrade and empty database initialization
+        run: |
+          psql -v ON_ERROR_STOP=1 -f database/src/main/resources/db/migration/V001__sprint1.sql
+          psql -v ON_ERROR_STOP=1 -f database/src/test/resources/v1-upgrade-fixture.sql
+          psql -v ON_ERROR_STOP=1 -f database/src/main/resources/db/migration/V002__align_serms_model.sql
+          createdb serms_empty
+          for migration in database/src/main/resources/db/migration/V*.sql; do
+            psql -d serms_empty -v ON_ERROR_STOP=1 -f "$migration"
+          done
       - name: Build and test with real PostgreSQL
         run: mvn -B -f database/pom.xml clean verify
       - uses: actions/upload-artifact@v4

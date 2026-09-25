@@ -1,17 +1,17 @@
 package edu.nus.serms.domain;
-
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
-public record Reservation(UUID id, UUID userId, UUID equipmentId,
-                          Instant startsAt, Instant endsAt, Status status) {
+public record Reservation(UUID reservationId, UUID requesterId, UUID equipmentId,
+                          Instant startAt, Instant endAt, Status status, String purpose, int version) {
     public Reservation {
-        Objects.requireNonNull(id);
-        Objects.requireNonNull(userId);
+        Objects.requireNonNull(reservationId);
+        Objects.requireNonNull(requesterId);
         Objects.requireNonNull(equipmentId);
         Objects.requireNonNull(status);
-        validateWindow(startsAt, endsAt);
+        validateWindow(startAt, endAt);
+        if (version < 0) throw new IllegalArgumentException("Negative version");
     }
     public static void validateWindow(Instant start, Instant end) {
         Objects.requireNonNull(start);
@@ -20,5 +20,5 @@ public record Reservation(UUID id, UUID userId, UUID equipmentId,
         if (start.getNano() % 1000 != 0 || end.getNano() % 1000 != 0)
             throw new IllegalArgumentException("Use microsecond precision or coarser");
     }
-    public enum Status { PENDING, CONFIRMED, REJECTED, CANCELLED, FULFILLED }
+    public enum Status { PENDING_APPROVAL, CONFIRMED, REJECTED, CANCELLED, FULFILLED }
 }

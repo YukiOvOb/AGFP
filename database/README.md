@@ -1,75 +1,88 @@
-# SERMS Sprint 1 数据模块
+# SERMS 数据模块
 
-负责人：Zhou Fanhao。模块为 Java 17/JDBC 领域和数据层，供登录、设备搜索与预约服务集成。PostgreSQL 17 是本分支的初始选型，团队需在 Review 时确认。现有根目录 Docker 部署仍运行原欢迎页。
+负责人：Zhou Fanhao。Java 17/JDBC + PostgreSQL 17；当前 schema 为 V002。根据 SERMS 原始 ER 图已具备用户、多角色、设备、预约、审批决定、借用、维修工单、通知与审计十个业务表。现有 Java Repository 实现搜索、预约和本人取消；其他表为后续业务服务提供持久化基础。
+
+设计与来源见 [领域模型](../docs/sprint1-domain.md)，调整与测试记录见 [V002 对齐记录](../docs/serms-database-alignment.md)。
 
 ## 一键验证
 
-Windows 安装 JDK 17+、Maven、Docker Desktop，在仓库根目录执行：
+要求 Docker Desktop、JDK 17+、Maven。从仓库根目录运行：
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-sprint1.ps1
 ```
 
-脚本创建临时 PostgreSQL，使用随机密码和本机随机端口，应用迁移后执行真实数据库测试，最后删除本次创建的测试容器及匿名卷、恢复环境变量。不会使用已有数据库。结果位于 `database/target/surefire-reports/`，JAR 位于 `database/target/serms-data-0.1.0-SNAPSHOT.jar`。
+脚本创建本机随机端口、随机密码的临时 PostgreSQL；验证空库 V001→V002 初始化，以及带旧角色、禁用账户、旧状态和预约记录的 V1→V2 升级；运行全部 27 项集成测试后自动清理容器/匿名卷并恢复环境变量。
 
-Linux/CI 可对空的专用 `serms_test` 数据库执行：
+报告位于 `database/target/surefire-reports/`，构建产物位于 `database/target/serms-data-0.1.0-SNAPSHOT.jar`。测试使用真实 PostgreSQL，不使用 H2；未配置专用测试数据库会失败而非跳过。
+
+Linux/CI 的等价流程（PGHOST/PGUSER/PGPASSWORD 指向专用测试服务器）：
 
 ```sh
+export PGDATABASE=serms_test
 psql -v ON_ERROR_STOP=1 -f database/src/main/resources/db/migration/V001__sprint1.sql
-# 用实际测试环境设置上述 psql 的 PGHOST/PGUSER/PGDATABASE/PGPASSWORD。
-# JDBC 同样通过环境变量读取连接信息：
+psql -v ON_ERROR_STOP=1 -f database/src/test/resources/v1-upgrade-fixture.sql
+psql -v ON_ERROR_STOP=1 -f database/src/main/resources/db/migration/V002__align_serms_model.sql
+createdb serms_empty
+for migration in database/src/main/resources/db/migration/V*.sql; do
+  psql -d serms_empty -v ON_ERROR_STOP=1 -f "$migration"
+done
 export SERMS_TEST_JDBC_URL=jdbc:postgresql://localhost:5432/serms_test
-export SERMS_TEST_DB_USER=serms_test
+export SERMS_TEST_DB_USER="$PGUSER"
 export SERMS_TEST_DB_PASSWORD="$PGPASSWORD"
 mvn -B -f database/pom.xml clean verify
 ```
 
-未配置数据库会明确失败，不会跳过集成测试。测试只允许数据库名称为 `serms_test`；每个用例使用独立 UUID，避免共享固定数据。测试账户的占位 hash 不能用于登录。
+`v1-upgrade-fixture.sql` 仅限测试，不进入开发或生产初始化。JUnit 限定数据库名为 serms_test；测试仍应只在一次性实例执行，避免残留夹具被误当真实业务数据。
 
-## 开发数据库
+## 开发初始化与已有数据库升级
 
-在当前 PowerShell 会话设置 `$env:SERMS_DB_PASSWORD` 为本地开发密码，然后运行：
+在当前 PowerShell 设置本地密码：
 
 ```powershell
+$env:SERMS_DB_PASSWORD = '<your-local-password>'
 docker compose -f database/compose.yaml up -d --wait
 ```
 
-连接地址为 `jdbc:postgresql://127.0.0.1:55432/serms`，用户名为 `serms`。可用 `SERMS_DB_PORT` 覆盖端口。密码不写进仓库；根目录的服务器 .env 不受此配置影响。
+默认连接 `jdbc:postgresql://127.0.0.1:55432/serms`，用户名 serms，可设置 SERMS_DB_PORT 改端口。空卷第一次启动按文件名顺序应用 V001、V002。Compose 停止用 `docker compose -f database/compose.yaml down`，保留数据卷。
 
-初始化脚本仅在空数据卷第一次启动时运行。V001 在事务中执行，失败全部回滚；再次执行会拒绝已有 schema，不会清空数据。后续迁移使用新的 V002 等版本，不能修改已应用脚本；上线前备份、在测试副本验证并采用向前修复。停止容器用 `docker compose -f database/compose.yaml down`，保留数据卷。本地 compose 用户拥有迁移权限，生产需区分迁移用户和最小权限应用用户。
+已有 V001 数据卷不会自动执行新 SQL。先备份并停止业务写入，再只应用 V002：
 
-## Java 集成契约
+```powershell
+docker compose -f database/compose.yaml cp database/src/main/resources/db/migration/V002__align_serms_model.sql db:/tmp/V002.sql
+docker compose -f database/compose.yaml exec -T db psql -U serms -d serms -v ON_ERROR_STOP=1 -f /tmp/V002.sql
+docker compose -f database/compose.yaml exec -T db psql -U serms -d serms -c "SELECT version, description FROM serms.schema_version ORDER BY version"
+```
 
-通过连接池或 PostgreSQL DataSource 注入 `ReservationRepository(DataSource)`。每次操作借用并关闭一个连接。DataSource 返回的连接必须处于默认自动提交模式；book 在独立事务中提交或回滚，不能加入调用者的外层事务。当前接口：
+命令均从仓库根目录执行。不要重跑 V001、删卷或修改已应用的迁移。V002 是完整事务，任一步失败自动回滚；遇到旧 FULFILLED 重叠应人工核对历史。再次运行 V002 会拒绝已迁移结构，不覆盖数据。生产部署仍需迁移账号与最小权限应用账号分离。新表的历史数据不自动生成。
+
+V002 重命名列并改变 Java record 的访问器，不兼容 V001 模块；应在同一维护窗口迁移数据库和发布对应 Java 代码。当前根目录站点仍为静态欢迎页，没有连接开发数据库。
+
+## Java 接口
+
+注入 `DataSource` 创建 `ReservationRepository`；新连接应处于默认自动提交模式，Repository 自行管理事务，不能嵌套到调用者未提交事务中。
 
 | 方法 | 行为 |
 | --- | --- |
-| findAvailable(query, start, end) | 按名称、资产编号、分类进行大小写不敏感的字面量包含搜索；最多返回按资产编号排序的 100 项 |
-| book(authenticatedUser, equipment, start, end) | 从数据库读取审批标记，自动写入 PENDING 或 CONFIRMED，返回 Reservation |
-| cancel(authenticatedUser, reservation) | 仅取消本人仍有效的预约；返回 false 表示不存在、非本人或已结束 |
+| findAvailable(query,start,end) | 按设备名称、资产编号、分类进行字面量包含搜索；最多 100 条，按资产编号排序；检查活动借用、维修与区间冲突 |
+| book(actor,equipment,start,end) | 生成请求关联 ID，不填用途 |
+| book(actor,equipment,start,end,purpose,requestId) | 从设备决定 PENDING_APPROVAL/CONFIRMED，原子写预约与成功审计 |
+| cancel(actor,reservation) | 仅本人有效预约；不存在、非本人或已结束返回 false |
+| cancel(actor,reservation,requestId) | 同上；账户需 ACTIVE；成功取消与审计原子提交 |
 
-时间以 Instant 输入、timestamptz 保存，精度最多微秒，区间为左闭右开 [start,end)。显示时区由页面处理。不要将可用性查询结果当作锁或预约凭据。借出中的设备在 Sprint 1 暂不接受新的未来预约，这是保守规则，待团队确认是否放宽。
+参数 actor 必须来自可信认证会话，角色授权在 Service 校验。管理员代取消等能力尚未由本 Repository 暴露。失败操作的独立审计由上层在回滚后负责。requestId 是追踪标识，不是通用幂等键；不要在网络中断、提交结果未知时无条件重试。
 
-Service 必须从登录会话提供用户 ID，不得信任请求体中的 userId；登录、密码哈希算法、HTTP Controller、RBAC 授权属于上层集成。app_user 为其提供标准化唯一邮箱、密码哈希、角色及启用标记，User 投影不暴露 hash。只有管理服务可改角色和设备状态，数据库公共账号不是终端用户身份。
+Reservation 属性为 reservationId、requesterId、equipmentId、startAt、endAt、status、purpose、version。Equipment 使用 equipmentId 与 version；User 使用 accountStatus 和不可变 roles 集合，不包含密码哈希。
 
-| SQLSTATE / Java 错误 | 上层建议 |
-| --- | --- |
-| 23P01 | HTTP 409：预约时段冲突，请重新查询 |
-| 23503 | HTTP 404 或业务校验失败：引用不存在 |
-| 23514 | HTTP 422：设备/用户不可用、时间或状态不合法 |
-| 23505 | HTTP 409：唯一标识重复 |
-| IllegalArgumentException / NullPointerException | HTTP 400：时间顺序、精度或必填项非法 |
-| 40P01 / 40001 | 整个事务有限重试；不能把所有 SQL 异常当冲突 |
-| 其他 SQLException | 内部记录关联 ID，返回通用服务错误，不将 SQL 信息返回客户端 |
+## 业务与错误约定
 
-取消返回 false 的统一响应可以避免向其他用户泄露预约是否存在。不要自动重试连接中断后的提交，提交结果可能未知；客户端幂等键是后续接口设计事项。
+- 区间 [start,end)，最大微秒精度；支持尚未结束的当前时段。
+- PENDING_APPROVAL、CONFIRMED、FULFILLED 均占位；提前归还仍保留原预约时段。
+- ON_LOAN 只有当前借用未逾期，且新预约不早于到期、无活动工单和预约冲突时可预约。
+- 数据库状态与多角色定义以 [领域模型](../docs/sprint1-domain.md) 为准。
+- SQLSTATE 23P01：时间冲突（可映射 409）；23503：无效引用；23514：状态/字段/业务约束失败；23505：唯一性冲突。
+- Java IllegalArgumentException/NullPointerException：输入非法。40P01/40001 可有限重试整个事务；其他 SQL 错误由服务记录 requestId 并返回通用错误，不暴露 SQL 或凭据。
+- 所有相关写服务先锁 Equipment，再按序处理 Reservation、Loan、MaintenanceCase。version 更新需配合 WHERE version 与行数检查。
+- 数据库约束不能完成 RBAC、现场交付核验、设备状态重算或完整领还事务。完整责任边界见领域文档。
 
-数据库通过设备行锁串行化预约与设备状态修改，并以 exclusion constraint 最终拒绝同一设备的有效预约重叠。PENDING 也占位，CANCELLED/REJECTED 释放容量；审批时再次检查设备与用户状态。已有预约遇到设备故障后的通知、取消或重新安排，由 Sprint 2 故障流程协调。锁顺序统一为设备后用户。触发器只保证数据规则，不代替身份认证或审批权限。
-
-## 交接
-
-- 领域词汇、ERD、状态与分析/设计图：[领域设计](../docs/sprint1-domain.md)。
-- 任务、验收项和证据：[个人交付记录](../docs/sprint1-zhoufanhao.md)。
-- CI 工作流：[database.yml](../.github/workflows/database.yml)，使用真实 PostgreSQL 并上传测试报告。
-- PostgreSQL 区间排斥约束依据：[官方 Range Types 文档](https://www.postgresql.org/docs/17/rangetypes.html)。
-- JDBC 依赖：[官方 42.7.13 发布记录](https://jdbc.postgresql.org/changelogs/2026-07-06-42.7.13-release/)。
+CI 工作流：[database.yml](../.github/workflows/database.yml)。参考：[PostgreSQL 区间约束](https://www.postgresql.org/docs/17/rangetypes.html)、[pgJDBC 42.7.13](https://jdbc.postgresql.org/changelogs/2026-07-06-42.7.13-release/)。

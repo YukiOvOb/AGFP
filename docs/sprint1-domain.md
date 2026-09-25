@@ -1,295 +1,259 @@
-# Sprint 1 领域模型与集成设计
+# SERMS 数据库与领域模型
 
-本设计支持 9 月 12 日至 9 月 25 日的预约流程，负责人为 Zhou Fanhao。依据项目计划第 3、4、5.3、7、8 节：本次落地 User、Equipment、Reservation，并为 Loan、MaintenanceCase、Notification 建立统一概念和集成关系。后三者的持久化及业务实现属于 Sprint 2，不在 V001 中创建空表。
+负责人：Zhou Fanhao。当前数据库版本 V002，2026-09-25 根据 SERMS 目录中的 ER 图、分析类图、领还顺序图、状态说明与系统集成说明修订。原始图文的实体和业务规则为本次调整依据，取代 V001 中单角色、简化状态和借出设备不允许预约的暂定设计。
 
-## 领域词汇
+## 参考依据与冲突处理
 
-| 术语 | 含义与边界 |
-| --- | --- |
-| User / 用户 | 以 UUID 标识的账户，邮箱统一 trim + lowercase；active 控制是否可新建预约 |
-| Role / 角色 | BORROWER 借用者、APPROVER 审批人、TECHNICIAN 维护人员、ADMIN 管理员；V001 每人一个角色，多角色需后续迁移 |
-| Equipment / 设备 | 一台可独立预约的实物，由唯一 asset_tag 标识；不把多台同型号设备合成一个容量记录 |
-| Reservation / 预约 | 用户申请某设备的未来时间区间；预约不是实际借出记录 |
-| Availability / 可用性 | 设备可预约且目标区间不与有效预约重叠；属于查询结果，不是设备永久状态 |
-| Loan / 借用 | Sprint 2 的实际领用记录，关联一个已确认预约，记录领出、应还和实还时间 |
-| MaintenanceCase / 维护工单 | Sprint 2 的设备故障处理记录，可来源于损坏归还；设备进入维护后不能新建预约 |
-| Notification / 通知 | Sprint 2 的用户应用内消息，逾期通知需有业务去重键 |
-| Overdue / 逾期 | 未归还且当前时间超过 due_at 的派生条件；不能只依赖定时任务维护的布尔值 |
-| Active reservation / 有效预约 | PENDING 或 CONFIRMED，占据时间区间；待审批也占位，避免同一时段无限申请 |
-| Time window / 时段 | UTC 瞬时语义，精度至微秒，左闭右开 [starts_at,ends_at)，相邻预约不冲突 |
+主要依据：
 
-## 数据字典与关系
+- `SERMS_Domain_Glossary_and_ERD.md`：十个领域实体、字段、可空性、主外键与关系基数。
+- `Diagrams/ER Diagram.png`：逐项核对实体、字段与关联。
+- `Diagrams/Class Diagram.png`、`Pickup Sequence Diagram.png`、`Return Sequence Diagram.png`：区分 Borrower 与 Custodian、实际领还记录、审计及损坏归还关联。
+- `SERMS_Equipment_and_Loan_States.md` 及设备/借用状态图：使用正式状态代码、维护优先级与不可逆终态。
+- `SERMS_System_Integration.md`：预约占位、锁顺序、事务边界、通知去重。
+- `English_Deliverables/Domain_Glossary_EN.md` 和 `State_Pattern_Candidate_Final.md`：英文术语与模式职责边界。
 
-所有已实现表均在 serms schema 下。标识符由应用生成 UUID，数据库时间戳使用 timestamptz。
+中文术语表的冲突公式写成“或”，与集成说明、英文版及相邻时段可预约的要求冲突。本实现以一致的 AND 公式为准：`existing.start_at < requested.end_at AND requested.start_at < existing.end_at`。
 
-| 表 | 字段 | 约束 |
+`attempt.md` 只有“续租申请”“自批复”两个议题，没有流程或验收条件。当前依照详细状态与集成说明保留无续借、禁止自批；不把讨论标题当成已确认规则。
+
+## 术语与物理映射
+
+| 领域概念 | 数据库表示 | 语义 |
 | --- | --- | --- |
-| app_user | id, email, display_name, password_hash, role, active, created_at | PK id；email 唯一且标准化；role 白名单；密码只保存外部认证模块生成的哈希 |
-| equipment | id, asset_tag, name, category, location, status, requires_approval, created_at | PK id；asset_tag 唯一；必填文字非空；status 白名单 |
-| reservation | id, user_id, equipment_id, starts_at, ends_at, status, created_at | PK id；两个 FK 禁止删除被引用对象；有限且正长度时间区间；有效预约不得重叠 |
-| schema_version | version, description, installed_at | 与迁移同事务提交的版本记录 |
+| User | app_user | 身份主体；不以 Student/Customer/Borrower 单独建表 |
+| Role / UserRole | role / user_role | BORROWER、APPROVER、CUSTODIAN、MAINTAINER、ADMIN；用户可有多个角色 |
+| Equipment | equipment | 一条记录是一台独立实物；资产编号唯一 |
+| Reservation | reservation | 申请人 requester_id、用途 purpose 和 [start_at,end_at) 时段 |
+| ApprovalDecision | approval_decision | 一次不可覆盖的终局决定；一预约最多一条 |
+| Loan | loan | 一预约最多一次借用；借用人和设备经 Reservation 追溯 |
+| Custodian | loan.checkout_by / return_by | 领还经办人，不能与预约申请人混为一谈 |
+| MaintenanceCase | maintenance_case | 可独立报告，也可关联同设备的 Loan |
+| Notification | notification | 接收人、唯一业务关联、去重键、投递/重试/阅读信息 |
+| AuditLog | audit_log | 追加式业务操作证据；系统任务 actor_id 可空 |
+| Overdue | 时间比较 | ACTIVE 且 now > due_at；RETURNED 且 returned_at > due_at 表示曾逾期，不存 OVERDUE 状态 |
 
-索引：邮箱与资产编号的唯一索引；预约 user_id + starts_at 用于个人时间线；设备 category + status 用于筛选；GiST 排斥约束索引用于预约区间冲突。包含搜索目前按小规模设备目录实现，无分页接口且最多 100 条；数据量增大时再评估全文/三元组索引与分页契约。
+保留物理表名 `app_user` 避免 SQL USER 名称冲突；其余字段按 ER 图使用 user_id/equipment_id/reservation_id/requester_id/start_at/end_at 等。账户状态原图未定义枚举取值，本次映射为 ACTIVE、DISABLED（对应旧 active=true/false）。equipment.created_at 和 schema_version 为原有实施字段，额外保留，不改变业务关系。
 
-以下 ERD 包含已实现部分及 Sprint 2 规划（实体名带 Planned）。规划属性不是已存在的列。
+## 当前 ERD
+
+下图基于原始 ERD 转为物理名称；V002 已创建全部十个业务实体，非仅预留设计。schema_version 和 equipment.created_at 未在原图中展开。
 
 ```mermaid
 erDiagram
-    User ||--o{ Reservation : places
-    Equipment ||--o{ Reservation : receives
-    Reservation ||--o| LoanPlanned : fulfilled_by
-    Equipment ||--o{ MaintenanceCasePlanned : has
-    User ||--o{ MaintenanceCasePlanned : reports
-    LoanPlanned o|--o{ MaintenanceCasePlanned : damage_source
-    LoanPlanned ||--o{ NotificationPlanned : triggers
-    User ||--o{ NotificationPlanned : receives
-    User {
-        uuid id PK
+    app_user ||--o{ user_role : has
+    role ||--o{ user_role : grants
+    app_user ||--o{ reservation : requests
+    equipment ||--o{ reservation : booked_for
+    reservation ||--o| approval_decision : receives
+    app_user ||--o{ approval_decision : decides
+    reservation ||--o| loan : produces
+    app_user ||--o{ loan : checks_out
+    app_user o|--o{ loan : accepts_return
+    equipment ||--o{ maintenance_case : has
+    app_user ||--o{ maintenance_case : reports
+    app_user o|--o{ maintenance_case : assigned_to
+    loan o|--o{ maintenance_case : associated_with
+    app_user ||--o{ notification : receives
+    reservation o|--o{ notification : concerns
+    loan o|--o{ notification : concerns
+    maintenance_case o|--o{ notification : concerns
+    app_user o|--o{ audit_log : performs
+
+    app_user {
+        uuid user_id PK
         text email UK
+        text display_name
         text password_hash
-        text role
-        boolean active
+        text account_status
+        timestamptz created_at
     }
-    Equipment {
-        uuid id PK
+    role {
+        uuid role_id PK
+        text code UK
+        text name
+    }
+    user_role {
+        uuid user_id PK,FK
+        uuid role_id PK,FK
+    }
+    equipment {
+        uuid equipment_id PK
         text asset_tag UK
+        text name
+        text category
+        text location
         text status
         boolean requires_approval
+        integer version
     }
-    Reservation {
-        uuid id PK
-        uuid user_id FK
+    reservation {
+        uuid reservation_id PK
+        uuid requester_id FK
         uuid equipment_id FK
-        timestamptz starts_at
-        timestamptz ends_at
+        timestamptz start_at
+        timestamptz end_at
         text status
+        text purpose
+        timestamptz created_at
+        integer version
     }
-    LoanPlanned {
-        uuid id PK
+    approval_decision {
+        uuid approval_id PK
         uuid reservation_id FK,UK
+        uuid approver_id FK
+        text decision
+        text comment
+        timestamptz decided_at
+    }
+    loan {
+        uuid loan_id PK
+        uuid reservation_id FK,UK
+        uuid checkout_by FK
+        uuid return_by FK
         timestamptz checked_out_at
         timestamptz due_at
         timestamptz returned_at
-        text return_condition
-    }
-    MaintenanceCasePlanned {
-        uuid id PK
-        uuid equipment_id FK
-        uuid reporter_id FK
-        uuid source_loan_id FK
         text status
+        text return_condition
+        text return_note
+        integer version
     }
-    NotificationPlanned {
-        uuid id PK
-        uuid recipient_id FK
+    maintenance_case {
+        uuid maintenance_case_id PK
+        uuid equipment_id FK
+        uuid reported_by FK
+        uuid assigned_to FK
         uuid loan_id FK
-        text deduplication_key UK
+        text status
+        text fault_description
+        text resolution_note
+        timestamptz reported_at
+        timestamptz resolved_at
+        integer version
+    }
+    notification {
+        uuid notification_id PK
+        uuid recipient_id FK
+        uuid reservation_id FK
+        uuid loan_id FK
+        uuid maintenance_case_id FK
+        text type
+        text content
+        text delivery_status
+        text dedup_key UK
+        integer attempt_count
+        timestamptz created_at
+        timestamptz delivered_at
         timestamptz read_at
+    }
+    audit_log {
+        uuid audit_id PK
+        uuid actor_id FK
+        text action
+        text entity_type
+        uuid entity_id
+        text outcome
+        text request_id
+        text change_summary
+        timestamptz occurred_at
     }
 ```
 
-Loan 通过 Reservation 确定设备和借用人，避免重复外键造成不一致。Sprint 2 必须在领出事务中锁设备并确保一台设备只有一个未归还 Loan；新增 Loan、设备 ON_LOAN、预约 FULFILLED 要原子提交。归还事务更新 Loan、设备状态，损坏时同时生成工单。通知以 loan + recipient + notification type + due/version 组成去重键；规则由通知负责人确认。
+## 已实施的数据约束
 
-## 状态约束
+| 对象 | V002 约束 |
+| --- | --- |
+| app_user / role / user_role | 标准化唯一邮箱；角色代码白名单；联合主键阻止重复授权；外键保留历史 |
+| equipment | 正式状态白名单；RETIRED 禁止恢复；version 每次更新增加 |
+| reservation | 有限且正长度时段；用途；版本；有效占位区间排斥；引用与时间不可任意改写；合法状态转换 |
+| approval_decision | 预约唯一；拒绝理由必填；禁止审批申请人自己的预约；决定禁止覆盖或删除 |
+| loan | 预约唯一；经办人外键；due_at 必须等于预约结束；一个设备最多一个 ACTIVE 借用（锁设备后检查）；归还字段完整且时间合法；损坏说明必填；已归还结果不可覆盖 |
+| maintenance_case | OPEN 起始及合法转换；分派/进行中需 assigned_to；结单有结果和结束时间；关联 Loan 必须属于同设备；可首次关联原先独立的故障工单，但不能更换已有借用关联 |
+| notification | 三个业务关联必须恰好一个；dedup_key 唯一；重试计数非负；SENT 才能有 delivered_at/read_at，时间顺序合法 |
+| audit_log | 操作者可空，其余关键识别信息必填；禁止 UPDATE/DELETE/TRUNCATE；业务对象多态引用由服务校验 |
 
-已实现 Reservation 状态转换：插入时由 requires_approval 决定 PENDING/CONFIRMED。PENDING → CONFIRMED/REJECTED/CANCELLED；CONFIRMED → CANCELLED/FULFILLED；终态不能复活。预约设备、用户和起止时间不可原地修改，必须取消后重订。同状态更新允许幂等执行。审批和领出服务尚未实现，数据库状态预留不代表服务已可用。
+全部常规外键使用 RESTRICT，不级联删除历史。版本由触发器增加，应用需使用 `UPDATE ... WHERE id_column=? AND version=?` 并检查受影响行数实现乐观并发控制；单独存在 version 字段不等于自动发现客户端陈旧写入。
+
+## 预约可用性
+
+`PENDING_APPROVAL`、`CONFIRMED`、`FULFILLED` 均占据原预约时段；`CANCELLED`、`REJECTED` 释放占位。提前归还不会缩短原预约。半开区间允许前一预约的结束时刻等于后一预约开始。
+
+UNDER_MAINTENANCE、RETIRED 不接受新预约。AVAILABLE 必须无活动借用和活动工单；ON_LOAN 必须存在尚未逾期的 ACTIVE Loan，申请开始不早于其 due_at，且无活动工单。即使设备状态暂未同步，存在活动工单也会阻止新预约。查询和写入共用 `serms.equipment_can_reserve`，写入时锁设备再次检查。
+
+允许当前尚未结束的预约时段；end_at 必须晚于提交时刻。设备实际交付仍由后续领用服务检查 `start_at <= now < end_at`。时间统一使用 Instant / timestamptz，精度不超过微秒，显示时区由页面负责。
+
+## 状态和事务
 
 ```mermaid
 stateDiagram-v2
-    [*] --> PENDING: requires approval
-    [*] --> CONFIRMED: no approval
-    PENDING --> CONFIRMED: approval service in Sprint 2
-    PENDING --> REJECTED: reject
-    PENDING --> CANCELLED: owner cancels
-    CONFIRMED --> CANCELLED: owner cancels
-    CONFIRMED --> FULFILLED: checkout service in Sprint 2
+    [*] --> PENDING_APPROVAL: restricted equipment
+    [*] --> CONFIRMED: no approval required
+    PENDING_APPROVAL --> CONFIRMED: approve
+    PENDING_APPROVAL --> REJECTED: reject
+    PENDING_APPROVAL --> CANCELLED: cancel
+    CONFIRMED --> FULFILLED: checkout
+    CONFIRMED --> CANCELLED: cancel
+    FULFILLED --> [*]
     REJECTED --> [*]
     CANCELLED --> [*]
-    FULFILLED --> [*]
 ```
-
-以下 Equipment、Loan、Maintenance 状态图是 Sprint 2 合法转换设计。V001 仅校验设备状态值并阻止非 AVAILABLE 设备产生新预约，不实现这些跨实体事务。
 
 ```mermaid
 stateDiagram-v2
     [*] --> AVAILABLE
-    AVAILABLE --> ON_LOAN: checkout confirmed reservation
-    ON_LOAN --> AVAILABLE: undamaged return
-    AVAILABLE --> MAINTENANCE: report fault
-    ON_LOAN --> MAINTENANCE: damaged return
-    MAINTENANCE --> AVAILABLE: repair completed
-    MAINTENANCE --> RETIRED: cannot repair
-    AVAILABLE --> RETIRED: authorized retirement
-    RETIRED --> [*]
+    AVAILABLE --> ON_LOAN: authorized checkout
+    AVAILABLE --> UNDER_MAINTENANCE: report fault
+    ON_LOAN --> AVAILABLE: good return and no active case
+    ON_LOAN --> UNDER_MAINTENANCE: damage or fault while on loan
+    UNDER_MAINTENANCE --> UNDER_MAINTENANCE: active cases remain
+    UNDER_MAINTENANCE --> AVAILABLE: all repaired and no active loan
+    UNDER_MAINTENANCE --> ON_LOAN: all repaired but loan remains
+    UNDER_MAINTENANCE --> RETIRED: unrepairable
+    RETIRED --> RETIRED: collect equipment without restoring it
 ```
 
 ```mermaid
 stateDiagram-v2
-    [*] --> ACTIVE: checkout
-    ACTIVE --> RETURNED: return including overdue return
+    [*] --> ACTIVE
+    ACTIVE --> ACTIVE: overdue or fault does not imply return
+    ACTIVE --> RETURNED: GOOD or DAMAGED with receipt
     RETURNED --> [*]
-    note right of ACTIVE
-        overdue = now > due_at
-        damage = return condition
-    end note
 ```
 
-```mermaid
-stateDiagram-v2
-    [*] --> REPORTED
-    REPORTED --> IN_PROGRESS: assign technician
-    IN_PROGRESS --> RESOLVED: repaired
-    IN_PROGRESS --> UNREPAIRABLE: retire equipment
-    RESOLVED --> [*]
-    UNREPAIRABLE --> [*]
-```
+设备状态优先级为 RETIRED > 活动工单 > ACTIVE Loan > AVAILABLE。借用中报障或报废不自动结束 Loan；仍可登记收回。逾期与损坏可同时成立，归还时各自保留。维护状态采用 OPEN → ASSIGNED → IN_PROGRESS → RESOLVED/UNREPAIRABLE；终结不重开。
 
-## Sprint 1 分析与设计追踪
+预约创建与取消已通过 Repository 与成功审计原子提交。其他跨实体业务仍由下一阶段 Service 实现：审批决定与预约变化；Loan、设备和预约的领用联动；归还、工单及设备状态重算；通知扫描和重试。数据库约束不代替身份认证、角色授权、现场身份核实、领用窗口或全流程审计。
 
-分析类把可用性与预约规则放在业务协调对象上：
-
-```mermaid
-classDiagram
-    class ReservationBoundary
-    class BookingControl
-    class User
-    class Equipment
-    class Reservation
-    ReservationBoundary --> BookingControl
-    BookingControl --> User
-    BookingControl --> Equipment
-    BookingControl --> Reservation
-    User "1" --> "*" Reservation
-    Equipment "1" --> "*" Reservation
-```
+各模块先锁 Equipment，再锁 Reservation、Loan、MaintenanceCase，多记录按 ID 排序。数据库触发器提供防御性设备锁，但服务仍须从事务开始遵循此顺序，以避免先更新子记录再反向获取设备造成死锁。遇到 40P01/40001 应有限重试完整事务。
 
 ```mermaid
 sequenceDiagram
-    actor Borrower
-    participant UI as ReservationBoundary
-    participant Control as BookingControl
-    participant Equipment
-    participant Reservation
-    Borrower->>UI: Search time window
-    UI->>Control: Check availability
-    Control->>Equipment: Check operational status
-    Control->>Reservation: Check active overlaps
-    Control-->>UI: Candidate equipment
-    Borrower->>UI: Confirm booking
-    UI->>Control: Reserve as authenticated borrower
-    Control->>Equipment: Recheck availability
-    alt Available and no conflicting reservation
-        Control->>Reservation: Create pending or confirmed
-        Control-->>UI: Reservation result
-    else Inactive, unavailable or conflict
-        Control-->>UI: Explain rejection and refresh availability
-    end
-```
-
-设计图中的 Repository、Equipment、Reservation、User 和 SQL 已实现；Controller/Service 为其他负责人接入边界。
-
-```mermaid
-classDiagram
-    class ReservationService {
-        <<integration boundary>>
-    }
-    class ReservationRepository {
-        +findAvailable(query, start, end) List~Equipment~
-        +book(authenticatedUser, equipment, start, end) Reservation
-        +cancel(authenticatedUser, reservation) boolean
-    }
-    class DataSource
-    class Equipment
-    class Reservation
-    class User
-    ReservationService --> ReservationRepository
-    ReservationService --> User
-    ReservationRepository --> DataSource
-    ReservationRepository --> Equipment
-    ReservationRepository --> Reservation
-```
-
-```mermaid
-sequenceDiagram
-    participant Service as Authenticated service (integration boundary)
+    participant Service as Authenticated reservation service
     participant Repo as ReservationRepository
-    participant DB as PostgreSQL
-    Service->>Repo: book(sessionUserId, equipmentId, start, end)
-    Repo->>DB: BEGIN
-    Repo->>DB: SELECT equipment FOR UPDATE
-    DB-->>Repo: requires_approval
-    Repo->>DB: INSERT reservation
-    Note over DB: Trigger checks user and equipment; GiST rejects overlapping active ranges
-    alt Valid
-        DB-->>Repo: inserted
+    participant DB as PostgreSQL V002
+    Service->>Repo: book(actor, equipment, interval, purpose, requestId)
+    Repo->>DB: BEGIN and lock Equipment
+    Repo->>DB: Insert Reservation
+    Note over DB: Recheck account, active Loan, active cases and interval exclusion
+    Repo->>DB: Insert success AuditLog
+    alt All writes succeed
         Repo->>DB: COMMIT
-        Repo-->>Service: Reservation
-    else Constraint violation
-        DB-->>Repo: SQLSTATE
+        Repo-->>Service: Reservation with version
+    else Business or audit write fails
         Repo->>DB: ROLLBACK
         Repo-->>Service: SQLException
     end
 ```
 
-## Zhou Fanhao 核心用例的 Sprint 2 设计准备
+## 与原分析模型的对应
 
-用例：设备领用和归还。参与者为借用者及授权的发放/接收人员（具体角色映射由 RBAC 负责人确认）。领用前必须预约归本人且为 CONFIRMED，当前时间满足领用窗口，设备可用，无活动借用。成功后创建 Loan，设备为 ON_LOAN，预约为 FULFILLED；重复、越权、已取消、未审批、设备故障或超窗口领用应拒绝且无部分写入。
+LoanDesk 是界面边界，LoanControl 是分析控制对象，设计阶段可落实为 Controller/Service；它们不是数据库实体。图中的 User.roles 对应 user_role，Reservation.requester 对应 requester_id，Loan 中的领还经办人单独持久化；LoanControl 协调 MaintenanceCase 与 AuditLog 的事务，不能让 Entity 自行提交数据库。
 
-正常归还关闭 Loan 并释放设备；逾期归还仍接受，保留 due_at 和 returned_at，停止未来逾期提醒；损坏归还关闭 Loan、设备转 MAINTENANCE 并生成维护工单。不存在、已归还或越权操作应返回清晰结果，重复提交不得新建第二张工单。审核权限和领用时间容差尚需团队确认。
+State Pattern 仍是候选：按 `State_Pattern_Candidate_Final.md`，若采用，应将允许的操作交给设备状态类，将共同事实校验和目标状态优先级集中在共享规则中。当前仍存枚举状态代码，未实现或宣称已采用 State 类层次。Loan 使用 ACTIVE/RETURNED 即可，不新增 OverdueState。
 
-```mermaid
-classDiagram
-    class LoanBoundary
-    class LoanControl
-    class Reservation
-    class Equipment
-    class Loan
-    class MaintenanceCase
-    LoanBoundary --> LoanControl
-    LoanControl --> Reservation
-    LoanControl --> Equipment
-    LoanControl --> Loan
-    LoanControl --> MaintenanceCase
-```
+## 迁移与交接
 
-```mermaid
-sequenceDiagram
-    actor Operator
-    participant Boundary as LoanBoundary
-    participant Control as LoanControl
-    participant Reservation
-    participant Loan
-    participant Equipment
-    Operator->>Boundary: Collect equipment
-    Boundary->>Control: Authenticated checkout
-    Control->>Reservation: Verify owner, confirmation and time
-    Control->>Equipment: Verify available
-    alt Preconditions satisfied
-        Control->>Loan: Create active loan
-        Control->>Equipment: Mark on loan
-        Control->>Reservation: Mark fulfilled
-        Control-->>Boundary: Checkout receipt
-    else Illegal checkout
-        Control-->>Boundary: Reject with no state change
-    end
-    Operator->>Boundary: Return with condition
-    Boundary->>Control: Verify active loan and return authority
-    Control->>Loan: Record returned_at and condition
-    alt Undamaged including overdue
-        Control->>Equipment: Mark available
-    else Damaged
-        Control->>Equipment: Mark maintenance and create maintenance case
-    end
-```
+V001 保留原样；V002 原子重命名、迁移旧角色与状态、创建新表并记录版本 2。旧 TECHNICIAN 转 MAINTAINER，不额外授予权限。旧 FULFILLED 数据如果与其他有效预约重叠，新约束将拒绝整个迁移，需先人工核对；不删除冲突或捏造历史 Loan。
 
-State Pattern 候选问题：直接在多个 Controller 写 if/else 会让合法转换和副作用分散。Sprint 1 状态简单，采用枚举加集中数据库校验，保留最小实现。Sprint 2 可比较集中转换表与 State 对象：前者容易审计；后者适合状态具有多种行为时，但增加类数。若选择 State，应由 LoanService 在事务中委托状态对象，Repository 保存结果；跨对象原子性、锁和数据库约束仍须保留。当前没有将候选模式宣称为已实现。
-
-## 集成关系与待确认决策
-
-1. Shi Wenqi：服务使用本模块的查询与预约接口，冲突映射为 409；前端仍需实现并接入认证。
-2. Zhang Hanming：审批只允许授权用户执行；批准前重检规则；共同 Review 测试与角色边界。
-3. Liu Tongyao：维护状态更新必须锁同一设备；已有预约的取消/重排及通知在同一业务流程协调。
-4. Wang Yuanmeng：配置 DataSource 和 Service 分层；逾期读取 Loan，通知进行幂等处理。
-5. Zhou Fanhao：后续增加 Loan 迁移、领出/归还原子事务及状态模式验证。
-
-暂定决策：PostgreSQL 17、Java 17、每人单角色、待审批占位、所有启用账户可经服务申请、借出设备暂停接受新预约。需要团队 Review 确认；不推定项目名称已获老师确认。源文件为本 Markdown 内的 Mermaid，可编辑且可在支持 Mermaid 的页面渲染。
+V002 与 Java API 是配套升级：停写、备份、迁移、发布新模块后再开放服务。初始化/升级命令见 [数据库 README](../database/README.md)。真实测试覆盖数据升级和数据库规则，但不代表审批、领还、维护和通知的完整 Service 已实现或已上线。

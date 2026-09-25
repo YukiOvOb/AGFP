@@ -19,10 +19,23 @@ try {
         Start-Sleep -Seconds 1
     }
     if (-not $ready) { throw 'Database did not become ready in 60 seconds' }
-    docker cp database/src/main/resources/db/migration/V001__sprint1.sql "${containerName}:/tmp/001.sql"
-    if ($LASTEXITCODE -ne 0) { throw 'Cannot copy migration' }
-    docker exec $containerName psql -U serms_test -d serms_test -v ON_ERROR_STOP=1 -f /tmp/001.sql
-    if ($LASTEXITCODE -ne 0) { throw 'Migration failed' }
+    $migrationDir = 'database/src/main/resources/db/migration'
+    $steps = @("$migrationDir/V001__sprint1.sql", 'database/src/test/resources/v1-upgrade-fixture.sql', "$migrationDir/V002__align_serms_model.sql")
+    foreach ($sqlFile in $steps) {
+        docker cp $sqlFile "${containerName}:/tmp/migration.sql"
+        if ($LASTEXITCODE -ne 0) { throw "Cannot copy $sqlFile" }
+        docker exec $containerName psql -U serms_test -d serms_test -v ON_ERROR_STOP=1 -f /tmp/migration.sql
+        if ($LASTEXITCODE -ne 0) { throw "Migration failed: $sqlFile" }
+    }
+    # Also test the empty-database path without legacy fixtures.
+    docker exec $containerName createdb -U serms_test serms_empty
+    if ($LASTEXITCODE -ne 0) { throw 'Cannot create empty-path test database' }
+    foreach ($sqlFile in (Get-ChildItem $migrationDir -Filter 'V*.sql' | Sort-Object Name)) {
+        docker cp $sqlFile.FullName "${containerName}:/tmp/migration.sql"
+        if ($LASTEXITCODE -ne 0) { throw 'Cannot copy migration' }
+        docker exec $containerName psql -U serms_test -d serms_empty -v ON_ERROR_STOP=1 -f /tmp/migration.sql
+        if ($LASTEXITCODE -ne 0) { throw "Empty-database migration failed: $($sqlFile.Name)" }
+    }
     $binding = docker port $containerName 5432/tcp
     if ($LASTEXITCODE -ne 0) { throw 'Cannot discover database port' }
     $testPort = ($binding.Trim() -split ':')[-1]

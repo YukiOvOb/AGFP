@@ -1,4 +1,6 @@
-# Zhou Fanhao Sprint 1 交付记录
+# Zhou Fanhao Sprint 1 首次交付记录
+
+本文保存首次提交 2b09c6d 的历史状态。随后已按 SERMS 图文完成 V002 调整并通过 27 项测试，当前内容以 [V002 对齐记录](serms-database-alignment.md) 和 [领域模型](sprint1-domain.md) 为准。
 
 依据本地 Team_07_SERMS_Project_Plan.docx 第 3、4、5.3、7、8 节。Sprint 1 为 9 月 12 日至 9 月 25 日，目标是登录、RBAC、搜索、可用性和预约冲突处理。文档只列团队 Sprint 1 目标与个人长期职责，没有单独的 Zhou Fanhao Sprint 1 任务清单；本分支据此落实数据库、领域模型及预约数据层集成基础。领用归还业务排在 Sprint 2，本次提供其设计准备。
 
