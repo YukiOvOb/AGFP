@@ -6,63 +6,90 @@ Team 07 · Shared Equipment Reservation and Maintenance System（共享设备预
 
 ---
 
-## 1. 一页总览
+## 1. 全部技术栈
 
-整体是**前后端分离**：前端是 React 单页应用，后端 Spring Boot 只提供 REST API，数据存在 PostgreSQL。
+整体是**前后端分离**：前端是 React 单页应用，后端 Spring Boot 只提供 REST API，数据存在 PostgreSQL 18。
+
+“状态” 一列说明这项技术目前是否已经写进代码：✅ 已在 main 上；🔶 只在个人分支上，尚未合并；⬜ 已定下，尚未落地。
 
 ### 1.1 前端（`frontend/`）
 
-| 方面 | 选型 | 版本基线 |
-| --- | --- | --- |
-| 语言 | TypeScript（`strict` 模式） | 5.x |
-| 框架 | React | 19 |
-| 构建 / 开发服务器 | Vite | 7 |
-| 路由 | React Router | 7 |
-| 服务端数据请求与缓存 | TanStack Query | 5 |
-| API 客户端 | openapi-typescript + openapi-fetch（根据后端 OpenAPI 文档自动生成类型） | — |
-| 表单与校验 | React Hook Form + Zod | — |
-| UI 组件 | shadcn/ui（基于 Radix，自带无障碍支持）+ Tailwind CSS | Tailwind 4 |
-| 表格 | TanStack Table | 8 |
-| 报表图表 | Recharts | 3 |
-| 日期时间 | date-fns + date-fns-tz（统一按 `Asia/Singapore` 显示） | — |
-| 包管理 / 运行时 | pnpm · Node.js LTS | Node 24 |
-| 代码规范 | ESLint + Prettier | — |
-| 单元 / 组件测试 | Vitest + React Testing Library + MSW（模拟 API） | — |
-| 端到端测试 | Playwright | — |
+| 方面 | 技术 | 版本 | 状态 |
+| --- | --- | --- | --- |
+| 语言 | TypeScript（`strict` 模式） | 5.x | ⬜ |
+| 框架 | React | 19 | ⬜ |
+| 构建 / 开发服务器 | Vite | 7 | ⬜ |
+| 路由 | React Router | 7 | ⬜ |
+| 请求后端数据与缓存 | TanStack Query | 5 | ⬜ |
+| 调用后端接口 | openapi-typescript + openapi-fetch（根据后端接口文档自动生成类型） | — | ⬜ |
+| 表单与校验 | React Hook Form + Zod | — | ⬜ |
+| UI 组件 / 样式 | shadcn/ui（基于 Radix，自带无障碍支持）+ Tailwind CSS | Tailwind 4 | ⬜ |
+| 表格 | TanStack Table | 8 | ⬜ |
+| 图表 | Recharts | 3 | ⬜ |
+| 日期时间 | date-fns + date-fns-tz（按新加坡时间显示） | — | ⬜ |
+| 包管理 / 运行时 | pnpm · Node.js LTS | Node 24 | ⬜ |
+| 代码规范 | ESLint + Prettier | — | ⬜ |
+| 单元 / 组件测试 | Vitest + React Testing Library + MSW（模拟接口） | — | ⬜ |
+| 端到端测试 | Playwright | — | ⬜ |
 
 ### 1.2 后端（`app/`）
 
-| 方面 | 选型 | 版本基线 |
+| 方面 | 技术 | 版本 | 状态 |
+| --- | --- | --- | --- |
+| 语言 | Java | 17 | ✅ |
+| 框架 | Spring Boot（按业务模块划分的单体应用） | 3.5.x | ✅ |
+| Web 接口 | Spring MVC，`/api/v1` 下的 JSON 接口 + Jakarta Bean Validation | 随 Boot | 🔶 目前 main 上是 Thymeleaf 页面，待改为 REST |
+| 接口文档 | springdoc-openapi（OpenAPI 3） | 2.x | ⬜ |
+| 错误格式 | RFC 9457 Problem Details（Spring 自带 `ProblemDetail`） | 随 Boot | ⬜ |
+| 安全 | Spring Security：Session Cookie 登录、BCrypt 密码哈希、`@PreAuthorize` 方法级权限、CSRF（Cookie + 请求头） | 随 Boot | 🔶 main 上已有 Spring Security，待改为 JSON 登录 + RBAC |
+| 数据访问 | Spring Data JPA / Hibernate；需要加锁或复杂查询的地方用 JdbcTemplate 手写 SQL | 随 Boot | ✅ |
+| 定时任务 | Spring `@Scheduled` | 随 Boot | ✅ |
+| 运维端点 | Spring Boot Actuator（只开放 `health`、`info`） | 随 Boot | ⬜ |
+| 构建 | Maven（Maven Wrapper `./mvnw`） | 3.9 | ✅ |
+| 测试 | JUnit 5 · Mockito · AssertJ · Spring Boot Test | 随 Boot | ✅ |
+| 集成测试数据库 | Testcontainers（真实 PostgreSQL 18） | — | ⬜ |
+| 分层规则检查 | ArchUnit | — | ⬜ |
+| 覆盖率 | JaCoCo（service + domain ≥ 70% 作为合并门槛） | 0.8.x | ✅ 已生成报告，门槛待加 |
+| 代码规范 / 静态分析 | Spotless（google-java-format）· SpotBugs + FindSecBugs | — | ⬜ |
+
+### 1.3 数据库
+
+| 方面 | 技术 | 版本 | 状态 |
+| --- | --- | --- | --- |
+| 数据库 | PostgreSQL（本地、CI、服务器统一用 `postgres:18-alpine`） | 18 | 🔶 周凡浩分支，配置里写的还是 17，待改为 18 |
+| 表结构迁移 | Flyway（唯一的建表方式） | 随 Boot | ✅ |
+| 预约防重叠 | PostgreSQL 排他约束（`EXCLUDE USING gist` + `tstzrange`） | — | 🔶 周凡浩分支 |
+| 备份 | `pg_dump` 每日备份，保留 7 天 | — | ⬜ |
+
+### 1.4 DevSecOps 与部署
+
+| 方面 | 技术 | 状态 |
 | --- | --- | --- |
-| 语言 | Java | 17 |
-| 框架 | Spring Boot（单体应用，内部按业务模块划分） | 3.5.x |
-| Web | Spring MVC（只提供 JSON REST API）+ Jakarta Bean Validation | 随 Boot |
-| API 文档 | springdoc-openapi（自动生成 OpenAPI 3 文档，前端据此生成类型） | 2.x |
-| 错误格式 | RFC 9457 Problem Details（Spring 自带 `ProblemDetail`） | 随 Boot |
-| 安全 | Spring Security：Session Cookie 登录、BCrypt、方法级权限、CSRF（Cookie + 请求头方式） | 随 Boot |
-| 持久化 | Spring Data JPA / Hibernate；需要加锁或复杂查询的地方用 JdbcTemplate 手写 SQL | 随 Boot |
-| 数据库 | **PostgreSQL** | **18** |
-| 表结构迁移 | Flyway（唯一的建表方式） | 随 Boot |
-| 定时任务 | Spring `@Scheduled` | 随 Boot |
-| 运维端点 | Spring Boot Actuator（只开放 `health`、`info`） | 随 Boot |
-| 构建 | Maven（Maven Wrapper `./mvnw`） | 3.9 |
-| 测试 | JUnit 5 · Mockito · AssertJ · Spring Boot Test · **Testcontainers（真实 PostgreSQL 18）** · ArchUnit | — |
-| 覆盖率 | JaCoCo（service + domain 包 ≥ 70% 作为合并门槛） | 0.8.x |
-| 代码规范 / 静态分析 | Spotless（google-java-format）· SpotBugs + FindSecBugs | — |
+| CI/CD | GitHub Actions | ✅ |
+| 密钥扫描 | gitleaks | ✅ |
+| 漏洞扫描 | Trivy（文件系统 + Docker 镜像） | ✅ 文件系统扫描；镜像扫描待加 |
+| 依赖检查 | Dependency Review（PR 阶段）+ Dependabot（每周自动升级） | ✅ Dependency Review；Dependabot 待开 |
+| 代码安全扫描 | CodeQL（Java + TypeScript） | ⬜ |
+| 部署后安全扫描 | OWASP ZAP Baseline | ⬜ |
+| 压力测试 | k6（50 并发） | ⬜ |
+| 容器 | Docker（多阶段构建，非 root 运行）+ Docker Compose：`web` + `app` + `db` 三个容器 | 🔶 目前只有 welcome 静态页一个容器 |
+| 镜像仓库 | GitHub Container Registry（GHCR） | ⬜ |
+| 服务器 | 香港服务器 + nginx + Let's Encrypt，https://serms.midas.cyou | ✅ |
 
-### 1.3 交付与协作
+### 1.5 可选功能（时间允许再做）
 
-| 方面 | 选型 |
+| 功能 | 技术 |
 | --- | --- |
-| CI/CD | GitHub Actions |
-| 安全扫描 | gitleaks（密钥）· Trivy（文件系统 + 镜像）· Dependency Review + Dependabot（Maven 和 npm 依赖）· CodeQL（Java + TypeScript）· OWASP ZAP Baseline（部署后扫描） |
-| 容器 | Docker（多阶段构建，非 root 运行）+ Docker Compose |
-| 镜像仓库 | GitHub Container Registry（GHCR） |
-| 测试 / 演示环境 | 香港服务器 + nginx + Let's Encrypt，https://serms.midas.cyou |
-| 可选：邮件通知 | Spring Mail；开发时用 Mailpit 接收测试邮件 |
-| 可选：二维码 | 前端用 `qrcode` 库生成，扫码用浏览器摄像头库（如 `@zxing/browser`） |
+| 邮件通知 | Spring Mail；开发时用 Mailpit 接收测试邮件 |
+| 二维码 | 前端用 `qrcode` 生成，`@zxing/browser` 扫码 |
+
+### 1.6 协作
+
+| 方面 | 技术 |
+| --- | --- |
+| 代码托管 | Git + GitHub |
 | 项目管理 | GitHub Projects（看板：To Do → In Progress → Review → Testing → Done） |
-| 设计图 | PlantUML / Mermaid 源文件放在 `docs/diagrams/`，draw.io 作为补充 |
+| 设计图 | PlantUML / Mermaid（源文件放在 `docs/diagrams/`），draw.io 作为补充 |
 
 ---
 

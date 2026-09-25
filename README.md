@@ -4,21 +4,87 @@ Shared Equipment Reservation and Maintenance System（共享设备预约与维�
 
 ## 技术栈
 
-前后端分离：React 单页应用 + Spring Boot REST API（单体，内部按业务模块划分）+ PostgreSQL 18，用 Docker Compose 运行，GitHub Actions 负责从编译到部署后验证的整条流水线。详细说明、需求覆盖表和与 Proposal 的差异见 [docs/tech-stack.md](docs/tech-stack.md)。
+前后端分离：React 单页应用 + Spring Boot REST API（单体，内部按业务模块划分）+ PostgreSQL 18，用 Docker Compose 运行，GitHub Actions 负责从编译到部署后验证的整条流水线。每项技术对应哪条需求、目前是否已落地、与 Proposal 的差异，见 [docs/tech-stack.md](docs/tech-stack.md)。
 
-| 方面 | 选型 |
+### 前端（`frontend/`）
+
+| 方面 | 技术 |
 | --- | --- |
-| 前端（`frontend/`） | React 19 · TypeScript · Vite 7 · React Router 7 · TanStack Query / Table · React Hook Form + Zod · shadcn/ui + Tailwind CSS 4 · Recharts |
-| 后端（`app/`） | Java 17 · Spring Boot 3.5（Spring MVC REST、Spring Security、Spring Data JPA）· springdoc-openapi |
-| 数据库 | PostgreSQL 18 · Flyway 管理表结构迁移 |
-| 前后端接口 | `/api/v1` JSON；OpenAPI 文档自动生成前端 TypeScript 类型；错误统一用 Problem Details |
-| 构建 | Maven（`./mvnw`）· pnpm（Node 24 LTS） |
-| 测试 | 后端：JUnit 5 · Mockito · Spring Boot Test · Testcontainers · ArchUnit · JaCoCo（service/domain ≥ 70%）；前端：Vitest · React Testing Library · MSW · Playwright |
-| 代码质量 / 安全 | Spotless · ESLint + Prettier · SpotBugs + FindSecBugs · CodeQL · gitleaks · Trivy · Dependency Review · Dependabot · OWASP ZAP |
-| 交付 | Docker · Docker Compose · GHCR · GitHub Actions · nginx + Let's Encrypt |
-| 协作 | GitHub Projects · PlantUML / Mermaid |
+| 语言 | TypeScript 5（strict 模式） |
+| 框架 | React 19 |
+| 构建 / 开发服务器 | Vite 7 |
+| 路由 | React Router 7 |
+| 请求后端数据与缓存 | TanStack Query 5 |
+| 调用后端接口 | openapi-typescript + openapi-fetch（根据后端接口文档自动生成类型） |
+| 表单与校验 | React Hook Form + Zod |
+| UI 组件 / 样式 | shadcn/ui + Tailwind CSS 4 |
+| 表格 | TanStack Table 8 |
+| 图表 | Recharts 3 |
+| 日期时间 | date-fns + date-fns-tz（按新加坡时间显示） |
+| 包管理 / 运行时 | pnpm · Node.js 24 LTS |
+| 代码规范 | ESLint + Prettier |
+| 测试 | Vitest · React Testing Library · MSW（模拟接口）· Playwright（端到端） |
+
+### 后端（`app/`）
+
+| 方面 | 技术 |
+| --- | --- |
+| 语言 | Java 17 |
+| 框架 | Spring Boot 3.5（按业务模块划分的单体应用） |
+| Web 接口 | Spring MVC，`/api/v1` 下的 JSON 接口 + Jakarta Bean Validation |
+| 接口文档 | springdoc-openapi（OpenAPI 3） |
+| 错误格式 | RFC 9457 Problem Details |
+| 安全 | Spring Security：Session Cookie 登录、BCrypt 密码哈希、`@PreAuthorize` 方法级权限、CSRF（Cookie + 请求头） |
+| 数据访问 | Spring Data JPA / Hibernate；需要加锁或复杂查询的地方用 JdbcTemplate 手写 SQL |
+| 定时任务 | Spring `@Scheduled` |
+| 运维端点 | Spring Boot Actuator（只开放 health、info） |
+| 构建 | Maven 3.9（`./mvnw`） |
+| 测试 | JUnit 5 · Mockito · AssertJ · Spring Boot Test · Testcontainers · ArchUnit（分层规则检查） |
+| 覆盖率 | JaCoCo（service + domain ≥ 70%） |
+| 代码规范 / 静态分析 | Spotless（google-java-format）· SpotBugs + FindSecBugs |
 
 后端代码按业务模块组织在 `sg.edu.nus.serms` 下：`identity`、`equipment`、`reservation`、`approval`、`loan`、`maintenance`、`notification`、`report`、`audit`、`shared`；前端 `frontend/src/features/` 下的模块和后端一一对应。
+
+### 数据库
+
+| 方面 | 技术 |
+| --- | --- |
+| 数据库 | PostgreSQL 18（本地、CI、服务器统一用 `postgres:18-alpine`） |
+| 表结构迁移 | Flyway |
+| 预约防重叠 | PostgreSQL 排他约束（`EXCLUDE USING gist` + `tstzrange`） |
+| 备份 | `pg_dump` 每日备份，保留 7 天 |
+
+### DevSecOps 与部署
+
+| 方面 | 技术 |
+| --- | --- |
+| CI/CD | GitHub Actions |
+| 密钥扫描 | gitleaks |
+| 漏洞扫描 | Trivy（文件系统 + Docker 镜像） |
+| 依赖检查 | Dependency Review（PR 阶段）+ Dependabot（每周自动升级） |
+| 代码安全扫描 | CodeQL（Java + TypeScript） |
+| 部署后安全扫描 | OWASP ZAP Baseline |
+| 压力测试 | k6（50 并发） |
+| 容器 | Docker（多阶段构建，非 root 运行）+ Docker Compose：`web` + `app` + `db` 三个容器 |
+| 镜像仓库 | GitHub Container Registry（GHCR） |
+| 服务器 | 香港服务器 + nginx + Let's Encrypt，https://serms.midas.cyou |
+
+### 可选功能（时间允许再做）
+
+| 功能 | 技术 |
+| --- | --- |
+| 邮件通知 | Spring Mail；开发时用 Mailpit 接收测试邮件 |
+| 二维码 | 前端用 `qrcode` 生成，`@zxing/browser` 扫码 |
+
+### 协作
+
+| 方面 | 技术 |
+| --- | --- |
+| 代码托管 | Git + GitHub |
+| 项目管理 | GitHub Projects |
+| 设计图 | PlantUML / Mermaid（源文件放在 `docs/diagrams/`），draw.io 作为补充 |
+
+> 目前已写进 main 的有：Java 17、Spring Boot 3.5、Spring Data JPA、Flyway、Maven、JUnit / Mockito、JaCoCo、GitHub Actions、gitleaks、Trivy、Dependency Review、Docker Compose 和服务器部署。PostgreSQL 表结构在周凡浩的分支上；React 前端和其余流水线环节还没落地。逐项状态见 [docs/tech-stack.md 第 1 节](docs/tech-stack.md#1-全部技术栈)。
 
 ## 测试：每人写好自己的 Test Bench
 
