@@ -101,6 +101,7 @@ CI 只能验证已经写好的测试。**每位成员必须为自己负责的用
 
 ## 协作与发布
 
+- 模块之间的接口合同放在 [`docs/contracts/`](docs/contracts/)，以仓库版本为准；修改合同需要提 PR，并由受影响模块的负责人确认。目前已有：[登录与审批（UC02）](docs/contracts/auth-and-approval.md)。
 - 所有改动走 PR。`main` 受分支保护，必须通过 CI 检查（gitleaks、Trivy、依赖审查）才能合并。
 - 所有有 Write 权限的协作者都可以自行合并自己的 PR，不需要他人审批，只要求 CI 全绿。
 - 线上地址：https://serms.midas.cyou （香港服务器，Let's Encrypt 证书自动续期）
