@@ -1,0 +1,5 @@
+<!doctype html><html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title th:text="${title} + ' · SERMS'">SERMS</title><link rel="stylesheet" th:href="@{/css/serms.css}"></head>
+<body><header th:fragment="header"><a class="brand" th:href="@{/}"><span class="brand-icon">S</span>SERMS</a><nav aria-label="Main navigation"><a th:href="@{/}">Overview</a><a th:href="@{/notifications}">Notifications</a></nav></header>
+<footer th:fragment="footer">Shared Equipment Reservation and Maintenance System · Team 07</footer>
+</body></html>

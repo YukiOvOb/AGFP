@@ -40,3 +40,7 @@ CI 只能验证已经写好的测试。**每位成员必须为自己负责的用
 - 合并进 `main` 后自动部署到香港服务器 `/opt/agfp`（见 `.github/workflows/deploy.yml`、`scripts/deploy.sh`）。
 - 部署走 Docker Compose：仓库根目录需有 `compose.yaml` + `Dockerfile`，容器监听的端口映射到宿主机 `127.0.0.1:8789`，由 nginx 反代对外。
 - 机密只放服务器 `/opt/agfp/.env`（模板见 `.env.example`），不进 git。
+
+## SERMS Sprint 1 application
+
+Wang Yuanmeng's notification and shared-layout foundation lives in [`app/`](app/). Run with Java 17+ and the included Maven Wrapper: `cd app && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local`. Open http://127.0.0.1:8081. See [scope, contracts and verification](docs/wang-yuanmeng-sprint1.md). The root static deployment is unchanged pending team integration.
