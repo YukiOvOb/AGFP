@@ -8,6 +8,7 @@ import sg.edu.nus.serms.approval.domain.ApprovalCommand;
 import sg.edu.nus.serms.approval.domain.ApprovalContext;
 import sg.edu.nus.serms.approval.domain.ApprovalEvaluation;
 import sg.edu.nus.serms.approval.domain.ApprovalPolicyChain;
+import sg.edu.nus.serms.approval.service.event.ReservationDecided;
 
 /** Coordinates policy evaluation, the reservation transition, decision persistence, and eventing. */
 public class ApprovalService {
@@ -53,8 +54,10 @@ public class ApprovalService {
         decisions.record(command.reservationId(), actorId, command.decision(), command.comment());
     events.publishEvent(
         new ReservationDecided(
+            UUID.randomUUID(),
             decisionId,
             command.reservationId(),
+            current.requesterId(),
             actorId,
             command.decision(),
             command.comment()));

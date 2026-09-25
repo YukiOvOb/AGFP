@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.springframework.context.ApplicationEventPublisher;
 import sg.edu.nus.serms.approval.domain.ApprovalCommand;
@@ -20,6 +21,7 @@ import sg.edu.nus.serms.approval.domain.ApprovalFailure;
 import sg.edu.nus.serms.approval.domain.ApprovalPolicyChain;
 import sg.edu.nus.serms.approval.domain.DecisionCommentHandler;
 import sg.edu.nus.serms.approval.domain.NoSelfApprovalHandler;
+import sg.edu.nus.serms.approval.service.event.ReservationDecided;
 
 class ApprovalServiceTest {
 
@@ -67,14 +69,16 @@ class ApprovalServiceTest {
     order.verify(reservations).confirm(reservationId, 4L);
     order.verify(decisions)
         .record(reservationId, approverId, ApprovalDecisionType.APPROVED, null);
-    order.verify(events)
-        .publishEvent(
-            new ReservationDecided(
-                decisionId,
-                reservationId,
-                approverId,
-                ApprovalDecisionType.APPROVED,
-                null));
+    ArgumentCaptor<ReservationDecided> eventCaptor =
+        ArgumentCaptor.forClass(ReservationDecided.class);
+    order.verify(events).publishEvent(eventCaptor.capture());
+    assertThat(eventCaptor.getValue().eventId()).isNotNull();
+    assertThat(eventCaptor.getValue().approvalDecisionId()).isEqualTo(decisionId);
+    assertThat(eventCaptor.getValue().reservationId()).isEqualTo(reservationId);
+    assertThat(eventCaptor.getValue().requesterId()).isEqualTo(requesterId);
+    assertThat(eventCaptor.getValue().approverId()).isEqualTo(approverId);
+    assertThat(eventCaptor.getValue().decision()).isEqualTo(ApprovalDecisionType.APPROVED);
+    assertThat(eventCaptor.getValue().comment()).isNull();
   }
 
   @Test
