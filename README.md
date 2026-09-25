@@ -4,29 +4,32 @@ Shared Equipment Reservation and Maintenance System（共享设备预约与维�
 
 ## 技术栈
 
-一个 Spring Boot 单体应用（内部按业务模块划分）+ 一个 PostgreSQL 数据库，用 Docker Compose 运行，GitHub Actions 负责从编译到冒烟测试的整条流水线。详细说明、需求覆盖表和与 Proposal 的差异见 [docs/tech-stack.md](docs/tech-stack.md)。
+前后端分离：React 单页应用 + Spring Boot REST API（单体，内部按业务模块划分）+ PostgreSQL 18，用 Docker Compose 运行，GitHub Actions 负责从编译到部署后验证的整条流水线。详细说明、需求覆盖表和与 Proposal 的差异见 [docs/tech-stack.md](docs/tech-stack.md)。
 
 | 方面 | 选型 |
 | --- | --- |
-| 语言 / 框架 | Java 17 · Spring Boot 3.5（Spring MVC、Spring Security、Spring Data JPA） |
-| 页面 | Thymeleaf · Bootstrap 5 · Chart.js（报表） |
-| 数据库 | PostgreSQL 17 · Flyway 管理表结构迁移 |
-| 构建 | Maven（`./mvnw`） |
-| 测试 | JUnit 5 · Mockito · AssertJ · Spring Boot Test · Testcontainers · ArchUnit · Playwright · JaCoCo（service/domain ≥ 70%） |
-| 代码质量 / 安全 | Spotless · SpotBugs + FindSecBugs · CodeQL · gitleaks · Trivy · Dependency Review · Dependabot · OWASP ZAP |
+| 前端（`frontend/`） | React 19 · TypeScript · Vite 7 · React Router 7 · TanStack Query / Table · React Hook Form + Zod · shadcn/ui + Tailwind CSS 4 · Recharts |
+| 后端（`app/`） | Java 17 · Spring Boot 3.5（Spring MVC REST、Spring Security、Spring Data JPA）· springdoc-openapi |
+| 数据库 | PostgreSQL 18 · Flyway 管理表结构迁移 |
+| 前后端接口 | `/api/v1` JSON；OpenAPI 文档自动生成前端 TypeScript 类型；错误统一用 Problem Details |
+| 构建 | Maven（`./mvnw`）· pnpm（Node 24 LTS） |
+| 测试 | 后端：JUnit 5 · Mockito · Spring Boot Test · Testcontainers · ArchUnit · JaCoCo（service/domain ≥ 70%）；前端：Vitest · React Testing Library · MSW · Playwright |
+| 代码质量 / 安全 | Spotless · ESLint + Prettier · SpotBugs + FindSecBugs · CodeQL · gitleaks · Trivy · Dependency Review · Dependabot · OWASP ZAP |
 | 交付 | Docker · Docker Compose · GHCR · GitHub Actions · nginx + Let's Encrypt |
 | 协作 | GitHub Projects · PlantUML / Mermaid |
 
-代码按业务模块组织在 `sg.edu.nus.serms` 下：`identity`、`equipment`、`reservation`、`approval`、`loan`、`maintenance`、`notification`、`report`、`audit`、`shared`。
+后端代码按业务模块组织在 `sg.edu.nus.serms` 下：`identity`、`equipment`、`reservation`、`approval`、`loan`、`maintenance`、`notification`、`report`、`audit`、`shared`；前端 `frontend/src/features/` 下的模块和后端一一对应。
 
 ## 测试：每人写好自己的 Test Bench
 
 CI 只能验证已经写好的测试。**每位成员必须为自己负责的用例写好完整的测试台，并和功能代码放在同一个 PR 里提交**，这样每个 PR 在 CI 上都能自己验证自己。
 
-- 位置：`app/src/test/java/sg/edu/nus/serms/<模块>/`
-- 内容：单元测试（领域规则）+ 集成测试（真实 PostgreSQL，Testcontainers）+ Web / 权限测试（MockMvc），覆盖用例的正常流程和所有主要异常流程。
-- 要求：只装 Docker 就能用 `./mvnw verify` 跑完；每个测试自己准备数据，不依赖执行顺序和其他测试。
-- CI：每个 PR 跑全部测试，任何测试失败或 service/domain 覆盖率低于 70% 都不能合并；不允许靠跳过或删除测试让 CI 变绿。
+- 位置：后端 `app/src/test/java/sg/edu/nus/serms/<模块>/`；前端 `frontend/src/features/<模块>/**/*.test.tsx`
+- 后端：单元测试（领域规则）+ 集成测试（真实 PostgreSQL 18，Testcontainers）+ API / 权限测试（MockMvc）。
+- 前端：组件测试（Vitest + React Testing Library，接口用 MSW 模拟）+ 至少一条自己用例主流程的 Playwright 端到端测试。
+- 覆盖用例的正常流程和所有主要异常流程。
+- 要求：装好 Docker 和 Node 后，`./mvnw verify` 和 `pnpm test` 就能跑完；每个测试自己准备数据，不依赖执行顺序和其他测试。
+- CI：每个 PR 跑全部前后端测试，任何测试失败或后端 service/domain 覆盖率低于 70% 都不能合并；不允许靠跳过或删除测试让 CI 变绿。
 
 每位成员的测试范围清单见 [docs/tech-stack.md 第 5 节](docs/tech-stack.md#5-测试台test-bench每人负责自己的)。
 
