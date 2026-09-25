@@ -14,7 +14,7 @@ try {
     $created = $true
     $ready = $false
     for ($attempt = 0; $attempt -lt 60; $attempt++) {
-        docker exec $containerName pg_isready -U serms_test -d serms_test *> $null
+        docker exec $containerName pg_isready -h 127.0.0.1 -U serms_test -d serms_test *> $null
         if ($LASTEXITCODE -eq 0) { $ready = $true; break }
         Start-Sleep -Seconds 1
     }

@@ -15,3 +15,8 @@ Assignment Grading and Feedback Platform
 Zhou Fanhao 的 Java/JDBC 领域与预约数据模块位于 [database](database/README.md)。
 数据库现已按 SERMS 图文升级至 V002，覆盖十个业务实体，详见 [调整记录](docs/serms-database-alignment.md)。包含 PostgreSQL 迁移、并发冲突保护、真实数据库测试与 CI，以及 [领域设计](docs/sprint1-domain.md) 和 [交付记录](docs/sprint1-zhoufanhao.md)。
 本地验证：`powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-sprint1.ps1`。
+
+## 通知接口集成
+
+与 Wang Yuanmeng 通知分支的 PostgreSQL 适配位于 [integration/notifications](integration/notifications/README.md)，包含 V003 迁移、真实 LoanReminderGuard 和最小接入补丁。
+本地测试：`powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-notification-integration.ps1`；结果见 [接口对齐记录](docs/notification-interface-alignment.md)。

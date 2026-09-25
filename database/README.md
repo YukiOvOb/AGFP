@@ -1,5 +1,7 @@
 # SERMS 数据模块
 
+通知应用可通过可选 V003 接入，见 [通知适配](../integration/notifications/README.md)。本页描述基础 V002；集成后通知以 notification_request / notification_attempt 为准，V2 表保留为只读历史。
+
 负责人：Zhou Fanhao。Java 17/JDBC + PostgreSQL 17；当前 schema 为 V002。根据 SERMS 原始 ER 图已具备用户、多角色、设备、预约、审批决定、借用、维修工单、通知与审计十个业务表。现有 Java Repository 实现搜索、预约和本人取消；其他表为后续业务服务提供持久化基础。
 
 设计与来源见 [领域模型](../docs/sprint1-domain.md)，调整与测试记录见 [V002 对齐记录](../docs/serms-database-alignment.md)。
