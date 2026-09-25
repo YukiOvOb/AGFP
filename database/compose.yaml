@@ -1,0 +1,20 @@
+# Local development only; separate from the existing website deployment.
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: serms
+      POSTGRES_USER: serms
+      POSTGRES_PASSWORD: ${SERMS_DB_PASSWORD:?Set SERMS_DB_PASSWORD}
+    ports:
+      - "127.0.0.1:${SERMS_DB_PORT:-55432}:5432"
+    volumes:
+      - serms_db:/var/lib/postgresql/data
+      - ./src/main/resources/db/migration/V001__sprint1.sql:/docker-entrypoint-initdb.d/001.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U serms -d serms"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  serms_db:
