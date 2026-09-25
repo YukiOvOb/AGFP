@@ -2,8 +2,6 @@
 
 Shared Equipment Reservation and Maintenance System（共享设备预约与维护系统）· SWE5006 Team 07
 
-> 仓库名 AGFP 来自审批邮件里的项目名（Assignment Grading and Feedback Platform），与 Proposal 不一致，正在向老师确认。
-
 ## 技术栈
 
 一个 Spring Boot 单体应用（内部按业务模块划分）+ 一个 PostgreSQL 数据库，用 Docker Compose 运行，GitHub Actions 负责从编译到冒烟测试的整条流水线。详细说明、需求覆盖表和与 Proposal 的差异见 [docs/tech-stack.md](docs/tech-stack.md)。
