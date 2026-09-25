@@ -1,54 +1,54 @@
-# SERMS 图文对齐与 V002 调整记录
+# SERMS Diagram Alignment and V002 Change Record
 
-日期：2026-09-25。负责人：Zhou Fanhao。当前分支：feat/zhoufanhao-sprint1-data-foundation。
+Date: 2026-09-25. Owner: Zhou Fanhao. Branch: feat/zhoufanhao-sprint1-data-foundation.
 
-用户要求参考 SERMS 目录中的图和文件调整数据库。本次以 ER 图、领域说明、设备/借用状态设计和集成说明为依据，对首个本地提交 2b09c6d 进行后续修订；保留 V001 与既有 Git 历史，通过 V002 前向升级。
+The user requested database adjustments based on diagrams and files in the SERMS directory. This revision builds on initial local commit 2b09c6d using the ER diagram, domain descriptions, equipment/loan state design and integration notes. It preserves V001 and existing Git history and upgrades forward through V002.
 
-## 对照与调整
+## Design Comparison and Changes
 
-| 原始设计要求 | V001 差异 | V002 与配套代码 |
+| Original Design Requirement | V001 Difference | V002 and Supporting Code |
 | --- | --- | --- |
-| User 与 Role 多对多 | 单个 role 字段，缺少 CUSTODIAN，使用 TECHNICIAN | role/user_role；五种角色；TECHNICIAN 映射 MAINTAINER |
-| 实体主键、requester_id、start_at/end_at | 通用 id/user_id/starts_at/ends_at | 按图重命名，保留原 UUID 与引用 |
-| account_status、purpose、version | active 布尔值，无用途和版本 | 迁移 ACTIVE/DISABLED；增加 purpose；设备、预约、Loan、工单有 version |
-| PENDING_APPROVAL、UNDER_MAINTENANCE | PENDING、MAINTENANCE | 迁移已有状态并更新约束、Java 枚举和查询 |
-| FULFILLED 继续占原时段 | 排斥约束仅含待审批和已确认 | FULFILLED 纳入占位，提前归还不释放原预约 |
-| ON_LOAN 可预约未逾期借用到期后的未来时段 | 全部拒绝 | 查询和写入共用数据库可用性函数，考虑实际 Loan 和活动工单 |
-| 审批决定不可覆盖、禁止自批 | 无表 | approval_decision、预约唯一、理由与自批检查、不可变记录 |
-| 借用与领还经办人 | 仅规划 | loan、归还字段、时间与损坏说明、单预约借用与单设备活动借用保护 |
-| 维修工单 | 仅规划 | maintenance_case、正式状态、分派/结单字段及 Loan 同设备校验 |
-| 通知重试、阅读和去重 | 仅规划 | notification、恰好一个业务关联、唯一 dedup_key、投递时间和计数约束 |
-| 重要操作审计 | 无表和写入 | 追加式 audit_log；已实现的预约/取消与成功审计同事务提交 |
+| Many-to-many User and Role relationship | Single role field, missing CUSTODIAN, uses TECHNICIAN | role/user_role; five roles; TECHNICIAN maps to MAINTAINER |
+| Entity primary keys, requester_id, start_at/end_at | Generic id/user_id/starts_at/ends_at | Renamed to match the diagram while preserving UUIDs and references |
+| account_status, purpose, version | Boolean active, no purpose or version | Migrates to ACTIVE/DISABLED; adds purpose and versions for equipment, reservations, loans and maintenance cases |
+| PENDING_APPROVAL, UNDER_MAINTENANCE | PENDING, MAINTENANCE | Migrates existing states and updates constraints, Java enums and queries |
+| FULFILLED retains the original slot | Exclusion constraint covers only pending and confirmed reservations | Includes FULFILLED; early return does not release the original slot |
+| ON_LOAN allows future reservations after a non-overdue loan's due time | All rejected | Reads and writes share a database availability function using actual loans and active maintenance cases |
+| Immutable approval decisions; no self-approval | No table | approval_decision, one per reservation, rejection reason and self-approval checks, immutable records |
+| Loans and checkout/return custodians | Planned only | loan, return fields, time and damage details, one loan per reservation and one active loan per equipment |
+| Maintenance cases | Planned only | maintenance_case, official states, assignment/closure fields and same-equipment Loan validation |
+| Notification retry, read state and deduplication | Planned only | notification, exactly one business reference, unique dedup_key, delivery time and count constraints |
+| Audit of important operations | No table or writes | Append-only audit_log; implemented booking/cancellation commits atomically with success audits |
 
-app_user 保留物理表名避免 SQL USER 名称冲突；账户状态具体代码在原 ER 图中未列出，采用 ACTIVE/DISABLED。图中未列出的既有 equipment.created_at 和 schema_version 保留。
+The physical name app_user is retained to avoid the SQL USER name conflict. The original ER diagram does not enumerate account states; ACTIVE/DISABLED are used. Existing equipment.created_at and schema_version are retained even though absent from the diagram.
 
-中文词汇表把区间重叠公式误写为“或”，集成说明和英文版均为 AND，本次按后者实现。attempt.md 的续租/自批复仅为议题标题，继续采用详细设计中的无续借、禁止自批规则。
+The Chinese glossary incorrectly uses OR for interval overlap, whereas the integration notes and English version use AND; this implementation follows the latter. Renewal/self-approval entries in attempt.md are discussion headings only, so the detailed design's no-renewal and no-self-approval rules remain in effect.
 
-## 验证结果
+## Verification Results
 
-执行：`powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-sprint1.ps1`。
+Command: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-sprint1.ps1`.
 
-- 空 PostgreSQL 17 数据库顺序应用 V001、V002：通过。
-- 先写入 V1 旧状态、旧角色、禁用用户和预约，再应用 V002：通过，ID、hash 和业务记录保留。
-- Java 使用 --release 17 编译，Maven clean verify：通过。
-- 真实数据库集成测试：27 项，失败 0、错误 0、跳过 0。
-- 并发预约：同设备冲突仅一笔提交；并发借用：不同预约对同设备最多一条 ACTIVE Loan。
-- 测试还覆盖：多角色与重复授权、FULFILLED 占位、ON_LOAN 未来预约、逾期阻止预约、晚还和损坏同时记录、审批与维修约束、通知单关联与去重、审计不可改写及失败回滚、版本条件拒绝陈旧更新。
-- 一键脚本在结束时清理本次测试容器和匿名卷。报告位于 database/target/surefire-reports，CI 使用相同迁移/夹具并上传报告。
+- Sequential V001 and V002 application on an empty PostgreSQL 17 database: passed.
+- V002 upgrade after inserting V1 states, roles, disabled users and reservations: passed; IDs, hashes and business records preserved.
+- Java compilation with --release 17 and Maven clean verify: passed.
+- Real database integration tests: 27 tests, 0 failures, 0 errors and 0 skipped.
+- Concurrent reservations: only one conflicting booking commits for the same equipment. Concurrent loans: at most one ACTIVE Loan for the same equipment across different reservations.
+- Additional coverage: multiple roles and duplicate grants, FULFILLED slot occupancy, future ON_LOAN reservations, overdue booking prevention, simultaneous late/damaged returns, approval and maintenance constraints, notification single-reference and deduplication rules, immutable audits and failure rollback, and version conditions rejecting stale updates.
+- The one-command script removes its test containers and anonymous volumes on completion. Reports are in database/target/surefire-reports; CI uses the same migrations/fixtures and uploads reports.
 
-测试中的直接 SQL 夹具专门验证数据约束，不代表已经实现完整领还/审批服务。外层服务仍负责角色授权、实际领取人、领用时间窗口、跨实体设备状态重算、失败操作独立审计和通知任务。State Pattern 仍为候选，未虚报为完成实现。
+Direct SQL fixtures test data constraints; they do not indicate complete checkout/return or approval services. Upper-layer services still handle role authorization, the actual recipient, checkout windows, cross-entity equipment state recomputation, independent audits of failed operations and notification jobs. State Pattern remains a candidate, not a claimed completed implementation.
 
-GitHub CI、同伴 Review、测试环境部署及全流程 Smoke Test 尚未执行。本次仅修改仓库并本地提交，没有操作线上数据库或推送远端。
+At the time of this V002 verification, GitHub CI, peer review, test-environment deployment and end-to-end smoke tests had not run. Changes were committed locally; no production database operations or remote push were performed as part of that verification.
 
-## 迁移注意事项
+## Migration Notes
 
-V001 文件保持不变，V002 保留已有数据并在单个事务内完成升级。现有数据卷需手动应用 V002；新数据卷自动按顺序初始化。Java 字段访问器及表列名已变化，须配套迁移与发布。若历史 FULFILLED 已与其他有效预约重叠，迁移会拒绝并回滚，需要人工核对，不自动删除数据。运行命令与责任边界见 [数据库 README](../database/README.md)。
+V001 remains unchanged. V002 preserves existing data and upgrades in one transaction. Existing data volumes require manual V002 application; new volumes initialize in order automatically. Java accessors and table column names have changed, requiring coordinated migration and release. If historical FULFILLED reservations overlap other occupying reservations, migration rejects and rolls back for manual review; it does not delete data automatically. See the [database README](../database/README.md) for commands and responsibility boundaries.
 
-## 参考文件校验值
+## Reference File Checksums
 
-原始参考位于 C:/Users/haohao/Desktop/SERMS；未修改这些文件。下列 SHA-256 用于标识本次参考版本。
+Original references are under C:/Users/haohao/Desktop/SERMS and were not modified. The following SHA-256 values identify the versions consulted.
 
-| 文件 | SHA-256 |
+| File | SHA-256 |
 | --- | --- |
 | SERMS_Domain_Glossary_and_ERD.md | 69509CB1EC4180D7E5478DD9C796A78607EC16EBDCDE99C1FC50328440D57FF0 |
 | SERMS_Equipment_and_Loan_States.md | CB80860CDD1805A1AB672F5B1B0DFBD1493ADAE765D23B5F3B7AE96972D99387 |
@@ -60,4 +60,4 @@ V001 文件保持不变，V002 保留已有数据并在单个事务内完成升�
 | Diagrams/Pickup Sequence Diagram.png | 5369AA28BFFB6CC737E4106E4132365045CF585D36CEDD231F15D892937D1895 |
 | Diagrams/Return Sequence Diagram.png | 00E5CA9089CE0DA6401BABE477DBB7DE0F7F3C5ACA4B3A9B387308134BB46A83 |
 
-AI 使用：Codex 用于对照图文、生成迁移与测试、执行本地验证。人工检查人仍待 Zhou Fanhao 和团队 Reviewer 签核；未虚构实际工时、会议或 Review 记录。
+AI usage: Codex assisted with diagram/document comparison, migration and test generation, and local verification. Manual sign-off awaits Zhou Fanhao and the team reviewer; actual hours, meetings and review records were not fabricated.

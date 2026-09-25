@@ -1,49 +1,49 @@
-# Zhou Fanhao Sprint 1 首次交付记录
+# Zhou Fanhao Sprint 1 Initial Delivery Record
 
-本文保存首次提交 2b09c6d 的历史状态。随后已按 SERMS 图文完成 V002 调整并通过 27 项测试，当前内容以 [V002 对齐记录](serms-database-alignment.md) 和 [领域模型](sprint1-domain.md) 为准。
+This document preserves the historical state of initial commit 2b09c6d. V002 was subsequently aligned with the SERMS diagrams and documents and passed 27 tests. See the [V002 alignment record](serms-database-alignment.md) and [domain model](sprint1-domain.md) for the current design.
 
-依据本地 Team_07_SERMS_Project_Plan.docx 第 3、4、5.3、7、8 节。Sprint 1 为 9 月 12 日至 9 月 25 日，目标是登录、RBAC、搜索、可用性和预约冲突处理。文档只列团队 Sprint 1 目标与个人长期职责，没有单独的 Zhou Fanhao Sprint 1 任务清单；本分支据此落实数据库、领域模型及预约数据层集成基础。领用归还业务排在 Sprint 2，本次提供其设计准备。
+Based on sections 3, 4, 5.3, 7 and 8 of the local Team_07_SERMS_Project_Plan.docx. Sprint 1 runs from September 12 to September 25 and targets login, RBAC, search, availability and reservation conflict handling. The plan lists team Sprint 1 goals and long-term individual responsibilities, but no separate Zhou Fanhao Sprint 1 task list. This branch implements the database, domain model and reservation persistence integration foundation on that basis. Checkout and return business functionality is scheduled for Sprint 2; this delivery prepares its design.
 
-分支：feat/zhoufanhao-sprint1-data-foundation。基于 main 的 9ddd40a。状态：本地实现和验证完成，等待团队 Review 与上层集成；不能按项目 DoD 标记 Done。
+Branch: feat/zhoufanhao-sprint1-data-foundation. Base: main at 9ddd40a. Status at initial delivery: local implementation and verification complete, awaiting team review and upper-layer integration; it cannot be marked Done under the project DoD.
 
-## Backlog 与验收追踪
+## Backlog and Acceptance Tracking
 
-以下条目是从项目计划拆分的本地工作清单，尚未同步团队任务板。工作量为相对规模，不作为实际工时。
+The following local work items were derived from the project plan and have not been synchronized to the team task board. Sizes are relative estimates, not actual work hours.
 
-| ID | User Story | 优先级 / 规模 | Acceptance Criteria | 实现与验证 |
+| ID | User Story | Priority / Size | Acceptance Criteria | Implementation and Verification |
 | --- | --- | --- | --- | --- |
-| ZFH-S1-01 | 作为开发者，我需要统一领域词汇与状态，避免模块解释不一致 | P0 / M | 定义六个领域对象、关系、状态及后续集成边界 | sprint1-domain.md：词汇、ERD、状态、分析/设计图 |
-| ZFH-S1-02 | 作为集成人员，我需要可重复创建的数据结构 | P0 / M | 空 PostgreSQL 可一次性迁移；身份唯一、引用完整、时间合法 | V001、事务版本标记、真实数据库约束测试 |
-| ZFH-S1-03 | 作为借用者，我需要可靠预约设备 | P0 / L | 设备可用；待审批也占位；并发冲突仅一笔成功；相邻预约允许 | ReservationRepository、排斥约束、并发测试 |
-| ZFH-S1-04 | 作为借用者，我需要安全取消本人预约 | P1 / S | 他人不能取消；取消释放容量；重复取消不改变状态 | 带身份条件的 UPDATE 与测试 |
-| ZFH-S1-05 | 作为团队成员，我需要可执行的集成交接 | P0 / M | 提供 Java/JDBC 契约、本地一键测试和 CI 配置 | database/README.md、test-sprint1.ps1、database.yml |
+| ZFH-S1-01 | As a developer, I need shared domain vocabulary and states so modules interpret them consistently | P0 / M | Define six domain objects, relationships, states and future integration boundaries | sprint1-domain.md: vocabulary, ERD, states and analysis/design diagrams |
+| ZFH-S1-02 | As an integrator, I need reproducible data structures | P0 / M | Migrate an empty PostgreSQL database in one run; enforce unique identities, reference integrity and valid times | V001, transactional version marker and real database constraint tests |
+| ZFH-S1-03 | As a borrower, I need reliable equipment reservations | P0 / L | Equipment must be available; pending approval occupies a slot; only one conflicting concurrent request succeeds; adjacent reservations are allowed | ReservationRepository, exclusion constraint and concurrency tests |
+| ZFH-S1-04 | As a borrower, I need to cancel my own reservations securely | P1 / S | Other users cannot cancel; cancellation releases capacity; repeated cancellation does not change state | Identity-constrained UPDATE and tests |
+| ZFH-S1-05 | As a team member, I need an executable integration handover | P0 / M | Provide Java/JDBC contracts, one-command local tests and CI configuration | database/README.md, test-sprint1.ps1 and database.yml |
 
-以上条目负责人均为 Zhou Fanhao；估算、任务板状态和实际工时需其本人确认，本记录不虚构会议或投入时长。
+Zhou Fanhao owns all items above. Estimates, board status and actual hours require his confirmation; this record does not invent meetings or time spent.
 
-## 本地验证
+## Local Verification
 
-环境：Windows、JDK 25（以 --release 17 编译）、Maven 3.9.10、Docker Desktop，真实 PostgreSQL 17 容器。CI 指定 JDK 17。
+Environment: Windows, JDK 25 (compiled with --release 17), Maven 3.9.10, Docker Desktop and a real PostgreSQL 17 container. CI specifies JDK 17.
 
-2026-09-25 首次真实数据库验证发现 PL/pgSQL 条件中的 CASE 表达式需要括号，迁移事务已完整回滚；修复后迁移和测试通过。测试覆盖 14 个用例，失败 0、错误 0、跳过 0。测试不使用 H2，也不依赖 mock 数据库。
+Initial real database verification on 2026-09-25 found that a CASE expression in a PL/pgSQL condition required parentheses; the migration transaction rolled back completely. After the fix, migrations and tests passed: 14 tests, 0 failures, 0 errors and 0 skipped. Tests use neither H2 nor a mock database.
 
-覆盖范围：搜索和字面量转义、预约创建、审批占位、不同设备同时间、相邻/包含/部分重叠、取消归属、不可用设备、过期查询快照、禁用用户、非法时间/精度、直接 SQL 绕过尝试、状态不可逆、外键与唯一约束、两个连接竞争预约、设备维护修改与预约竞争。每次用例使用随机 UUID。
+Coverage: search and literal escaping, reservation creation, approval slot occupancy, simultaneous bookings for different equipment, adjacent/contained/partially overlapping intervals, cancellation ownership, unavailable equipment, stale search snapshots, disabled users, invalid times/precision, direct SQL bypass attempts, irreversible states, foreign keys and uniqueness, two connections competing for a reservation, and maintenance updates racing with bookings. Each test uses random UUIDs.
 
-一键脚本已在全新、带随机密码的数据库上执行 clean verify，14 项全部通过，并确认自动清理容器。另已验证 Compose 配置有效、重复迁移安全拒绝且版本记录保留。
+The one-command script ran clean verify against a fresh database with a random password: all 14 tests passed, and automatic container cleanup was confirmed. Compose configuration validity, safe rejection of repeated migration and preservation of the version record were also verified.
 
-可复现入口：`scripts/test-sprint1.ps1`。机器报告由 Maven 生成在 `database/target/surefire-reports/`，CI 配置在每次运行后上传相同报告。target 不提交 Git；本记录保存结果和复现步骤，不编造 Pipeline 链接。
+Reproduction entry point: `scripts/test-sprint1.ps1`. Maven generates machine-readable reports in `database/target/surefire-reports/`; CI is configured to upload the same reports after each run. target is not committed to Git. This record preserves results and reproduction steps without inventing pipeline links.
 
-## 未完成的团队 DoD 条件
+## Outstanding Team DoD Requirements
 
-- 至少一位其他成员的 Code Review，以及 PR 链接。
-- 远程 CI 三项现有安全检查及新增 database-test 实际通过的证据。
-- 登录/RBAC/HTTP/页面接入、测试环境部署、Smoke Test 与验收演示。
-- 团队确认暂定数据库选型和规则；项目名称差异仍按原计划由团队向老师确认。
-- 真实 Sprint Review、会议记录、个人实际工时及成员签核。
+- Code review by at least one other member and a PR link.
+- Evidence that the three existing remote CI security checks and the new database-test job pass.
+- Login/RBAC/HTTP/page integration, test-environment deployment, smoke tests and an acceptance demonstration.
+- Team confirmation of the provisional database choice and rules; the team must clarify the project-name discrepancy with the instructor as planned.
+- Actual Sprint Review, meeting records, individual work hours and member sign-offs.
 
-本分支没有推送、合并 main 或修改线上环境，现有静态站发布入口保持原状。
+At the time of this initial delivery, the branch had not been pushed or merged into main, and production had not been changed. The existing static-site deployment entry point remained unchanged.
 
-## AI 使用记录
+## AI Usage Record
 
-来源：OpenAI Codex，根据用户提供的项目计划及本地仓库生成 Java、SQL、测试、CI 和 Markdown 设计文档；用途为本次 Sprint 1 数据层实现与验证。自动检查结果见上文；人工检查人待 Zhou Fanhao 及 PR Reviewer 签核。未复制外部业务代码。
+Source: OpenAI Codex, used to generate Java, SQL, tests, CI and Markdown design documents from the user-provided project plan and local repository for this Sprint 1 data-layer implementation and verification. Automated check results are recorded above; manual sign-off awaits Zhou Fanhao and the PR reviewer. No external business code was copied.
 
-第三方组件：PostgreSQL 使用 PostgreSQL License；pgJDBC 使用 BSD-2-Clause；JUnit 使用 EPL-2.0。新增 Maven 依赖交由现有 dependency-review 与漏洞检查复核。数据库并发设计参考 PostgreSQL 官方 Range Types 文档，链接见数据模块 README。AI 生成内容遵循仓库后续确定的许可政策，不代替人工 Review。
+Third-party components: PostgreSQL uses the PostgreSQL License; pgJDBC uses BSD-2-Clause; JUnit uses EPL-2.0. New Maven dependencies are subject to the existing dependency-review and vulnerability checks. Database concurrency design references the official PostgreSQL Range Types documentation linked in the data module README. AI-generated content follows the repository's eventual licensing policy and does not replace human review.

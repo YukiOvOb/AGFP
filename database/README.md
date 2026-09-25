@@ -1,24 +1,24 @@
-# SERMS 数据模块
+# SERMS Data Module
 
-通知应用可通过可选 V003 接入，见 [通知适配](../integration/notifications/README.md)。本页描述基础 V002；集成后通知以 notification_request / notification_attempt 为准，V2 表保留为只读历史。
+The notification application can integrate through optional V003; see the [notification adapter](../integration/notifications/README.md). This page describes the V002 foundation. After integration, notification_request / notification_attempt are authoritative, and the V2 table remains as read-only history.
 
-负责人：Zhou Fanhao。Java 17/JDBC + PostgreSQL 17；当前 schema 为 V002。根据 SERMS 原始 ER 图已具备用户、多角色、设备、预约、审批决定、借用、维修工单、通知与审计十个业务表。现有 Java Repository 实现搜索、预约和本人取消；其他表为后续业务服务提供持久化基础。
+Owner: Zhou Fanhao. Java 17/JDBC + PostgreSQL 17; current schema: V002. The original SERMS ER diagram is implemented as ten business tables covering users, multiple roles, equipment, reservations, approval decisions, loans, maintenance cases, notifications and audits. The Java repository implements search, booking and cancellation by the requester; the other tables provide persistence for future business services.
 
-设计与来源见 [领域模型](../docs/sprint1-domain.md)，调整与测试记录见 [V002 对齐记录](../docs/serms-database-alignment.md)。
+See the [domain model](../docs/sprint1-domain.md) for design and sources, and the [V002 alignment record](../docs/serms-database-alignment.md) for changes and test results.
 
-## 一键验证
+## One-command Verification
 
-要求 Docker Desktop、JDK 17+、Maven。从仓库根目录运行：
+Requires Docker Desktop, JDK 17+ and Maven. Run from the repository root:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-sprint1.ps1
 ```
 
-脚本创建本机随机端口、随机密码的临时 PostgreSQL；验证空库 V001→V002 初始化，以及带旧角色、禁用账户、旧状态和预约记录的 V1→V2 升级；运行全部 27 项集成测试后自动清理容器/匿名卷并恢复环境变量。
+The script creates temporary PostgreSQL with a random local port and password. It checks empty-database V001-to-V002 initialization and V1-to-V2 upgrades containing legacy roles, disabled accounts, old states and reservations. After all 27 integration tests, it removes the container and anonymous volumes and restores environment variables.
 
-报告位于 `database/target/surefire-reports/`，构建产物位于 `database/target/serms-data-0.1.0-SNAPSHOT.jar`。测试使用真实 PostgreSQL，不使用 H2；未配置专用测试数据库会失败而非跳过。
+Reports: `database/target/surefire-reports/`. Build artifact: `database/target/serms-data-0.1.0-SNAPSHOT.jar`. Tests use real PostgreSQL, not H2; missing dedicated test database configuration causes failure rather than a skip.
 
-Linux/CI 的等价流程（PGHOST/PGUSER/PGPASSWORD 指向专用测试服务器）：
+Equivalent Linux/CI procedure (PGHOST/PGUSER/PGPASSWORD must point to a dedicated test server):
 
 ```sh
 export PGDATABASE=serms_test
@@ -35,20 +35,20 @@ export SERMS_TEST_DB_PASSWORD="$PGPASSWORD"
 mvn -B -f database/pom.xml clean verify
 ```
 
-`v1-upgrade-fixture.sql` 仅限测试，不进入开发或生产初始化。JUnit 限定数据库名为 serms_test；测试仍应只在一次性实例执行，避免残留夹具被误当真实业务数据。
+`v1-upgrade-fixture.sql` is for tests only and must not be used for development or production initialization. JUnit requires the database name serms_test. Run tests only on disposable instances so leftover fixtures cannot be mistaken for business data.
 
-## 开发初始化与已有数据库升级
+## Development Initialization and Existing Database Upgrades
 
-在当前 PowerShell 设置本地密码：
+Set the local password in the current PowerShell session:
 
 ```powershell
 $env:SERMS_DB_PASSWORD = '<your-local-password>'
 docker compose -f database/compose.yaml up -d --wait
 ```
 
-默认连接 `jdbc:postgresql://127.0.0.1:55432/serms`，用户名 serms，可设置 SERMS_DB_PORT 改端口。空卷第一次启动按文件名顺序应用 V001、V002。Compose 停止用 `docker compose -f database/compose.yaml down`，保留数据卷。
+The default connection is `jdbc:postgresql://127.0.0.1:55432/serms`, with username serms; set SERMS_DB_PORT to change the port. On first startup, an empty volume applies V001 and V002 in filename order. Stop Compose with `docker compose -f database/compose.yaml down`, which preserves the data volume.
 
-已有 V001 数据卷不会自动执行新 SQL。先备份并停止业务写入，再只应用 V002：
+Existing V001 volumes do not automatically run new SQL. Back up the database and stop business writes, then apply only V002:
 
 ```powershell
 docker compose -f database/compose.yaml cp database/src/main/resources/db/migration/V002__align_serms_model.sql db:/tmp/V002.sql
@@ -56,35 +56,35 @@ docker compose -f database/compose.yaml exec -T db psql -U serms -d serms -v ON_
 docker compose -f database/compose.yaml exec -T db psql -U serms -d serms -c "SELECT version, description FROM serms.schema_version ORDER BY version"
 ```
 
-命令均从仓库根目录执行。不要重跑 V001、删卷或修改已应用的迁移。V002 是完整事务，任一步失败自动回滚；遇到旧 FULFILLED 重叠应人工核对历史。再次运行 V002 会拒绝已迁移结构，不覆盖数据。生产部署仍需迁移账号与最小权限应用账号分离。新表的历史数据不自动生成。
+Run all commands from the repository root. Do not rerun V001, delete volumes or edit applied migrations. V002 runs in one transaction and rolls back on any failure; manually review historical FULFILLED overlaps. Reapplying V002 rejects the migrated structure without overwriting data. Production still requires separate migration and least-privilege application accounts. Historical data for new tables is not generated automatically.
 
-V002 重命名列并改变 Java record 的访问器，不兼容 V001 模块；应在同一维护窗口迁移数据库和发布对应 Java 代码。当前根目录站点仍为静态欢迎页，没有连接开发数据库。
+V002 renames columns and changes Java record accessors, making it incompatible with the V001 module. Migrate the database and release the matching Java code in the same maintenance window. The root website remains a static welcome page without a development database connection.
 
-## Java 接口
+## Java API
 
-注入 `DataSource` 创建 `ReservationRepository`；新连接应处于默认自动提交模式，Repository 自行管理事务，不能嵌套到调用者未提交事务中。
+Inject a `DataSource` to construct `ReservationRepository`. New connections must use default auto-commit mode. The repository manages its own transactions and cannot be nested inside an uncommitted caller transaction.
 
-| 方法 | 行为 |
+| Method | Behavior |
 | --- | --- |
-| findAvailable(query,start,end) | 按设备名称、资产编号、分类进行字面量包含搜索；最多 100 条，按资产编号排序；检查活动借用、维修与区间冲突 |
-| book(actor,equipment,start,end) | 生成请求关联 ID，不填用途 |
-| book(actor,equipment,start,end,purpose,requestId) | 从设备决定 PENDING_APPROVAL/CONFIRMED，原子写预约与成功审计 |
-| cancel(actor,reservation) | 仅本人有效预约；不存在、非本人或已结束返回 false |
-| cancel(actor,reservation,requestId) | 同上；账户需 ACTIVE；成功取消与审计原子提交 |
+| findAvailable(query,start,end) | Literal substring search over equipment name, asset tag and category; up to 100 rows ordered by asset tag; checks active loans, maintenance and interval conflicts |
+| book(actor,equipment,start,end) | Generates a request correlation ID and leaves purpose unset |
+| book(actor,equipment,start,end,purpose,requestId) | Chooses PENDING_APPROVAL/CONFIRMED from equipment settings; writes the reservation and success audit atomically |
+| cancel(actor,reservation) | Only the requester's valid reservation; returns false if missing, owned by another user or already ended |
+| cancel(actor,reservation,requestId) | Same behavior; requires an ACTIVE account; commits cancellation and its audit atomically |
 
-参数 actor 必须来自可信认证会话，角色授权在 Service 校验。管理员代取消等能力尚未由本 Repository 暴露。失败操作的独立审计由上层在回滚后负责。requestId 是追踪标识，不是通用幂等键；不要在网络中断、提交结果未知时无条件重试。
+The actor parameter must come from a trusted authenticated session; the service validates role authorization. This repository does not expose cancellation on behalf of another user by an administrator. The upper layer must independently audit failed operations after rollback. requestId is a tracing identifier, not a general idempotency key; do not retry unconditionally after a network failure when the commit outcome is unknown.
 
-Reservation 属性为 reservationId、requesterId、equipmentId、startAt、endAt、status、purpose、version。Equipment 使用 equipmentId 与 version；User 使用 accountStatus 和不可变 roles 集合，不包含密码哈希。
+Reservation properties are reservationId, requesterId, equipmentId, startAt, endAt, status, purpose and version. Equipment uses equipmentId and version; User uses accountStatus and an immutable roles set, without a password hash.
 
-## 业务与错误约定
+## Business Rules and Error Conventions
 
-- 区间 [start,end)，最大微秒精度；支持尚未结束的当前时段。
-- PENDING_APPROVAL、CONFIRMED、FULFILLED 均占位；提前归还仍保留原预约时段。
-- ON_LOAN 只有当前借用未逾期，且新预约不早于到期、无活动工单和预约冲突时可预约。
-- 数据库状态与多角色定义以 [领域模型](../docs/sprint1-domain.md) 为准。
-- SQLSTATE 23P01：时间冲突（可映射 409）；23503：无效引用；23514：状态/字段/业务约束失败；23505：唯一性冲突。
-- Java IllegalArgumentException/NullPointerException：输入非法。40P01/40001 可有限重试整个事务；其他 SQL 错误由服务记录 requestId 并返回通用错误，不暴露 SQL 或凭据。
-- 所有相关写服务先锁 Equipment，再按序处理 Reservation、Loan、MaintenanceCase。version 更新需配合 WHERE version 与行数检查。
-- 数据库约束不能完成 RBAC、现场交付核验、设备状态重算或完整领还事务。完整责任边界见领域文档。
+- Intervals are [start,end), with at most microsecond precision; current intervals that have not ended are supported.
+- PENDING_APPROVAL, CONFIRMED and FULFILLED occupy their original slots, including after an early return.
+- ON_LOAN equipment can be reserved only when its current loan is not overdue, the new reservation starts at or after the due time, and there are no active maintenance cases or reservation conflicts.
+- See the [domain model](../docs/sprint1-domain.md) for database states and multiple-role definitions.
+- SQLSTATE 23P01: time conflict (can map to HTTP 409); 23503: invalid reference; 23514: state/field/business constraint violation; 23505: uniqueness conflict.
+- Java IllegalArgumentException/NullPointerException: invalid input. Retry the entire transaction a bounded number of times for 40P01/40001. For other SQL errors, the service logs requestId and returns a generic error without exposing SQL or credentials.
+- All related write services lock Equipment first, then process Reservation, Loan and MaintenanceCase in order. Version checks require a WHERE version condition and an affected-row count check.
+- Database constraints do not implement RBAC, on-site handover checks, equipment state recomputation or complete checkout/return transactions. See the domain document for responsibility boundaries.
 
-CI 工作流：[database.yml](../.github/workflows/database.yml)。参考：[PostgreSQL 区间约束](https://www.postgresql.org/docs/17/rangetypes.html)、[pgJDBC 42.7.13](https://jdbc.postgresql.org/changelogs/2026-07-06-42.7.13-release/)。
+CI workflow: [database.yml](../.github/workflows/database.yml). References: [PostgreSQL range constraints](https://www.postgresql.org/docs/17/rangetypes.html), [pgJDBC 42.7.13](https://jdbc.postgresql.org/changelogs/2026-07-06-42.7.13-release/).
