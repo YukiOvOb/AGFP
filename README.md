@@ -110,4 +110,4 @@ CI 只能验证已经写好的测试。**每位成员必须为自己负责的用
 
 ## SERMS Sprint 1 application
 
-Wang Yuanmeng's notification and shared-layout foundation lives in [`app/`](app/). Run with Java 17+ and the included Maven Wrapper: `cd app && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local`. Open http://127.0.0.1:8081. See [scope, contracts and verification](docs/wang-yuanmeng-sprint1.md). The root static deployment is unchanged pending team integration.
+通知后端位于 `app/`，React 收件箱与登录页面位于 `frontend/`。本分支新增的 REST、Identity 和前端开发方式见 [对齐说明](docs/platform-rest-react.md)。公共 PostgreSQL 18 迁移、真实账号和部署整合仍待团队依赖合入；旧 H2 local 配置仅可运行通知测试基线，不能用于完整登录验收。

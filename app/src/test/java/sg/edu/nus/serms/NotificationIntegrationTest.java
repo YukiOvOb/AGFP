@@ -38,7 +38,26 @@ class NotificationIntegrationTest {
   @Autowired JdbcTemplate jdbc;
   @MockitoBean Clock clock;
   @MockitoBean LoanReminderGuard guard;
+  static final String ALICE = "00000000-0000-0000-0000-000000000001";
+  static final String BOB = "00000000-0000-0000-0000-000000000002";
+
+  static sg.edu.nus.serms.shared.security.SermsUserPrincipal principal(String id) {
+    return new sg.edu.nus.serms.shared.security.SermsUserPrincipal(
+        UUID.fromString(id), "user@example.com", "User", Set.of("BORROWER"));
+  }
+
   final Instant now = Instant.parse("2026-09-24T10:00:00Z");
+
+  org.springframework.test.web.servlet.request.RequestPostProcessor realCsrf() throws Exception {
+    var token =
+        mvc.perform(get("/api/v1/auth/csrf")).andReturn().getResponse().getCookie("XSRF-TOKEN");
+    assertThat(token).isNotNull();
+    return request -> {
+      request.setCookies(token);
+      request.addHeader("X-XSRF-TOKEN", token.getValue());
+      return request;
+    };
+  }
 
   @BeforeEach
   void setup() {
@@ -217,11 +236,11 @@ class NotificationIntegrationTest {
 
   @Test
   void pageRequiresAuthenticationAndEscapesContent() throws Exception {
-    mvc.perform(get("/notifications")).andExpect(status().is3xxRedirection());
+    mvc.perform(get("/api/v1/notifications")).andExpect(status().isUnauthorized());
     String id =
         requests.requestOnce(
             new NotificationRequest(
-                "alice",
+                ALICE,
                 NotificationType.BUSINESS_EVENT,
                 "escape",
                 "once",
@@ -229,10 +248,10 @@ class NotificationIntegrationTest {
                 null,
                 "<script>alert(1)</script>"));
     delivery.deliver(id);
-    mvc.perform(get("/notifications").with(user("alice")))
+    mvc.perform(get("/api/v1/notifications").with(user(principal(ALICE))))
         .andExpect(status().isOk())
-        .andExpect(content().string(org.hamcrest.Matchers.containsString("&lt;script&gt;")));
-    mvc.perform(get("/notifications").with(user("bob")))
+        .andExpect(jsonPath("$.content[0].content").value("<script>alert(1)</script>"));
+    mvc.perform(get("/api/v1/notifications").with(user(principal(BOB))))
         .andExpect(status().isOk())
         .andExpect(
             content()
@@ -242,18 +261,24 @@ class NotificationIntegrationTest {
 
   @Test
   void markReadEnforcesCsrfAndOwnership() throws Exception {
-    String id = requests.requestOnce(business("alice", "event:read"));
+    String id = requests.requestOnce(business(ALICE, "event:read"));
     delivery.deliver(id);
-    mvc.perform(post("/notifications/" + id + "/read").with(user("alice")))
+    mvc.perform(post("/api/v1/notifications/" + id + "/read").with(user(principal(ALICE))))
         .andExpect(status().isForbidden());
-    mvc.perform(post("/notifications/" + id + "/read").with(user("bob")).with(csrf()))
+    mvc.perform(
+            post("/api/v1/notifications/" + id + "/read")
+                .with(user(principal(BOB)))
+                .with(realCsrf()))
         .andExpect(status().isNotFound());
-    mvc.perform(post("/notifications/" + id + "/read").with(user("alice")).with(csrf()))
-        .andExpect(status().is3xxRedirection());
+    mvc.perform(
+            post("/api/v1/notifications/" + id + "/read")
+                .with(user(principal(ALICE)))
+                .with(realCsrf()))
+        .andExpect(status().isNoContent());
     Instant read = repository.findById(id).orElseThrow().getReadAt();
     assertThat(read).isEqualTo(now);
     when(clock.instant()).thenReturn(now.plusSeconds(10));
-    inbox.markRead(id, "alice");
+    inbox.markRead(id, ALICE);
     assertThat(repository.findById(id).orElseThrow().getReadAt()).isEqualTo(read);
   }
 
@@ -266,16 +291,62 @@ class NotificationIntegrationTest {
   }
 
   @Test
-  void sharedLoginRenders() throws Exception {
-    mvc.perform(get("/login"))
-        .andExpect(status().isOk())
-        .andExpect(content().string(org.hamcrest.Matchers.containsString("Welcome back")));
+  void csrfBootstrapIsPublic() throws Exception {
+    mvc.perform(get("/api/v1/auth/csrf"))
+        .andExpect(status().isNoContent())
+        .andExpect(cookie().exists("XSRF-TOKEN"));
   }
 
   @Test
-  void sharedHomeRenders() throws Exception {
-    mvc.perform(get("/"))
+  void healthIsPublicButIdentityIsProtected() throws Exception {
+    mvc.perform(get("/api/v1/health")).andExpect(status().isOk());
+    mvc.perform(get("/api/v1/auth/me"))
+        .andExpect(status().isUnauthorized())
+        .andExpect(content().contentTypeCompatibleWith("application/problem+json"));
+  }
+
+  @Test
+  void paginationUnreadAndInvalidInputs() throws Exception {
+    for (int i = 0; i < 3; i++)
+      delivery.deliver(requests.requestOnce(business(ALICE, "page:" + i)));
+    requests.requestOnce(business(ALICE, "pending"));
+    mvc.perform(get("/api/v1/notifications").param("size", "2").with(user(principal(ALICE))))
         .andExpect(status().isOk())
-        .andExpect(content().string(org.hamcrest.Matchers.containsString("Keep equipment moving")));
+        .andExpect(jsonPath("$.content.length()").value(2))
+        .andExpect(jsonPath("$.totalElements").value(3));
+    mvc.perform(get("/api/v1/notifications/unread-count").with(user(principal(ALICE))))
+        .andExpect(jsonPath("$.count").value(3));
+    for (String value : List.of("0", "101", "not-a-number"))
+      mvc.perform(get("/api/v1/notifications").param("size", value).with(user(principal(ALICE))))
+          .andExpect(status().isBadRequest());
+    mvc.perform(
+            get("/api/v1/notifications")
+                .param("sort", "recipient,asc")
+                .with(user(principal(ALICE))))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void exportsActualOpenApi() throws Exception {
+    String json =
+        mvc.perform(get("/api/v1/openapi.json"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.paths['/api/v1/notifications']").exists())
+            .andExpect(jsonPath("$.paths['/api/v1/auth/csrf'].get.parameters").doesNotExist())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    java.nio.file.Files.writeString(java.nio.file.Path.of("target/openapi.json"), json);
+  }
+
+  @Test
+  @org.springframework.security.test.context.support.WithMockUser(username = BOB)
+  void serviceRejectsAnotherUsersIdentity() {
+    assertThatThrownBy(() -> inbox.page(UUID.fromString(ALICE), 0, 20, "deliveredAt,desc"))
+        .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+    assertThatThrownBy(() -> inbox.unread(UUID.fromString(ALICE)))
+        .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+    assertThatThrownBy(() -> inbox.markReadForUser(UUID.randomUUID(), UUID.fromString(ALICE)))
+        .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
   }
 }
