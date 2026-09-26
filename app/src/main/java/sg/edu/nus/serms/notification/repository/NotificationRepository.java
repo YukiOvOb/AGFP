@@ -9,6 +9,11 @@ import org.springframework.data.repository.query.Param;
 import sg.edu.nus.serms.notification.domain.Notification;
 
 public interface NotificationRepository extends JpaRepository<Notification, String> {
+  org.springframework.data.domain.Page<Notification> findByRecipientAndStatus(
+      String recipient, Notification.Status status, Pageable pageable);
+
+  long countByRecipientAndStatusAndReadAtIsNull(String recipient, Notification.Status status);
+
   Optional<Notification> findByDedupKey(String key);
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)

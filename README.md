@@ -123,3 +123,4 @@ Local verification: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts
 
 The PostgreSQL adapter for Wang Yuanmeng's notification branch is in [integration/notifications](integration/notifications/README.md), including the V003 migration, a real LoanReminderGuard and a minimal integration patch.
 Local tests: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-notification-integration.ps1`; see the [interface alignment record](docs/notification-interface-alignment.md) for results.
+通知后端位于 `app/`，React 收件箱与登录页面位于 `frontend/`。本分支新增的 REST、Identity 和前端开发方式见 [对齐说明](docs/platform-rest-react.md)。公共 PostgreSQL 18 迁移、真实账号和部署整合仍待团队依赖合入；旧 H2 local 配置仅可运行通知测试基线，不能用于完整登录验收。
