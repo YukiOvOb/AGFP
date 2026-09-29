@@ -2,81 +2,99 @@ package sg.edu.nus.serms.maintenance.domain;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
+import java.time.Instant;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 
 class MaintenanceCaseTest {
-  private static MaintenanceCase startedCase() {
-    MaintenanceCase maintenanceCase = new MaintenanceCase();
-    maintenanceCase.assign();
-    maintenanceCase.start();
+  private static final UUID CASE_ID = new UUID(0, 1);
+  private static final UUID REPORT_ID = new UUID(0, 2);
+  private static final UUID EQUIPMENT_ID = new UUID(0, 3);
+  private static final UUID TECHNICIAN_ID = new UUID(0, 4);
+  private static final Instant CREATED = Instant.parse("2026-09-29T08:00:00Z");
+  private static final Instant ASSIGNED = CREATED.plusSeconds(60);
+  private static final Instant STARTED = ASSIGNED.plusSeconds(60);
+  private static final Instant COMPLETED = STARTED.plusSeconds(60);
+  private static final Instant CLOSED = COMPLETED.plusSeconds(60);
+
+  private MaintenanceCase newCase() {
+    return new MaintenanceCase(CASE_ID, REPORT_ID, EQUIPMENT_ID, CREATED);
+  }
+
+  private MaintenanceCase startedCase() {
+    MaintenanceCase maintenanceCase = newCase();
+    maintenanceCase.assign(TECHNICIAN_ID, ASSIGNED);
+    maintenanceCase.start(STARTED);
     return maintenanceCase;
   }
 
   @Test
-  void newCaseStartsReportedAndHasNoWorkInformation() {
-    MaintenanceCase maintenanceCase = new MaintenanceCase();
+  void newCaseRetainsRelationshipsAndStartsReported() {
+    MaintenanceCase maintenanceCase = newCase();
 
+    assertThat(maintenanceCase.maintenanceCaseId()).isEqualTo(CASE_ID);
+    assertThat(maintenanceCase.faultReportId()).isEqualTo(REPORT_ID);
+    assertThat(maintenanceCase.equipmentId()).isEqualTo(EQUIPMENT_ID);
+    assertThat(maintenanceCase.createdAt()).isEqualTo(CREATED);
     assertThat(maintenanceCase.status()).isEqualTo(MaintenanceStatus.REPORTED);
-    assertThat(maintenanceCase.diagnosis()).isNull();
-    assertThat(maintenanceCase.repairAction()).isNull();
-    assertThat(maintenanceCase.maintenanceNotes()).isEmpty();
-    assertThat(maintenanceCase.completionInformation()).isNull();
+    assertThat(maintenanceCase.assignedTechnicianId()).isNull();
+    assertThat(maintenanceCase.completedAt()).isNull();
   }
 
   @Test
-  void assignmentAndStartUseTheApprovedLifecycle() {
-    MaintenanceCase maintenanceCase = new MaintenanceCase();
+  void assignmentAndStartRetainTechnicianAndTimes() {
+    MaintenanceCase maintenanceCase = newCase();
 
-    maintenanceCase.assign();
+    maintenanceCase.assign(TECHNICIAN_ID, ASSIGNED);
     assertThat(maintenanceCase.status()).isEqualTo(MaintenanceStatus.ASSIGNED);
-    maintenanceCase.start();
+    assertThat(maintenanceCase.assignedTechnicianId()).isEqualTo(TECHNICIAN_ID);
+    assertThat(maintenanceCase.assignedAt()).isEqualTo(ASSIGNED);
+
+    maintenanceCase.start(STARTED);
     assertThat(maintenanceCase.status()).isEqualTo(MaintenanceStatus.IN_PROGRESS);
+    assertThat(maintenanceCase.startedAt()).isEqualTo(STARTED);
   }
 
   @Test
-  void resolvedCaseRetainsWorkAndCompletionInformationUntilClosed() {
+  void resolvedWorkflowRetainsWorkAndCompletionData() {
     MaintenanceCase maintenanceCase = startedCase();
     maintenanceCase.recordDiagnosis("  Broken cable  ");
     maintenanceCase.recordRepairAction("  Replaced cable  ");
     maintenanceCase.recordMaintenanceNotes("  Inspected connector  ");
     maintenanceCase.recordMaintenanceNotes("Passed final check");
 
-    maintenanceCase.resolve("  Tested and working  ");
+    maintenanceCase.resolve("  Tested and working  ", COMPLETED);
     assertThat(maintenanceCase.status()).isEqualTo(MaintenanceStatus.RESOLVED);
     assertThat(maintenanceCase.diagnosis()).isEqualTo("Broken cable");
     assertThat(maintenanceCase.repairAction()).isEqualTo("Replaced cable");
     assertThat(maintenanceCase.maintenanceNotes())
         .containsExactly("Inspected connector", "Passed final check");
     assertThat(maintenanceCase.completionInformation()).isEqualTo("Tested and working");
+    assertThat(maintenanceCase.completedAt()).isEqualTo(COMPLETED);
 
-    maintenanceCase.close();
+    maintenanceCase.close(CLOSED);
     assertThat(maintenanceCase.status()).isEqualTo(MaintenanceStatus.CLOSED);
-    assertThat(maintenanceCase.completionInformation()).isEqualTo("Tested and working");
+    assertThat(maintenanceCase.closedAt()).isEqualTo(CLOSED);
   }
 
   @Test
-  void notRepairableCaseRetainsCompletionInformationUntilClosed() {
+  void notRepairableWorkflowRetainsOutcomeUntilClosed() {
     MaintenanceCase maintenanceCase = startedCase();
 
-    maintenanceCase.markNotRepairable("Parts unavailable");
+    maintenanceCase.markNotRepairable("Parts unavailable", COMPLETED);
     assertThat(maintenanceCase.status()).isEqualTo(MaintenanceStatus.NOT_REPAIRABLE);
     assertThat(maintenanceCase.completionInformation()).isEqualTo("Parts unavailable");
-    maintenanceCase.close();
+    assertThat(maintenanceCase.completedAt()).isEqualTo(COMPLETED);
+    maintenanceCase.close(CLOSED);
     assertThat(maintenanceCase.status()).isEqualTo(MaintenanceStatus.CLOSED);
-    assertThat(maintenanceCase.completionInformation()).isEqualTo("Parts unavailable");
+    assertThat(maintenanceCase.closedAt()).isEqualTo(CLOSED);
   }
 
   @Test
-  void illegalLifecycleActionUsesStateMachineExceptionAndLeavesCaseUnchanged() {
+  void illegalLifecycleActionUsesTheExistingStateMachineException() {
     MaintenanceCase maintenanceCase = startedCase();
 
-    assertThatThrownBy(maintenanceCase::close)
+    assertThatThrownBy(() -> maintenanceCase.close(COMPLETED))
         .isInstanceOf(InvalidMaintenanceTransitionException.class)
         .satisfies(
             failure -> {
@@ -85,94 +103,98 @@ class MaintenanceCaseTest {
               assertThat(transition.getAttemptedAction()).isEqualTo(MaintenanceAction.CLOSE);
             });
     assertThat(maintenanceCase.status()).isEqualTo(MaintenanceStatus.IN_PROGRESS);
-    assertThat(maintenanceCase.completionInformation()).isNull();
+    assertThat(maintenanceCase.closedAt()).isNull();
   }
 
-  static Stream<Arguments> closedLifecycleActions() {
-    return Stream.of(
-        Arguments.of(MaintenanceAction.ASSIGN, (Consumer<MaintenanceCase>) MaintenanceCase::assign),
-        Arguments.of(MaintenanceAction.START, (Consumer<MaintenanceCase>) MaintenanceCase::start),
-        Arguments.of(
-            MaintenanceAction.RESOLVE,
-            (Consumer<MaintenanceCase>) maintenanceCase -> maintenanceCase.resolve("Done")),
-        Arguments.of(
-            MaintenanceAction.MARK_NOT_REPAIRABLE,
-            (Consumer<MaintenanceCase>) maintenanceCase -> maintenanceCase.markNotRepairable("Done")),
-        Arguments.of(MaintenanceAction.CLOSE, (Consumer<MaintenanceCase>) MaintenanceCase::close));
-  }
-
-  @ParameterizedTest
-  @MethodSource("closedLifecycleActions")
-  void closedCaseRejectsEveryLifecycleAction(
-      MaintenanceAction action, Consumer<MaintenanceCase> operation) {
+  @Test
+  void closedCaseIsTerminalAndRejectsFurtherWork() {
     MaintenanceCase maintenanceCase = startedCase();
-    maintenanceCase.resolve("Working");
-    maintenanceCase.close();
+    maintenanceCase.resolve("Working", COMPLETED);
+    maintenanceCase.close(CLOSED);
 
-    assertThatThrownBy(() -> operation.accept(maintenanceCase))
-        .isInstanceOf(InvalidMaintenanceTransitionException.class)
-        .satisfies(
-            failure -> {
-              var transition = (InvalidMaintenanceTransitionException) failure;
-              assertThat(transition.getCurrentStatus()).isEqualTo(MaintenanceStatus.CLOSED);
-              assertThat(transition.getAttemptedAction()).isEqualTo(action);
-            });
+    assertThatThrownBy(() -> maintenanceCase.close(CLOSED.plusSeconds(1)))
+        .isInstanceOf(InvalidMaintenanceTransitionException.class);
+    assertThatThrownBy(() -> maintenanceCase.resolve("Again", CLOSED.plusSeconds(1)))
+        .isInstanceOf(InvalidMaintenanceTransitionException.class);
+    assertThatIllegalStateException().isThrownBy(() -> maintenanceCase.recordDiagnosis("Later"));
+    assertThatIllegalStateException().isThrownBy(() -> maintenanceCase.recordRepairAction("Later"));
+    assertThatIllegalStateException().isThrownBy(() -> maintenanceCase.recordMaintenanceNotes("Later"));
     assertThat(maintenanceCase.status()).isEqualTo(MaintenanceStatus.CLOSED);
     assertThat(maintenanceCase.completionInformation()).isEqualTo("Working");
   }
 
   @Test
-  void workInformationCanOnlyBeRecordedInProgress() {
-    MaintenanceCase reported = new MaintenanceCase();
+  void workInformationIsOnlyEditableInProgressAndNotesAreAppendOnly() {
+    MaintenanceCase reported = newCase();
     assertThatIllegalStateException().isThrownBy(() -> reported.recordDiagnosis("Fault"));
     assertThatIllegalStateException().isThrownBy(() -> reported.recordRepairAction("Repair"));
     assertThatIllegalStateException().isThrownBy(() -> reported.recordMaintenanceNotes("Note"));
 
-    MaintenanceCase completed = startedCase();
-    completed.resolve("Working");
-    assertThatIllegalStateException().isThrownBy(() -> completed.recordDiagnosis("Later fault"));
-    assertThatIllegalStateException().isThrownBy(() -> completed.recordRepairAction("Later repair"));
-    assertThatIllegalStateException().isThrownBy(() -> completed.recordMaintenanceNotes("Later note"));
-    completed.close();
-    assertThatIllegalStateException().isThrownBy(() -> completed.recordMaintenanceNotes("Closed note"));
-    assertThat(completed.maintenanceNotes()).isEmpty();
-  }
-
-  @Test
-  void notesCannotBeChangedThroughReturnedList() {
     MaintenanceCase maintenanceCase = startedCase();
     maintenanceCase.recordMaintenanceNotes("First note");
-    List<String> notes = maintenanceCase.maintenanceNotes();
-
-    assertThatThrownBy(() -> notes.add("External change"))
-        .isInstanceOf(UnsupportedOperationException.class);
+    var snapshot = maintenanceCase.maintenanceNotes();
     maintenanceCase.recordMaintenanceNotes("Second note");
-    assertThat(notes).containsExactly("First note");
+    assertThat(snapshot).containsExactly("First note");
     assertThat(maintenanceCase.maintenanceNotes()).containsExactly("First note", "Second note");
+    assertThatThrownBy(() -> snapshot.add("External"))
+        .isInstanceOf(UnsupportedOperationException.class);
+    maintenanceCase.resolve("Working", COMPLETED);
+    assertThatIllegalStateException().isThrownBy(() -> maintenanceCase.recordMaintenanceNotes("Late"));
   }
 
   @Test
-  void blankOrNullWorkInformationIsRejectedWithoutChangingRecordedValues() {
+  void blankWorkAndCompletionInformationDoNotCausePartialMutation() {
     MaintenanceCase maintenanceCase = startedCase();
     maintenanceCase.recordDiagnosis("Cable fault");
-    maintenanceCase.recordRepairAction("Cable replaced");
-    maintenanceCase.recordMaintenanceNotes("Inspected");
 
     assertThatIllegalArgumentException().isThrownBy(() -> maintenanceCase.recordDiagnosis(" \t "));
     assertThatIllegalArgumentException().isThrownBy(() -> maintenanceCase.recordRepairAction(null));
     assertThatIllegalArgumentException().isThrownBy(() -> maintenanceCase.recordMaintenanceNotes(""));
+    assertThatIllegalArgumentException().isThrownBy(() -> maintenanceCase.resolve(" \n ", COMPLETED));
+    assertThatIllegalArgumentException()
+        .isThrownBy(() -> maintenanceCase.markNotRepairable(null, COMPLETED));
     assertThat(maintenanceCase.diagnosis()).isEqualTo("Cable fault");
-    assertThat(maintenanceCase.repairAction()).isEqualTo("Cable replaced");
-    assertThat(maintenanceCase.maintenanceNotes()).containsExactly("Inspected");
+    assertThat(maintenanceCase.repairAction()).isNull();
+    assertThat(maintenanceCase.maintenanceNotes()).isEmpty();
+    assertThat(maintenanceCase.status()).isEqualTo(MaintenanceStatus.IN_PROGRESS);
+    assertThat(maintenanceCase.completedAt()).isNull();
   }
 
   @Test
-  void completionInformationIsRequiredAndDoesNotCausePartialTransition() {
-    MaintenanceCase maintenanceCase = startedCase();
+  void invalidIdentifiersAndTimesDoNotPartiallyChangeCase() {
+    assertThatNullPointerException()
+        .isThrownBy(() -> new MaintenanceCase(null, REPORT_ID, EQUIPMENT_ID, CREATED));
+    MaintenanceCase maintenanceCase = newCase();
+    assertThatNullPointerException().isThrownBy(() -> maintenanceCase.assign(null, ASSIGNED));
+    assertThatIllegalArgumentException()
+        .isThrownBy(() -> maintenanceCase.assign(TECHNICIAN_ID, CREATED.minusSeconds(1)));
+    assertThat(maintenanceCase.status()).isEqualTo(MaintenanceStatus.REPORTED);
+    assertThat(maintenanceCase.assignedAt()).isNull();
 
-    assertThatIllegalArgumentException().isThrownBy(() -> maintenanceCase.resolve(" \n "));
-    assertThatIllegalArgumentException().isThrownBy(() -> maintenanceCase.markNotRepairable(null));
+    maintenanceCase.assign(TECHNICIAN_ID, ASSIGNED);
+    assertThatIllegalArgumentException()
+        .isThrownBy(() -> maintenanceCase.start(ASSIGNED.minusSeconds(1)));
+    assertThat(maintenanceCase.startedAt()).isNull();
+    maintenanceCase.start(STARTED);
+    assertThatIllegalArgumentException()
+        .isThrownBy(() -> maintenanceCase.resolve("Working", STARTED.minusSeconds(1)));
     assertThat(maintenanceCase.status()).isEqualTo(MaintenanceStatus.IN_PROGRESS);
-    assertThat(maintenanceCase.completionInformation()).isNull();
+    maintenanceCase.resolve("Working", COMPLETED);
+    assertThatIllegalArgumentException()
+        .isThrownBy(() -> maintenanceCase.close(COMPLETED.minusSeconds(1)));
+    assertThat(maintenanceCase.closedAt()).isNull();
+  }
+
+  @Test
+  void copyDoesNotShareMutableCaseState() {
+    MaintenanceCase original = startedCase();
+    original.recordMaintenanceNotes("Original");
+    MaintenanceCase copy = original.copy();
+    copy.recordMaintenanceNotes("Copy only");
+    copy.resolve("Done", COMPLETED);
+
+    assertThat(original.status()).isEqualTo(MaintenanceStatus.IN_PROGRESS);
+    assertThat(original.maintenanceNotes()).containsExactly("Original");
+    assertThat(copy.maintenanceNotes()).containsExactly("Original", "Copy only");
   }
 }

@@ -1,19 +1,94 @@
 package sg.edu.nus.serms.maintenance.domain;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 public final class MaintenanceCase {
   private static final MaintenanceStateMachine TRANSITIONS = new MaintenanceStateMachine();
 
+  private final UUID maintenanceCaseId;
+  private final UUID faultReportId;
+  private final UUID equipmentId;
+  private final Instant createdAt;
   private MaintenanceStatus status = MaintenanceStatus.REPORTED;
+  private UUID assignedTechnicianId;
+  private Instant assignedAt;
+  private Instant startedAt;
+  private Instant completedAt;
+  private Instant closedAt;
   private String diagnosis;
   private String repairAction;
   private final List<String> maintenanceNotes = new ArrayList<>();
   private String completionInformation;
 
+  public MaintenanceCase(
+      UUID maintenanceCaseId, UUID faultReportId, UUID equipmentId, Instant createdAt) {
+    this.maintenanceCaseId = Objects.requireNonNull(maintenanceCaseId, "maintenanceCaseId");
+    this.faultReportId = Objects.requireNonNull(faultReportId, "faultReportId");
+    this.equipmentId = Objects.requireNonNull(equipmentId, "equipmentId");
+    this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
+  }
+
+  private MaintenanceCase(MaintenanceCase source) {
+    this(source.maintenanceCaseId, source.faultReportId, source.equipmentId, source.createdAt);
+    status = source.status;
+    assignedTechnicianId = source.assignedTechnicianId;
+    assignedAt = source.assignedAt;
+    startedAt = source.startedAt;
+    completedAt = source.completedAt;
+    closedAt = source.closedAt;
+    diagnosis = source.diagnosis;
+    repairAction = source.repairAction;
+    maintenanceNotes.addAll(source.maintenanceNotes);
+    completionInformation = source.completionInformation;
+  }
+
+  /** An independent snapshot, so an unsuccessful orchestration cannot mutate a loaded instance. */
+  public MaintenanceCase copy() {
+    return new MaintenanceCase(this);
+  }
+
+  public UUID maintenanceCaseId() {
+    return maintenanceCaseId;
+  }
+
+  public UUID faultReportId() {
+    return faultReportId;
+  }
+
+  public UUID equipmentId() {
+    return equipmentId;
+  }
+
+  public Instant createdAt() {
+    return createdAt;
+  }
+
   public MaintenanceStatus status() {
     return status;
+  }
+
+  public UUID assignedTechnicianId() {
+    return assignedTechnicianId;
+  }
+
+  public Instant assignedAt() {
+    return assignedAt;
+  }
+
+  public Instant startedAt() {
+    return startedAt;
+  }
+
+  public Instant completedAt() {
+    return completedAt;
+  }
+
+  public Instant closedAt() {
+    return closedAt;
   }
 
   public String diagnosis() {
@@ -32,12 +107,20 @@ public final class MaintenanceCase {
     return completionInformation;
   }
 
-  public void assign() {
-    status = TRANSITIONS.transition(status, MaintenanceAction.ASSIGN);
+  public void assign(UUID technicianId, Instant at) {
+    MaintenanceStatus next = TRANSITIONS.transition(status, MaintenanceAction.ASSIGN);
+    Objects.requireNonNull(technicianId, "technicianId");
+    requireNotBefore(at, createdAt);
+    assignedTechnicianId = technicianId;
+    assignedAt = at;
+    status = next;
   }
 
-  public void start() {
-    status = TRANSITIONS.transition(status, MaintenanceAction.START);
+  public void start(Instant at) {
+    MaintenanceStatus next = TRANSITIONS.transition(status, MaintenanceAction.START);
+    requireNotBefore(at, assignedAt);
+    startedAt = at;
+    status = next;
   }
 
   public void recordDiagnosis(String diagnosis) {
@@ -55,28 +138,40 @@ public final class MaintenanceCase {
     maintenanceNotes.add(requireText(note));
   }
 
-  public void resolve(String completionInformation) {
-    complete(MaintenanceAction.RESOLVE, completionInformation);
+  public void resolve(String information, Instant at) {
+    complete(MaintenanceAction.RESOLVE, information, at);
   }
 
-  public void markNotRepairable(String completionInformation) {
-    complete(MaintenanceAction.MARK_NOT_REPAIRABLE, completionInformation);
+  public void markNotRepairable(String information, Instant at) {
+    complete(MaintenanceAction.MARK_NOT_REPAIRABLE, information, at);
   }
 
-  public void close() {
-    status = TRANSITIONS.transition(status, MaintenanceAction.CLOSE);
+  public void close(Instant at) {
+    MaintenanceStatus next = TRANSITIONS.transition(status, MaintenanceAction.CLOSE);
+    requireNotBefore(at, completedAt);
+    closedAt = at;
+    status = next;
   }
 
-  private void complete(MaintenanceAction action, String information) {
+  private void complete(MaintenanceAction action, String information, Instant at) {
     MaintenanceStatus next = TRANSITIONS.transition(status, action);
     String text = requireText(information);
+    requireNotBefore(at, startedAt);
     completionInformation = text;
+    completedAt = at;
     status = next;
   }
 
   private void requireWorkInProgress() {
     if (status != MaintenanceStatus.IN_PROGRESS) {
       throw new IllegalStateException("Maintenance work requires IN_PROGRESS status; current: " + status);
+    }
+  }
+
+  private static void requireNotBefore(Instant at, Instant previous) {
+    Objects.requireNonNull(at, "transition time");
+    if (at.isBefore(previous)) {
+      throw new IllegalArgumentException("Transition time precedes the previous lifecycle step");
     }
   }
 
