@@ -4,6 +4,5 @@ public enum MaintenanceAction {
   ASSIGN,
   START,
   RESOLVE,
-  MARK_NOT_REPAIRABLE,
-  CLOSE
+  MARK_UNREPAIRABLE
 }

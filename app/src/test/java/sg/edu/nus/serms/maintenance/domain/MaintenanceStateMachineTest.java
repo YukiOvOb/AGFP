@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
 class MaintenanceStateMachineTest {
@@ -18,18 +17,14 @@ class MaintenanceStateMachineTest {
 
   private static final Map<Transition, MaintenanceStatus> LEGAL =
       Map.of(
-          new Transition(MaintenanceStatus.REPORTED, MaintenanceAction.ASSIGN),
+          new Transition(MaintenanceStatus.OPEN, MaintenanceAction.ASSIGN),
               MaintenanceStatus.ASSIGNED,
           new Transition(MaintenanceStatus.ASSIGNED, MaintenanceAction.START),
               MaintenanceStatus.IN_PROGRESS,
           new Transition(MaintenanceStatus.IN_PROGRESS, MaintenanceAction.RESOLVE),
               MaintenanceStatus.RESOLVED,
-          new Transition(MaintenanceStatus.IN_PROGRESS, MaintenanceAction.MARK_NOT_REPAIRABLE),
-              MaintenanceStatus.NOT_REPAIRABLE,
-          new Transition(MaintenanceStatus.RESOLVED, MaintenanceAction.CLOSE),
-              MaintenanceStatus.CLOSED,
-          new Transition(MaintenanceStatus.NOT_REPAIRABLE, MaintenanceAction.CLOSE),
-              MaintenanceStatus.CLOSED);
+          new Transition(MaintenanceStatus.IN_PROGRESS, MaintenanceAction.MARK_UNREPAIRABLE),
+              MaintenanceStatus.UNREPAIRABLE);
 
   static Stream<Arguments> legalTransitions() {
     return LEGAL.entrySet().stream()
@@ -70,10 +65,16 @@ class MaintenanceStateMachineTest {
   }
 
   @ParameterizedTest
-  @EnumSource(MaintenanceAction.class)
-  void closedIsTerminal(MaintenanceAction action) {
-    assertThatThrownBy(() -> MACHINE.transition(MaintenanceStatus.CLOSED, action))
+  @MethodSource("terminalActions")
+  void terminalResultsRejectAllActions(MaintenanceStatus status, MaintenanceAction action) {
+    assertThatThrownBy(() -> MACHINE.transition(status, action))
         .isInstanceOf(InvalidMaintenanceTransitionException.class);
+  }
+
+  static Stream<Arguments> terminalActions() {
+    return Stream.of(MaintenanceStatus.RESOLVED, MaintenanceStatus.UNREPAIRABLE)
+        .flatMap(status -> Arrays.stream(MaintenanceAction.values())
+            .map(action -> Arguments.of(status, action)));
   }
 
   @Test
@@ -82,7 +83,7 @@ class MaintenanceStateMachineTest {
         .isThrownBy(() -> MACHINE.transition(null, MaintenanceAction.ASSIGN))
         .withMessage("current status");
     assertThatNullPointerException()
-        .isThrownBy(() -> MACHINE.transition(MaintenanceStatus.REPORTED, null))
+        .isThrownBy(() -> MACHINE.transition(MaintenanceStatus.OPEN, null))
         .withMessage("maintenance action");
   }
 }

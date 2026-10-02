@@ -7,6 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.springframework.context.ApplicationEventPublisher;
 import sg.edu.nus.serms.maintenance.domain.MaintenanceAssigned;
 import sg.edu.nus.serms.maintenance.domain.MaintenanceCompleted;
@@ -27,11 +30,22 @@ class SpringMaintenanceEventPublisherTest {
     assertThat(published.get(0)).isSameAs(event);
   }
 
-  @Test
-  void forwardsCompletedEventExactlyOnceWithoutReplacingIt() {
-    var event = new MaintenanceCompleted(ID, ID, ID, ID, MaintenanceStatus.RESOLVED, NOW);
+  @ParameterizedTest
+  @EnumSource(value = MaintenanceStatus.class, names = {"RESOLVED", "UNREPAIRABLE"})
+  void forwardsCompletedEventExactlyOnceWithoutReplacingIt(MaintenanceStatus outcome) {
+    var event = new MaintenanceCompleted(ID, ID, ID, ID, outcome, NOW);
     bridge.publish(event);
     assertThat(published).hasSize(1);
     assertThat(published.get(0)).isSameAs(event);
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @EnumSource(value = MaintenanceStatus.class, names = {"RESOLVED", "UNREPAIRABLE"},
+      mode = EnumSource.Mode.EXCLUDE)
+  void completionEventsRejectNonterminalResults(MaintenanceStatus outcome) {
+    assertThatIllegalArgumentException()
+        .isThrownBy(() -> new MaintenanceCompleted(ID, ID, ID, ID, outcome, NOW));
+    assertThat(published).isEmpty();
   }
 }

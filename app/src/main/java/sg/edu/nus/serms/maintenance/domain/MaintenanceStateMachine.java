@@ -8,17 +8,15 @@ public final class MaintenanceStateMachine {
     Objects.requireNonNull(action, "maintenance action");
 
     return switch (current) {
-      case REPORTED -> require(current, action, MaintenanceAction.ASSIGN, MaintenanceStatus.ASSIGNED);
+      case OPEN -> require(current, action, MaintenanceAction.ASSIGN, MaintenanceStatus.ASSIGNED);
       case ASSIGNED -> require(current, action, MaintenanceAction.START, MaintenanceStatus.IN_PROGRESS);
       case IN_PROGRESS ->
           switch (action) {
             case RESOLVE -> MaintenanceStatus.RESOLVED;
-            case MARK_NOT_REPAIRABLE -> MaintenanceStatus.NOT_REPAIRABLE;
+            case MARK_UNREPAIRABLE -> MaintenanceStatus.UNREPAIRABLE;
             default -> throw new InvalidMaintenanceTransitionException(current, action);
           };
-      case RESOLVED, NOT_REPAIRABLE ->
-          require(current, action, MaintenanceAction.CLOSE, MaintenanceStatus.CLOSED);
-      case CLOSED -> throw new InvalidMaintenanceTransitionException(current, action);
+      case RESOLVED, UNREPAIRABLE -> throw new InvalidMaintenanceTransitionException(current, action);
     };
   }
 

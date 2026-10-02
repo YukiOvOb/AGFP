@@ -17,8 +17,8 @@ public record MaintenanceCompleted(
     Objects.requireNonNull(technicianId, "technicianId");
     Objects.requireNonNull(actorId, "actorId");
     Objects.requireNonNull(occurredAt, "occurredAt");
-    if (outcome != MaintenanceStatus.RESOLVED && outcome != MaintenanceStatus.NOT_REPAIRABLE) {
-      throw new IllegalArgumentException("Completion outcome must be RESOLVED or NOT_REPAIRABLE");
+    if (outcome != MaintenanceStatus.RESOLVED && outcome != MaintenanceStatus.UNREPAIRABLE) {
+      throw new IllegalArgumentException("Completion outcome must be RESOLVED or UNREPAIRABLE");
     }
   }
 }

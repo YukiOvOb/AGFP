@@ -7,7 +7,8 @@ public interface EquipmentMaintenancePort {
 
   void markUnderMaintenance(UUID equipmentId);
 
-  void markAvailable(UUID equipmentId);
+  /** Recompute using RETIRED > active maintenance > ACTIVE Loan > AVAILABLE after case save. */
+  void recomputeAfterResolvedMaintenance(UUID equipmentId);
 
   void markRetired(UUID equipmentId);
 }

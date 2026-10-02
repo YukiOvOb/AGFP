@@ -8,6 +8,5 @@ public enum MaintenanceHistoryAction {
   RECORD_REPAIR_ACTION,
   ADD_NOTE,
   RESOLVE,
-  MARK_NOT_REPAIRABLE,
-  CLOSE
+  MARK_UNREPAIRABLE
 }

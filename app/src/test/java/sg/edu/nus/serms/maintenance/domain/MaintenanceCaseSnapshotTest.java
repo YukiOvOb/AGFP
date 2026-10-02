@@ -3,145 +3,117 @@ package sg.edu.nus.serms.maintenance.domain;
 import static org.assertj.core.api.Assertions.*;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
 class MaintenanceCaseSnapshotTest {
-  private static final Instant CREATED = Instant.parse("2026-10-02T01:00:00Z");
+  private static final UUID ID = new UUID(0, 1);
   private static final UUID TECHNICIAN = new UUID(0, 4);
+  private static final Instant NOW = Instant.parse("2026-10-02T02:00:00Z");
 
-  static Stream<Arguments> lifecycles() {
-    return Stream.of(
-        Arguments.of(MaintenanceStatus.REPORTED, false),
-        Arguments.of(MaintenanceStatus.ASSIGNED, false),
-        Arguments.of(MaintenanceStatus.IN_PROGRESS, false),
-        Arguments.of(MaintenanceStatus.RESOLVED, false),
-        Arguments.of(MaintenanceStatus.NOT_REPAIRABLE, true),
-        Arguments.of(MaintenanceStatus.CLOSED, false),
-        Arguments.of(MaintenanceStatus.CLOSED, true));
-  }
-
-  private static MaintenanceCase caseAt(MaintenanceStatus status, boolean notRepairable) {
-    var item = new MaintenanceCase(new UUID(0, 1), new UUID(0, 2), new UUID(0, 3), CREATED);
-    if (status == MaintenanceStatus.REPORTED) return item;
-    item.assign(TECHNICIAN, CREATED.plusSeconds(1));
+  private static MaintenanceCase caseAt(MaintenanceStatus status) {
+    var item = MaintenanceCase.restore(new MaintenanceCaseSnapshot(ID, new UUID(0, 2),
+        new UUID(0, 3), null, new UUID(0, 5), MaintenanceStatus.OPEN, "Fault", null, NOW, null, 9));
+    if (status == MaintenanceStatus.OPEN) return item;
+    item.assign(TECHNICIAN);
     if (status == MaintenanceStatus.ASSIGNED) return item;
-    item.start(CREATED.plusSeconds(2));
-    item.recordDiagnosis("Broken cable");
-    item.recordRepairAction("Inspected cable");
-    item.recordMaintenanceNotes("First note");
-    item.recordMaintenanceNotes("Second note");
-    if (status == MaintenanceStatus.IN_PROGRESS) return item;
-    if (notRepairable) item.markNotRepairable("No replacement", CREATED.plusSeconds(3));
-    else item.resolve("Cable replaced", CREATED.plusSeconds(3));
-    if (status == MaintenanceStatus.CLOSED) item.close(CREATED.plusSeconds(4));
+    item.start();
+    if (status == MaintenanceStatus.RESOLVED) item.resolve("Repaired", NOW.plusSeconds(10));
+    if (status == MaintenanceStatus.UNREPAIRABLE) item.markUnrepairable("No parts", NOW.plusSeconds(10));
     return item;
   }
 
   @ParameterizedTest
-  @MethodSource("lifecycles")
-  void faithfullyRestoresEveryLifecycle(MaintenanceStatus status, boolean notRepairable) {
-    var original = caseAt(status, notRepairable);
+  @EnumSource(MaintenanceStatus.class)
+  void roundTripsEveryStateWithVersionAndLoan(MaintenanceStatus status) {
+    var original = caseAt(status);
     var snapshot = original.snapshot();
     var restored = MaintenanceCase.restore(snapshot);
     assertThat(restored).isNotSameAs(original);
     assertThat(restored.snapshot()).isEqualTo(snapshot);
     assertThat(restored.status()).isEqualTo(status);
-    assertThat(restored.completionOutcome()).isEqualTo(original.completionOutcome());
-    if (status == MaintenanceStatus.IN_PROGRESS) {
-      restored.recordMaintenanceNotes("Restored only");
-      assertThat(original.maintenanceNotes()).containsExactly("First note", "Second note");
-      assertThat(snapshot.maintenanceNotes()).containsExactly("First note", "Second note");
-    }
-    if (status == MaintenanceStatus.RESOLVED || status == MaintenanceStatus.NOT_REPAIRABLE) {
-      restored.close(CREATED.plusSeconds(5));
-      assertThat(restored.completionOutcome()).isEqualTo(snapshot.completionOutcome());
-      assertThat(original.status()).isEqualTo(status);
-    }
-    if (status == MaintenanceStatus.CLOSED) {
-      assertThatThrownBy(() -> restored.start(CREATED.plusSeconds(5)))
-          .isInstanceOf(InvalidMaintenanceTransitionException.class);
+    assertThat(restored.version()).isEqualTo(9);
+    assertThat(restored.loanId()).isEqualTo(new UUID(0, 5));
+    assertThat(restored.reportedBy()).isEqualTo(new UUID(0, 3));
+    if (status == MaintenanceStatus.OPEN) {
+      restored.assign(TECHNICIAN);
+      assertThat(original.status()).isEqualTo(MaintenanceStatus.OPEN);
+      assertThat(snapshot.assignedTo()).isNull();
     }
   }
 
-  static Stream<Arguments> impossibleSnapshots() {
+  static Stream<Arguments> invalidSnapshots() {
     return Stream.of(
-        Arguments.of(MaintenanceStatus.CLOSED, "completionOutcome", null),
-        Arguments.of(MaintenanceStatus.CLOSED, "completionOutcome", MaintenanceStatus.CLOSED),
-        Arguments.of(MaintenanceStatus.RESOLVED, "completionOutcome", MaintenanceStatus.NOT_REPAIRABLE),
-        Arguments.of(MaintenanceStatus.NOT_REPAIRABLE, "completionOutcome", MaintenanceStatus.RESOLVED),
-        Arguments.of(MaintenanceStatus.ASSIGNED, "technician", null),
-        Arguments.of(MaintenanceStatus.ASSIGNED, "assignedAt", null),
-        Arguments.of(MaintenanceStatus.IN_PROGRESS, "startedAt", null),
-        Arguments.of(MaintenanceStatus.RESOLVED, "completedAt", null),
-        Arguments.of(MaintenanceStatus.CLOSED, "closedAt", null),
-        Arguments.of(MaintenanceStatus.CLOSED, "completionInformation", " "),
-        Arguments.of(MaintenanceStatus.REPORTED, "assignedAt", CREATED),
-        Arguments.of(MaintenanceStatus.ASSIGNED, "startedAt", CREATED),
-        Arguments.of(MaintenanceStatus.IN_PROGRESS, "closedAt", CREATED),
-        Arguments.of(MaintenanceStatus.IN_PROGRESS, "completionOutcome", MaintenanceStatus.RESOLVED),
-        Arguments.of(MaintenanceStatus.REPORTED, "diagnosis", "Premature"),
-        Arguments.of(MaintenanceStatus.IN_PROGRESS, "notes", List.of(" ")),
-        Arguments.of(MaintenanceStatus.CLOSED, "assignedAt", CREATED.minusSeconds(1)),
-        Arguments.of(MaintenanceStatus.CLOSED, "startedAt", CREATED),
-        Arguments.of(MaintenanceStatus.CLOSED, "completedAt", CREATED.plusSeconds(1)),
-        Arguments.of(MaintenanceStatus.CLOSED, "closedAt", CREATED.plusSeconds(2)));
+        Arguments.of(MaintenanceStatus.OPEN, "resolvedAt", NOW),
+        Arguments.of(MaintenanceStatus.OPEN, "resolutionNote", "Premature"),
+        Arguments.of(MaintenanceStatus.ASSIGNED, "assignedTo", null),
+        Arguments.of(MaintenanceStatus.IN_PROGRESS, "assignedTo", null),
+        Arguments.of(MaintenanceStatus.RESOLVED, "assignedTo", null),
+        Arguments.of(MaintenanceStatus.UNREPAIRABLE, "assignedTo", null),
+        Arguments.of(MaintenanceStatus.ASSIGNED, "resolvedAt", NOW),
+        Arguments.of(MaintenanceStatus.IN_PROGRESS, "resolutionNote", "Premature"),
+        Arguments.of(MaintenanceStatus.RESOLVED, "resolvedAt", null),
+        Arguments.of(MaintenanceStatus.UNREPAIRABLE, "resolvedAt", NOW.minusSeconds(1)),
+        Arguments.of(MaintenanceStatus.RESOLVED, "resolutionNote", " "),
+        Arguments.of(MaintenanceStatus.UNREPAIRABLE, "resolutionNote", null),
+        Arguments.of(MaintenanceStatus.OPEN, "version", -1),
+        Arguments.of(MaintenanceStatus.OPEN, "faultDescription", " "));
   }
 
   @ParameterizedTest
-  @MethodSource("impossibleSnapshots")
-  void rejectsImpossibleStateBeforeRestoration(MaintenanceStatus status, String field, Object value) {
-    var source = caseAt(status, status == MaintenanceStatus.NOT_REPAIRABLE).snapshot();
-    var overrides = new java.util.HashMap<String, Object>();
+  @MethodSource("invalidSnapshots")
+  void rejectsInvalidDurableState(MaintenanceStatus status, String field, Object value) {
+    var overrides = new HashMap<String, Object>();
     overrides.put(field, value);
-    assertThatIllegalArgumentException().isThrownBy(() -> changed(source, overrides));
+    assertThatIllegalArgumentException().isThrownBy(() -> changed(caseAt(status).snapshot(), overrides));
   }
 
   @Test
-  void snapshotDefensivelyCopiesNotesAndExposesAnImmutableList() {
-    var source = caseAt(MaintenanceStatus.IN_PROGRESS, false).snapshot();
-    var notes = new ArrayList<>(List.of("Retained"));
-    var snapshot = changed(source, Map.of("notes", notes));
-    notes.add("External");
-    assertThat(snapshot.maintenanceNotes()).containsExactly("Retained");
-    assertThatThrownBy(() -> snapshot.maintenanceNotes().clear())
-        .isInstanceOf(UnsupportedOperationException.class);
+  void acceptsOptionalAssignmentOnOpenAndIndependentFault() {
+    var s = new MaintenanceCaseSnapshot(ID, ID, ID, TECHNICIAN, null,
+        MaintenanceStatus.OPEN, "Fault", null, NOW, null, 0);
+    var restored = MaintenanceCase.restore(s);
+    assertThat(restored.assignedTo()).isEqualTo(TECHNICIAN);
+    assertThat(restored.loanId()).isNull();
+    assertThat(restored.snapshot()).isEqualTo(s);
   }
 
   @Test
-  void restoredReportedCaseCanContinueNormalLifecycle() {
-    var restored = MaintenanceCase.restore(caseAt(MaintenanceStatus.REPORTED, false).snapshot());
-    restored.assign(TECHNICIAN, CREATED);
-    restored.start(CREATED);
-    restored.resolve("Repaired", CREATED);
-    restored.close(CREATED);
-    assertThat(restored.status()).isEqualTo(MaintenanceStatus.CLOSED);
-    assertThat(restored.completionOutcome()).isEqualTo(MaintenanceStatus.RESOLVED);
+  void restoredInProgressCaseCanCompleteAtReportTime() {
+    var restored = MaintenanceCase.restore(caseAt(MaintenanceStatus.IN_PROGRESS).snapshot());
+    restored.resolve("Repaired", NOW);
+    assertThat(restored.resolvedAt()).isEqualTo(NOW);
+    assertThat(restored.status()).isEqualTo(MaintenanceStatus.RESOLVED);
   }
 
   @Test
-  void rejectsNullSnapshot() {
+  void rejectsNullSnapshotAndRequiredIdentifiers() {
     assertThatNullPointerException().isThrownBy(() -> MaintenanceCase.restore(null));
+    assertThatNullPointerException().isThrownBy(() -> new MaintenanceCaseSnapshot(null, ID, ID,
+        null, null, MaintenanceStatus.OPEN, "Fault", null, NOW, null, 0));
+    assertThatNullPointerException().isThrownBy(() -> new MaintenanceCaseSnapshot(ID, null, ID,
+        null, null, MaintenanceStatus.OPEN, "Fault", null, NOW, null, 0));
+    assertThatNullPointerException().isThrownBy(() -> new MaintenanceCaseSnapshot(ID, ID, null,
+        null, null, MaintenanceStatus.OPEN, "Fault", null, NOW, null, 0));
+    assertThatNullPointerException().isThrownBy(() -> new MaintenanceCaseSnapshot(ID, ID, ID,
+        null, null, null, "Fault", null, NOW, null, 0));
+    assertThatNullPointerException().isThrownBy(() -> new MaintenanceCaseSnapshot(ID, ID, ID,
+        null, null, MaintenanceStatus.OPEN, "Fault", null, null, null, 0));
   }
 
-  @SuppressWarnings("unchecked")
   private static MaintenanceCaseSnapshot changed(MaintenanceCaseSnapshot s, Map<String, Object> values) {
-    return new MaintenanceCaseSnapshot(s.maintenanceCaseId(), s.faultReportId(), s.equipmentId(),
-        s.status(), (MaintenanceStatus) values.getOrDefault("completionOutcome", s.completionOutcome()),
-        (UUID) values.getOrDefault("technician", s.assignedTechnicianId()), s.createdAt(),
-        (Instant) values.getOrDefault("assignedAt", s.assignedAt()),
-        (Instant) values.getOrDefault("startedAt", s.startedAt()),
-        (Instant) values.getOrDefault("completedAt", s.completedAt()),
-        (Instant) values.getOrDefault("closedAt", s.closedAt()),
-        (String) values.getOrDefault("diagnosis", s.diagnosis()), s.repairAction(),
-        (List<String>) values.getOrDefault("notes", s.maintenanceNotes()),
-        (String) values.getOrDefault("completionInformation", s.completionInformation()));
+    return new MaintenanceCaseSnapshot(s.maintenanceCaseId(), s.equipmentId(), s.reportedBy(),
+        (UUID) values.getOrDefault("assignedTo", s.assignedTo()), s.loanId(), s.status(),
+        (String) values.getOrDefault("faultDescription", s.faultDescription()),
+        (String) values.getOrDefault("resolutionNote", s.resolutionNote()), s.reportedAt(),
+        (Instant) values.getOrDefault("resolvedAt", s.resolvedAt()),
+        (Integer) values.getOrDefault("version", s.version()));
   }
 }
