@@ -101,6 +101,7 @@ CI 只能验证已经写好的测试。**每位成员必须为自己负责的用
 
 ## 协作与发布
 
+- 模块之间的接口合同放在 [`docs/contracts/`](docs/contracts/)，以仓库版本为准；修改合同需要提 PR，并由受影响模块的负责人确认。目前已有：[登录与审批（UC02）](docs/contracts/auth-and-approval.md)。
 - 所有改动走 PR。`main` 受分支保护，必须通过 CI 检查（gitleaks、Trivy、依赖审查）才能合并。
 - 所有有 Write 权限的协作者都可以自行合并自己的 PR，不需要他人审批，只要求 CI 全绿。
 - 线上地址：https://serms.midas.cyou （香港服务器，Let's Encrypt 证书自动续期）
@@ -111,3 +112,14 @@ CI 只能验证已经写好的测试。**每位成员必须为自己负责的用
 ## SERMS Sprint 1 application
 
 Wang Yuanmeng's notification and shared-layout foundation lives in [`app/`](app/). Run with Java 17+ and the included Maven Wrapper: `cd app && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local`. Open http://127.0.0.1:8081. See [scope, contracts and verification](docs/wang-yuanmeng-sprint1.md). The root static deployment is unchanged pending team integration.
+
+## SERMS Sprint 1 data foundation
+
+Zhou Fanhao's Java/JDBC domain and reservation data module is in [database](database/README.md).
+The database has been upgraded to V002 using the SERMS diagrams and documents, covering ten business entities; see the [alignment record](docs/serms-database-alignment.md). It includes PostgreSQL migrations, concurrency conflict protection, real database tests and CI, plus the [domain design](docs/sprint1-domain.md) and [delivery record](docs/sprint1-zhoufanhao.md).
+Local verification: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-sprint1.ps1`.
+
+## Notification Integration
+
+The PostgreSQL adapter for Wang Yuanmeng's notification branch is in [integration/notifications](integration/notifications/README.md), including the V003 migration, a real LoanReminderGuard and a minimal integration patch.
+Local tests: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-notification-integration.ps1`; see the [interface alignment record](docs/notification-interface-alignment.md) for results.
