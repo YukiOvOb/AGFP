@@ -3,6 +3,7 @@ package sg.edu.nus.serms.maintenance.repository.jdbc;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -62,6 +63,31 @@ public class JdbcMaintenanceCaseRepository implements MaintenanceCaseRepository 
     // Non-locking snapshot: the service takes the Equipment lock before any case write.
     return jdbc.query("SELECT " + COLUMNS + " FROM serms.maintenance_case WHERE maintenance_case_id = ?",
         MAPPER, id).stream().findFirst();
+  }
+
+  @Override
+  public List<MaintenanceCase> findOpenCases() {
+    return List.copyOf(jdbc.query("SELECT " + COLUMNS + """
+         FROM serms.maintenance_case WHERE status = 'OPEN'
+        ORDER BY reported_at ASC, maintenance_case_id ASC
+        """, MAPPER));
+  }
+
+  @Override
+  public List<MaintenanceCase> findByAssignedTo(UUID technicianId) {
+    return List.copyOf(jdbc.query("SELECT " + COLUMNS + """
+         FROM serms.maintenance_case WHERE assigned_to = ?
+        AND status IN ('ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'UNREPAIRABLE')
+        ORDER BY reported_at DESC, maintenance_case_id ASC
+        """, MAPPER, technicianId));
+  }
+
+  @Override
+  public List<MaintenanceCase> findByEquipmentId(UUID equipmentId) {
+    return List.copyOf(jdbc.query("SELECT " + COLUMNS + """
+         FROM serms.maintenance_case WHERE equipment_id = ?
+        ORDER BY reported_at DESC, maintenance_case_id ASC
+        """, MAPPER, equipmentId));
   }
 
   private static MaintenanceCase map(ResultSet row, int index) throws SQLException {

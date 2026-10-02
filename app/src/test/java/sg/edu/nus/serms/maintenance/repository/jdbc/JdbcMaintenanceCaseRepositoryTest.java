@@ -7,11 +7,13 @@ import static org.mockito.Mockito.*;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.RowMapper;
 import sg.edu.nus.serms.maintenance.domain.*;
@@ -35,7 +37,7 @@ class JdbcMaintenanceCaseRepositoryTest {
         terminal ? RESOLVED : null, version));
   }
 
-  private void returns(MaintenanceCase persisted) throws Exception {
+  private ResultSet row(MaintenanceCase persisted) throws Exception {
     var s = persisted.snapshot();
     ResultSet row = mock(ResultSet.class);
     when(row.getObject("maintenance_case_id", UUID.class)).thenReturn(s.maintenanceCaseId());
@@ -49,13 +51,95 @@ class JdbcMaintenanceCaseRepositoryTest {
     when(row.getTimestamp("reported_at")).thenReturn(Timestamp.from(s.reportedAt()));
     when(row.getTimestamp("resolved_at")).thenReturn(s.resolvedAt() == null ? null : Timestamp.from(s.resolvedAt()));
     when(row.getInt("version")).thenReturn(s.version());
+    return row;
+  }
+
+  private void returns(MaintenanceCase... persisted) throws Exception {
+    var rows = new ArrayList<ResultSet>();
+    for (var item : persisted) rows.add(row(item));
+    org.mockito.stubbing.Answer<List<MaintenanceCase>> answer = call -> {
+      sql = call.getArgument(0);
+      parameters = call.getRawArguments().length == 3 ? (Object[]) call.getRawArguments()[2] : new Object[0];
+      RowMapper<MaintenanceCase> mapper = call.getArgument(1);
+      var mapped = new ArrayList<MaintenanceCase>();
+      for (int i = 0; i < rows.size(); i++) mapped.add(mapper.mapRow(rows.get(i), i));
+      return mapped;
+    };
+    when(jdbc.query(anyString(), org.mockito.ArgumentMatchers.<RowMapper<MaintenanceCase>>any())).thenAnswer(answer);
     when(jdbc.query(anyString(), org.mockito.ArgumentMatchers.<RowMapper<MaintenanceCase>>any(), any(Object[].class)))
-        .thenAnswer(call -> {
-          sql = call.getArgument(0);
-          parameters = (Object[]) call.getRawArguments()[2];
-          RowMapper<MaintenanceCase> mapper = call.getArgument(1);
-          return List.of(mapper.mapRow(row, 0));
-        });
+        .thenAnswer(answer);
+  }
+
+  @Test
+  void openQueueUsesOnlyOpenStatusAndOldestFirstWithIdTieBreaker() throws Exception {
+    var expected = item(MaintenanceStatus.OPEN, 0, false);
+    returns(expected);
+    assertThat(repository.findOpenCases()).extracting(MaintenanceCase::snapshot).containsExactly(expected.snapshot());
+    assertThat(sql.replaceAll("\\s+", " ").strip()).endsWith(
+        "FROM serms.maintenance_case WHERE status = 'OPEN' ORDER BY reported_at ASC, maintenance_case_id ASC");
+    assertThat(parameters).isEmpty();
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = MaintenanceStatus.class, names = {"ASSIGNED", "IN_PROGRESS", "RESOLVED", "UNREPAIRABLE"})
+  void technicianQueryBindsTechnicianIncludesTerminalAndExcludesOpen(MaintenanceStatus status) throws Exception {
+    var expected = item(status, 3, false);
+    returns(expected);
+    assertThat(repository.findByAssignedTo(TECHNICIAN)).extracting(MaintenanceCase::snapshot)
+        .containsExactly(expected.snapshot());
+    assertThat(sql.replaceAll("\\s+", " ").strip()).endsWith(
+        "FROM serms.maintenance_case WHERE assigned_to = ? AND status IN ('ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'UNREPAIRABLE') ORDER BY reported_at DESC, maintenance_case_id ASC");
+    assertThat(parameters).containsExactly(TECHNICIAN);
+  }
+
+  @ParameterizedTest
+  @EnumSource(MaintenanceStatus.class)
+  void equipmentQueryBindsEquipmentAndMapsEveryStateAndNullableFields(MaintenanceStatus status) throws Exception {
+    var expected = item(status, 7, status == MaintenanceStatus.IN_PROGRESS);
+    returns(expected);
+    assertThat(repository.findByEquipmentId(EQUIPMENT)).extracting(MaintenanceCase::snapshot)
+        .containsExactly(expected.snapshot());
+    assertThat(sql.replaceAll("\\s+", " ").strip()).endsWith(
+        "FROM serms.maintenance_case WHERE equipment_id = ? ORDER BY reported_at DESC, maintenance_case_id ASC");
+    assertThat(parameters).containsExactly(EQUIPMENT);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"open", "assigned", "equipment"})
+  void listQueriesPreserveRowOrderAndReturnFreshAggregatesInImmutableLists(String query) throws Exception {
+    var status = query.equals("assigned") ? MaintenanceStatus.ASSIGNED : MaintenanceStatus.OPEN;
+    var first = item(status, 0, false);
+    var s = first.snapshot();
+    var second = MaintenanceCase.restore(new MaintenanceCaseSnapshot(new UUID(0, 10), EQUIPMENT,
+        REPORTER, s.assignedTo(), null, status, "Second fault", null, REPORTED, null, 0));
+    returns(first, second);
+    var results = query(query);
+    assertThat(results).extracting(MaintenanceCase::snapshot).containsExactly(first.snapshot(), second.snapshot());
+    assertThatThrownBy(results::clear).isInstanceOf(UnsupportedOperationException.class);
+    if (status == MaintenanceStatus.OPEN) results.get(0).assign(TECHNICIAN);
+    else results.get(0).start();
+    var again = query(query);
+    assertThat(again.get(0)).isNotSameAs(results.get(0));
+    assertThat(again.get(0).snapshot()).isEqualTo(first.snapshot());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"open", "assigned", "equipment"})
+  void listQueriesReturnImmutableEmptyListsWhenNothingMatches(String query) throws Exception {
+    returns();
+    var results = query(query);
+    assertThat(results).isEmpty();
+    assertThatThrownBy(() -> results.add(item(MaintenanceStatus.OPEN, 0, false)))
+        .isInstanceOf(UnsupportedOperationException.class);
+  }
+
+  private List<MaintenanceCase> query(String query) {
+    return switch (query) {
+      case "open" -> repository.findOpenCases();
+      case "assigned" -> repository.findByAssignedTo(TECHNICIAN);
+      case "equipment" -> repository.findByEquipmentId(EQUIPMENT);
+      default -> throw new AssertionError(query);
+    };
   }
 
   @Test

@@ -3,6 +3,7 @@ package sg.edu.nus.serms.maintenance.integration;
 import static org.assertj.core.api.Assertions.*;
 
 import java.sql.Timestamp;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -337,6 +338,105 @@ class MaintenancePostgresIT {
         winner.assignedTo(), reporter, db.clock.instant()));
     assertThat(db.equipmentStatus(equipment)).isEqualTo("UNDER_MAINTENANCE");
     assertThat(db.equipmentVersion(equipment)).isEqualTo(1);
+  }
+
+  @Test
+  void openQueueFiltersStatusesAndOrdersOldestFirstIncludingEqualReportTimes() {
+    var oldest = db.report(equipment, reporter);
+    db.clock.advance();
+    var tiedA = db.service.reportFault(equipment, reporter, "Tied fault A");
+    var tiedB = db.service.reportFault(db.equipment(), reporter, "Tied fault B");
+    var assigned = db.service.reportFault(equipment, reporter, "Assigned fault");
+    db.service.assignTechnician(assigned.maintenanceCaseId(), technician, reporter);
+    var expected = List.of(oldest, tiedA, tiedB).stream().sorted(queryOrder(false)).toList();
+    var queue = db.service.getOpenCases();
+    // A dedicated test database may contain other fixtures; only scope membership to our UUIDs.
+    assertThat(queue).allMatch(item -> item.status() == MaintenanceStatus.OPEN)
+        .isSortedAccordingTo(queryOrder(false));
+    assertThat(queue.stream().filter(item -> db.identifiers.created.contains(item.maintenanceCaseId())).toList())
+        .extracting(MaintenanceCase::maintenanceCaseId)
+        .containsExactlyElementsOf(expected.stream().map(MaintenanceCase::maintenanceCaseId).toList());
+    assertThatThrownBy(queue::clear).isInstanceOf(UnsupportedOperationException.class);
+    queue.stream().filter(item -> item.maintenanceCaseId().equals(oldest.maintenanceCaseId()))
+        .findFirst().orElseThrow().assign(technician);
+    assertThat(db.service.getCase(oldest.maintenanceCaseId()).status()).isEqualTo(MaintenanceStatus.OPEN);
+  }
+
+  @Test
+  void assignedQueriesSeparateTechniciansIncludeTerminalAndExcludeOpenWithAssignedUuid() {
+    UUID otherTechnician = db.user("ACTIVE", "MAINTAINER");
+    var older = db.report(equipment, reporter);
+    db.service.assignTechnician(older.maintenanceCaseId(), technician, reporter);
+    var other = db.report(equipment, reporter);
+    db.service.assignTechnician(other.maintenanceCaseId(), otherTechnician, reporter);
+    db.clock.advance();
+    var assigned = db.service.reportFault(equipment, reporter, "Assigned");
+    var inProgress = db.service.reportFault(equipment, reporter, "In progress");
+    var resolved = db.service.reportFault(equipment, reporter, "Resolved");
+    var unrepairable = db.service.reportFault(equipment, reporter, "Unrepairable");
+    // V002 permits an assigned_to UUID on OPEN; the query must still explicitly exclude OPEN.
+    UUID openId = db.identifiers.get();
+    var open = MaintenanceCase.restore(new MaintenanceCaseSnapshot(openId, equipment, reporter,
+        technician, null, MaintenanceStatus.OPEN, "Unassigned lifecycle", null, db.clock.instant(), null, 0));
+    db.transactions.executeWithoutResult(tx -> {
+      db.equipment.lockForMaintenance(equipment);
+      db.cases.insert(open);
+    });
+    for (var item : List.of(assigned, inProgress, resolved, unrepairable)) {
+      db.service.assignTechnician(item.maintenanceCaseId(), technician, reporter);
+    }
+    for (var item : List.of(inProgress, resolved, unrepairable)) {
+      db.service.startMaintenance(item.maintenanceCaseId(), technician);
+    }
+    db.service.resolve(resolved.maintenanceCaseId(), "Repaired", technician);
+    db.service.markUnrepairable(unrepairable.maintenanceCaseId(), "No parts", technician);
+    var expected = List.of(older, assigned, inProgress, resolved, unrepairable).stream()
+        .sorted(queryOrder(true)).map(MaintenanceCase::maintenanceCaseId).toList();
+    var own = db.service.getAssignedCases(technician);
+    assertThat(own).allMatch(item -> technician.equals(item.assignedTo()))
+        .isSortedAccordingTo(queryOrder(true));
+    assertThat(own).extracting(MaintenanceCase::maintenanceCaseId).containsExactlyElementsOf(expected);
+    assertThat(own).extracting(MaintenanceCase::status).containsOnly(MaintenanceStatus.ASSIGNED,
+        MaintenanceStatus.IN_PROGRESS, MaintenanceStatus.RESOLVED, MaintenanceStatus.UNREPAIRABLE)
+        .contains(MaintenanceStatus.RESOLVED, MaintenanceStatus.UNREPAIRABLE);
+    assertThat(db.service.getAssignedCases(otherTechnician)).extracting(MaintenanceCase::maintenanceCaseId)
+        .containsExactly(other.maintenanceCaseId());
+    assertThat(db.service.getAssignedCases(UUID.randomUUID())).isEmpty();
+  }
+
+  @Test
+  void equipmentQueriesIncludeEveryStateAndOrderNewestFirstWithIdTieBreaker() {
+    var oldest = db.report(equipment, reporter);
+    UUID otherEquipment = db.equipment();
+    var other = db.report(otherEquipment, reporter);
+    db.clock.advance();
+    var assigned = db.service.reportFault(equipment, reporter, "Assigned");
+    var inProgress = db.service.reportFault(equipment, reporter, "In progress");
+    var resolved = db.service.reportFault(equipment, reporter, "Resolved");
+    var unrepairable = db.service.reportFault(equipment, reporter, "Unrepairable");
+    for (var item : List.of(assigned, inProgress, resolved, unrepairable)) {
+      db.service.assignTechnician(item.maintenanceCaseId(), technician, reporter);
+    }
+    for (var item : List.of(inProgress, resolved, unrepairable)) {
+      db.service.startMaintenance(item.maintenanceCaseId(), technician);
+    }
+    db.service.resolve(resolved.maintenanceCaseId(), "Repaired", technician);
+    db.service.markUnrepairable(unrepairable.maintenanceCaseId(), "No parts", technician);
+    var expected = List.of(oldest, assigned, inProgress, resolved, unrepairable).stream()
+        .sorted(queryOrder(true)).map(MaintenanceCase::maintenanceCaseId).toList();
+    var cases = db.service.getEquipmentCases(equipment);
+    assertThat(cases).allMatch(item -> equipment.equals(item.equipmentId())).isSortedAccordingTo(queryOrder(true));
+    assertThat(cases).extracting(MaintenanceCase::maintenanceCaseId).containsExactlyElementsOf(expected);
+    assertThat(cases).extracting(MaintenanceCase::status).containsExactlyInAnyOrder(MaintenanceStatus.values());
+    assertThat(db.service.getEquipmentCases(otherEquipment)).extracting(MaintenanceCase::maintenanceCaseId)
+        .containsExactly(other.maintenanceCaseId());
+    assertThat(db.service.getEquipmentCases(UUID.randomUUID())).isEmpty();
+  }
+
+  private static Comparator<MaintenanceCase> queryOrder(boolean newestFirst) {
+    var time = Comparator.comparing(MaintenanceCase::reportedAt);
+    // PostgreSQL UUID ordering compares unsigned bytes; canonical strings preserve that order.
+    return (newestFirst ? time.reversed() : time).thenComparing(item -> item.maintenanceCaseId().toString());
   }
 
   private AssignmentResult assign(UUID id, UUID target) {

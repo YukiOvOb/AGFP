@@ -145,6 +145,14 @@ class MaintenanceTransactionTest {
 
   @Test
   void readsUseReadOnlySpringTransaction() {
+    org.mockito.stubbing.Answer<java.util.List<MaintenanceCase>> query = call -> {
+      assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
+      assertThat(TransactionSynchronizationManager.isCurrentTransactionReadOnly()).isTrue();
+      return java.util.List.of(startedCase());
+    };
+    when(cases.findOpenCases()).thenAnswer(query);
+    when(cases.findByAssignedTo(TECHNICIAN)).thenAnswer(query);
+    when(cases.findByEquipmentId(EQUIPMENT)).thenAnswer(query);
     when(cases.findById(CASE)).thenAnswer(call -> {
       assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
       assertThat(TransactionSynchronizationManager.isCurrentTransactionReadOnly()).isTrue();
@@ -163,8 +171,12 @@ class MaintenanceTransactionTest {
       service.getCase(CASE);
       service.getCaseHistory(CASE);
       service.getEquipmentMaintenanceHistory(EQUIPMENT);
-      assertThat(transactions.begins).isEqualTo(3);
-      assertThat(transactions.commits).isEqualTo(3);
+      service.getOpenCases();
+      service.getAssignedCases(TECHNICIAN);
+      service.getEquipmentCases(EQUIPMENT);
+      assertThat(transactions.begins).isEqualTo(6);
+      assertThat(transactions.commits).isEqualTo(6);
+      assertThat(transactions.rollbacks).isZero();
       verifyNoInteractions(equipment, events);
     }
   }

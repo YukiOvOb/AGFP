@@ -152,6 +152,25 @@ public class MaintenanceService {
   public MaintenanceCase getCase(UUID caseId) { return load(caseId); }
 
   @Transactional(readOnly = true)
+  public List<MaintenanceCase> getOpenCases() {
+    return copies(cases.findOpenCases());
+  }
+
+  @Transactional(readOnly = true)
+  public List<MaintenanceCase> getAssignedCases(UUID technicianId) {
+    return copies(cases.findByAssignedTo(Objects.requireNonNull(technicianId, "technicianId")));
+  }
+
+  @Transactional(readOnly = true)
+  public List<MaintenanceCase> getEquipmentCases(UUID equipmentId) {
+    return copies(cases.findByEquipmentId(Objects.requireNonNull(equipmentId, "equipmentId")));
+  }
+
+  private static List<MaintenanceCase> copies(List<MaintenanceCase> items) {
+    return items.stream().map(MaintenanceCase::copy).toList();
+  }
+
+  @Transactional(readOnly = true)
   public List<MaintenanceHistoryEntry> getEquipmentMaintenanceHistory(UUID equipmentId) {
     return List.copyOf(history.findByEquipmentId(Objects.requireNonNull(equipmentId)));
   }

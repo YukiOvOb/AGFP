@@ -1,11 +1,13 @@
 package sg.edu.nus.serms.maintenance.service;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +19,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import sg.edu.nus.serms.maintenance.domain.*;
 import sg.edu.nus.serms.maintenance.repository.*;
 
@@ -310,6 +313,82 @@ class MaintenanceServiceTest {
     assertThat(history.entries).hasSize(3);
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"open", "assigned", "equipment"})
+  void queriesDelegateOnlyToTheirRepositoryAndCopyMutableResults(String query) {
+    var repository = mock(MaintenanceCaseRepository.class);
+    var queried = new MaintenanceService(repository, history, equipment, technicians, events,
+        () -> CASE, Clock.fixed(NOW, ZoneOffset.UTC));
+    var shared = new MaintenanceCase(CASE, EQUIPMENT, REPORTER, null, "Fault", NOW);
+    if (query.equals("assigned")) shared.assign(TECHNICIAN);
+    var other = new MaintenanceCase(new UUID(0, 10), EQUIPMENT, REPORTER, null, "Other fault", NOW);
+    var source = new ArrayList<>(List.of(shared, other));
+    switch (query) {
+      case "open" -> when(repository.findOpenCases()).thenReturn(source);
+      case "assigned" -> when(repository.findByAssignedTo(TECHNICIAN)).thenReturn(source);
+      case "equipment" -> when(repository.findByEquipmentId(EQUIPMENT)).thenReturn(source);
+      default -> throw new AssertionError(query);
+    }
+    var result = query(queried, query);
+    assertThat(result).extracting(MaintenanceCase::snapshot).containsExactly(shared.snapshot(), other.snapshot());
+    assertThat(result.get(0)).isNotSameAs(shared);
+    assertThatThrownBy(result::clear).isInstanceOf(UnsupportedOperationException.class);
+    if (query.equals("assigned")) result.get(0).start();
+    else result.get(0).assign(TECHNICIAN);
+    assertThat(query(queried, query).get(0).snapshot()).isEqualTo(shared.snapshot());
+    source.clear();
+    assertThat(result).hasSize(2);
+    switch (query) {
+      case "open" -> verify(repository, times(2)).findOpenCases();
+      case "assigned" -> verify(repository, times(2)).findByAssignedTo(TECHNICIAN);
+      case "equipment" -> verify(repository, times(2)).findByEquipmentId(EQUIPMENT);
+    }
+    verifyNoMoreInteractions(repository);
+    assertThat(calls).isEmpty();
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"assigned", "equipment"})
+  void queriesRejectNullIdentifiersBeforeRepositoryCalls(String query) {
+    assertThatNullPointerException().isThrownBy(() -> {
+      if (query.equals("assigned")) service.getAssignedCases(null);
+      else service.getEquipmentCases(null);
+    }).withMessage(query.equals("assigned") ? "technicianId" : "equipmentId");
+    assertThat(calls).isEmpty();
+  }
+
+  @Test
+  void fakeQueriesFilterSortAndProtectTheirStoredSnapshots() {
+    var first = report();
+    var second = new MaintenanceCase(new UUID(0, 10), EQUIPMENT, REPORTER, null, "Later fault", NOW.plusSeconds(1));
+    var third = new MaintenanceCase(new UUID(0, 11), new UUID(0, 20), REPORTER, null, "Other equipment", NOW);
+    cases.insert(second);
+    cases.insert(third);
+    assertThat(service.getOpenCases()).extracting(MaintenanceCase::maintenanceCaseId)
+        .containsExactly(CASE, third.maintenanceCaseId(), second.maintenanceCaseId());
+    assertThat(service.getEquipmentCases(EQUIPMENT)).extracting(MaintenanceCase::maintenanceCaseId)
+        .containsExactly(second.maintenanceCaseId(), CASE);
+    second.assign(TECHNICIAN);
+    cases.update(second);
+    third.assign(ACTOR);
+    cases.update(third);
+    assertThat(service.getAssignedCases(TECHNICIAN)).extracting(MaintenanceCase::maintenanceCaseId)
+        .containsExactly(second.maintenanceCaseId());
+    var returned = cases.findOpenCases();
+    returned.get(0).assign(TECHNICIAN);
+    assertThat(cases.findById(CASE).orElseThrow().snapshot()).isEqualTo(first.snapshot());
+    assertThatThrownBy(returned::clear).isInstanceOf(UnsupportedOperationException.class);
+  }
+
+  private List<MaintenanceCase> query(MaintenanceService queried, String query) {
+    return switch (query) {
+      case "open" -> queried.getOpenCases();
+      case "assigned" -> queried.getAssignedCases(TECHNICIAN);
+      case "equipment" -> queried.getEquipmentCases(EQUIPMENT);
+      default -> throw new AssertionError(query);
+    };
+  }
+
   private final class FakeCases implements MaintenanceCaseRepository {
     final Map<UUID, MaintenanceCase> saved = new HashMap<>();
     boolean stale;
@@ -332,6 +411,26 @@ class MaintenanceServiceTest {
       return persisted.copy();
     }
     public Optional<MaintenanceCase> findById(UUID id) { return Optional.ofNullable(saved.get(id)).map(MaintenanceCase::copy); }
+    public List<MaintenanceCase> findOpenCases() {
+      calls.add("open-cases");
+      return saved.values().stream().filter(item -> item.status() == MaintenanceStatus.OPEN)
+          .sorted(order(false)).map(MaintenanceCase::copy).toList();
+    }
+    public List<MaintenanceCase> findByAssignedTo(UUID id) {
+      calls.add("assigned-cases");
+      return saved.values().stream().filter(item -> id.equals(item.assignedTo()) && item.status() != MaintenanceStatus.OPEN)
+          .sorted(order(true)).map(MaintenanceCase::copy).toList();
+    }
+    public List<MaintenanceCase> findByEquipmentId(UUID id) {
+      calls.add("equipment-cases");
+      return saved.values().stream().filter(item -> id.equals(item.equipmentId()))
+          .sorted(order(true)).map(MaintenanceCase::copy).toList();
+    }
+    private Comparator<MaintenanceCase> order(boolean newestFirst) {
+      var time = Comparator.comparing(MaintenanceCase::reportedAt);
+      return (newestFirst ? time.reversed() : time)
+          .thenComparing(item -> item.maintenanceCaseId().toString());
+    }
   }
 
   private final class FakeHistory implements MaintenanceHistoryRepository {

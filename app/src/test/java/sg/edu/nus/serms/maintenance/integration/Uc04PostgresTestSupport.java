@@ -296,6 +296,9 @@ final class Uc04PostgresTestSupport implements AutoCloseable {
     CaseReads(JdbcMaintenanceCaseRepository delegate, JdbcTemplate jdbc) { this.delegate = delegate; this.jdbc = jdbc; }
     @Override public MaintenanceCase insert(MaintenanceCase item) { return delegate.insert(item); }
     @Override public MaintenanceCase update(MaintenanceCase item) { return delegate.update(item); }
+    @Override public List<MaintenanceCase> findOpenCases() { return delegate.findOpenCases(); }
+    @Override public List<MaintenanceCase> findByAssignedTo(UUID id) { return delegate.findByAssignedTo(id); }
+    @Override public List<MaintenanceCase> findByEquipmentId(UUID id) { return delegate.findByEquipmentId(id); }
     @Override public Optional<MaintenanceCase> findById(UUID id) {
       var persisted = delegate.findById(id);
       var replay = replayOnce.get();
