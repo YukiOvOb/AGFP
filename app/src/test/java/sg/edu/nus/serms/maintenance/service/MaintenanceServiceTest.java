@@ -48,7 +48,7 @@ class MaintenanceServiceTest {
   @Test
   void faultCreatesOneOpenCaseAndMarksEquipmentUnderMaintenance() {
     var item = report();
-    assertThat(calls).containsExactly("exists", "under-maintenance", "save", "history");
+    assertThat(calls).containsExactly("exists", "lock", "under-maintenance", "insert", "history");
     assertThat(cases.saved).hasSize(1);
     assertThat(item.status()).isEqualTo(MaintenanceStatus.OPEN);
     assertThat(item.reportedBy()).isEqualTo(REPORTER);
@@ -78,7 +78,7 @@ class MaintenanceServiceTest {
     report();
     calls.clear();
     var assigned = service.assignTechnician(CASE, TECHNICIAN, ACTOR);
-    assertThat(calls).containsExactly("technician", "save", "history", "assigned-event");
+    assertThat(calls).containsExactly("technician", "lock", "update", "history", "assigned-event");
     assertThat(assigned.status()).isEqualTo(MaintenanceStatus.ASSIGNED);
     assertThat(assigned.assignedTo()).isEqualTo(TECHNICIAN);
     assertThat(technicians.checked).containsExactly(TECHNICIAN);
@@ -117,7 +117,7 @@ class MaintenanceServiceTest {
     var before = service.getCase(CASE).snapshot();
     calls.clear();
     var result = work(action, "  Detail  ");
-    assertThat(calls).containsExactly("history");
+    assertThat(calls).containsExactly("lock", "history");
     assertThat(result.snapshot()).isEqualTo(before);
     assertThat(service.getCase(CASE).snapshot()).isEqualTo(before);
     assertThat(history.entries.get(3)).isEqualTo(new MaintenanceHistoryEntry(CASE, EQUIPMENT, action,
@@ -186,7 +186,7 @@ class MaintenanceServiceTest {
     if (retired) equipment.state = "RETIRED";
     calls.clear();
     var result = service.resolve(CASE, "  Repaired  ", TECHNICIAN);
-    assertThat(calls).containsExactly("save", "recompute", "history", "completed-event");
+    assertThat(calls).containsExactly("lock", "update", "recompute", "history", "completed-event");
     assertThat(result.status()).isEqualTo(MaintenanceStatus.RESOLVED);
     assertThat(result.resolutionNote()).isEqualTo("Repaired");
     assertThat(result.resolvedAt()).isEqualTo(NOW);
@@ -201,7 +201,7 @@ class MaintenanceServiceTest {
     equipment.activeLoan = true;
     calls.clear();
     var result = service.markUnrepairable(CASE, "  No parts  ", TECHNICIAN);
-    assertThat(calls).containsExactly("save", "retired", "history", "completed-event");
+    assertThat(calls).containsExactly("lock", "update", "retired", "history", "completed-event");
     assertThat(result.status()).isEqualTo(MaintenanceStatus.UNREPAIRABLE);
     assertThat(result.resolutionNote()).isEqualTo("No parts");
     assertThat(result.resolvedAt()).isEqualTo(NOW);
@@ -218,7 +218,7 @@ class MaintenanceServiceTest {
     calls.clear();
     assertThatIllegalArgumentException().isThrownBy(() -> service.resolve(CASE, " ", TECHNICIAN));
     assertThatIllegalArgumentException().isThrownBy(() -> service.markUnrepairable(CASE, null, TECHNICIAN));
-    assertThat(calls).isEmpty();
+    assertThat(calls).containsExactly("lock", "lock");
     assertThat(events.completed).isEmpty();
   }
 
@@ -229,7 +229,7 @@ class MaintenanceServiceTest {
     calls.clear();
     assertThatThrownBy(() -> service.markUnrepairable(CASE, "No parts", TECHNICIAN))
         .isInstanceOf(InvalidMaintenanceTransitionException.class);
-    assertThat(calls).isEmpty();
+    assertThat(calls).containsExactly("lock");
     assertThat(events.completed).hasSize(1);
   }
 
@@ -261,11 +261,75 @@ class MaintenanceServiceTest {
     assertThat(MaintenanceService.class.getDeclaredMethods()).noneMatch(method -> method.getName().equals("close"));
   }
 
+  @Test
+  void returnsPersistedVersionsThroughoutLifecycle() {
+    assertThat(report().version()).isZero();
+    assertThat(service.assignTechnician(CASE, TECHNICIAN, ACTOR).version()).isEqualTo(1);
+    assertThat(service.startMaintenance(CASE, TECHNICIAN).version()).isEqualTo(2);
+    assertThat(service.resolve(CASE, "Repaired", TECHNICIAN).version()).isEqualTo(3);
+    assertThat(service.getCase(CASE).version()).isEqualTo(3);
+  }
+
+  @Test
+  void staleAssignmentDoesNotAppendHistoryOrPublishEvent() {
+    report();
+    cases.stale = true;
+    calls.clear();
+    assertThatThrownBy(() -> service.assignTechnician(CASE, TECHNICIAN, ACTOR))
+        .isInstanceOf(MaintenanceVersionConflictException.class);
+    assertThat(calls).containsExactly("technician", "lock", "update");
+    assertThat(history.entries).hasSize(1);
+    assertThat(events.assigned).isEmpty();
+    assertThat(service.getCase(CASE).status()).isEqualTo(MaintenanceStatus.OPEN);
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = MaintenanceHistoryAction.class, names = {"RESOLVE", "MARK_UNREPAIRABLE"})
+  void staleCompletionStopsEquipmentHistoryAndEvent(MaintenanceHistoryAction action) {
+    started();
+    cases.stale = true;
+    calls.clear();
+    assertThatThrownBy(() -> {
+      if (action == MaintenanceHistoryAction.RESOLVE) service.resolve(CASE, "Repaired", TECHNICIAN);
+      else service.markUnrepairable(CASE, "No parts", TECHNICIAN);
+    }).isInstanceOf(MaintenanceVersionConflictException.class);
+    assertThat(calls).containsExactly("lock", "update");
+    assertThat(history.entries).hasSize(3);
+    assertThat(events.completed).isEmpty();
+    assertThat(equipment.state).isEqualTo("UNDER_MAINTENANCE");
+  }
+
+  @Test
+  void noteReloadRejectsCaseCompletedWhileWaitingForEquipmentLock() {
+    started();
+    equipment.completeOnLock = true;
+    calls.clear();
+    assertThatThrownBy(() -> service.addMaintenanceNote(CASE, "Late note", TECHNICIAN))
+        .isInstanceOf(IllegalStateException.class);
+    assertThat(calls).containsExactly("lock");
+    assertThat(history.entries).hasSize(3);
+  }
+
   private final class FakeCases implements MaintenanceCaseRepository {
     final Map<UUID, MaintenanceCase> saved = new HashMap<>();
-    public void save(MaintenanceCase item) {
-      calls.add("save");
+    boolean stale;
+    public MaintenanceCase insert(MaintenanceCase item) {
+      calls.add("insert");
       saved.put(item.maintenanceCaseId(), item.copy());
+      return item.copy();
+    }
+    public MaintenanceCase update(MaintenanceCase item) {
+      calls.add("update");
+      if (stale || saved.get(item.maintenanceCaseId()).version() != item.version()) {
+        throw new MaintenanceVersionConflictException(item.maintenanceCaseId(), item.version());
+      }
+      var s = item.snapshot();
+      // Simulate the database trigger in the test double only.
+      var persisted = MaintenanceCase.restore(new MaintenanceCaseSnapshot(s.maintenanceCaseId(),
+          s.equipmentId(), s.reportedBy(), s.assignedTo(), s.loanId(), s.status(), s.faultDescription(),
+          s.resolutionNote(), s.reportedAt(), s.resolvedAt(), s.version() + 1));
+      saved.put(item.maintenanceCaseId(), persisted);
+      return persisted.copy();
     }
     public Optional<MaintenanceCase> findById(UUID id) { return Optional.ofNullable(saved.get(id)).map(MaintenanceCase::copy); }
   }
@@ -283,8 +347,12 @@ class MaintenanceServiceTest {
 
   private final class FakeEquipment implements EquipmentMaintenancePort {
     String state = "AVAILABLE";
-    boolean otherActiveCase, activeLoan, fail;
+    boolean otherActiveCase, activeLoan, fail, completeOnLock;
     public void ensureEquipmentExists(UUID id) { calls.add("exists"); }
+    public void lockForMaintenance(UUID id) {
+      calls.add("lock");
+      if (completeOnLock) cases.saved.get(CASE).resolve("Concurrent completion", NOW);
+    }
     public void markUnderMaintenance(UUID id) {
       if (fail) throw new IllegalStateException("Equipment failure");
       calls.add("under-maintenance");
