@@ -14,6 +14,7 @@ public final class MaintenanceCase {
   private final UUID equipmentId;
   private final Instant createdAt;
   private MaintenanceStatus status = MaintenanceStatus.REPORTED;
+  private MaintenanceStatus completionOutcome;
   private UUID assignedTechnicianId;
   private Instant assignedAt;
   private Instant startedAt;
@@ -35,6 +36,7 @@ public final class MaintenanceCase {
   private MaintenanceCase(MaintenanceCase source) {
     this(source.maintenanceCaseId, source.faultReportId, source.equipmentId, source.createdAt);
     status = source.status;
+    completionOutcome = source.completionOutcome;
     assignedTechnicianId = source.assignedTechnicianId;
     assignedAt = source.assignedAt;
     startedAt = source.startedAt;
@@ -49,6 +51,36 @@ public final class MaintenanceCase {
   /** An independent snapshot, so an unsuccessful orchestration cannot mutate a loaded instance. */
   public MaintenanceCase copy() {
     return new MaintenanceCase(this);
+  }
+
+  public MaintenanceCaseSnapshot snapshot() {
+    return new MaintenanceCaseSnapshot(
+        maintenanceCaseId, faultReportId, equipmentId, status, completionOutcome,
+        assignedTechnicianId, createdAt, assignedAt, startedAt, completedAt, closedAt,
+        diagnosis, repairAction, maintenanceNotes, completionInformation);
+  }
+
+  public static MaintenanceCase restore(MaintenanceCaseSnapshot snapshot) {
+    Objects.requireNonNull(snapshot, "snapshot");
+    MaintenanceCase restored = new MaintenanceCase(
+        snapshot.maintenanceCaseId(), snapshot.faultReportId(), snapshot.equipmentId(),
+        snapshot.createdAt());
+    restored.status = snapshot.status();
+    restored.completionOutcome = snapshot.completionOutcome();
+    restored.assignedTechnicianId = snapshot.assignedTechnicianId();
+    restored.assignedAt = snapshot.assignedAt();
+    restored.startedAt = snapshot.startedAt();
+    restored.completedAt = snapshot.completedAt();
+    restored.closedAt = snapshot.closedAt();
+    restored.diagnosis = snapshot.diagnosis();
+    restored.repairAction = snapshot.repairAction();
+    restored.maintenanceNotes.addAll(snapshot.maintenanceNotes());
+    restored.completionInformation = snapshot.completionInformation();
+    return restored;
+  }
+
+  public MaintenanceStatus completionOutcome() {
+    return completionOutcome;
   }
 
   public UUID maintenanceCaseId() {
@@ -159,6 +191,7 @@ public final class MaintenanceCase {
     requireNotBefore(at, startedAt);
     completionInformation = text;
     completedAt = at;
+    completionOutcome = next;
     status = next;
   }
 

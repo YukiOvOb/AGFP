@@ -37,6 +37,7 @@ class MaintenanceCaseTest {
     assertThat(maintenanceCase.equipmentId()).isEqualTo(EQUIPMENT_ID);
     assertThat(maintenanceCase.createdAt()).isEqualTo(CREATED);
     assertThat(maintenanceCase.status()).isEqualTo(MaintenanceStatus.REPORTED);
+    assertThat(maintenanceCase.completionOutcome()).isNull();
     assertThat(maintenanceCase.assignedTechnicianId()).isNull();
     assertThat(maintenanceCase.completedAt()).isNull();
   }
@@ -65,6 +66,7 @@ class MaintenanceCaseTest {
 
     maintenanceCase.resolve("  Tested and working  ", COMPLETED);
     assertThat(maintenanceCase.status()).isEqualTo(MaintenanceStatus.RESOLVED);
+    assertThat(maintenanceCase.completionOutcome()).isEqualTo(MaintenanceStatus.RESOLVED);
     assertThat(maintenanceCase.diagnosis()).isEqualTo("Broken cable");
     assertThat(maintenanceCase.repairAction()).isEqualTo("Replaced cable");
     assertThat(maintenanceCase.maintenanceNotes())
@@ -74,6 +76,8 @@ class MaintenanceCaseTest {
 
     maintenanceCase.close(CLOSED);
     assertThat(maintenanceCase.status()).isEqualTo(MaintenanceStatus.CLOSED);
+    assertThat(maintenanceCase.completionOutcome()).isEqualTo(MaintenanceStatus.RESOLVED);
+    assertThat(maintenanceCase.copy().completionOutcome()).isEqualTo(MaintenanceStatus.RESOLVED);
     assertThat(maintenanceCase.closedAt()).isEqualTo(CLOSED);
   }
 
@@ -83,10 +87,13 @@ class MaintenanceCaseTest {
 
     maintenanceCase.markNotRepairable("Parts unavailable", COMPLETED);
     assertThat(maintenanceCase.status()).isEqualTo(MaintenanceStatus.NOT_REPAIRABLE);
+    assertThat(maintenanceCase.completionOutcome()).isEqualTo(MaintenanceStatus.NOT_REPAIRABLE);
     assertThat(maintenanceCase.completionInformation()).isEqualTo("Parts unavailable");
     assertThat(maintenanceCase.completedAt()).isEqualTo(COMPLETED);
     maintenanceCase.close(CLOSED);
     assertThat(maintenanceCase.status()).isEqualTo(MaintenanceStatus.CLOSED);
+    assertThat(maintenanceCase.completionOutcome()).isEqualTo(MaintenanceStatus.NOT_REPAIRABLE);
+    assertThat(maintenanceCase.copy().completionOutcome()).isEqualTo(MaintenanceStatus.NOT_REPAIRABLE);
     assertThat(maintenanceCase.closedAt()).isEqualTo(CLOSED);
   }
 
