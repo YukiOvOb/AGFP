@@ -20,4 +20,17 @@
   <plugin><groupId>org.springframework.boot</groupId><artifactId>spring-boot-maven-plugin</artifactId></plugin>
   <plugin><groupId>org.jacoco</groupId><artifactId>jacoco-maven-plugin</artifactId><version>0.8.14</version><executions><execution><goals><goal>prepare-agent</goal></goals></execution><execution><id>report</id><phase>verify</phase><goals><goal>report</goal></goals></execution></executions></plugin>
  </plugins></build>
+ <profiles>
+  <profile>
+   <id>uc04-postgres-it</id>
+   <activation><property><name>uc04.postgres</name><value>true</value></property></activation>
+   <build><plugins>
+    <plugin>
+     <groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId><version>3.5.6</version>
+     <configuration><includes><include>**/*PostgresIT.java</include></includes><failIfNoTests>true</failIfNoTests></configuration>
+     <executions><execution><goals><goal>integration-test</goal><goal>verify</goal></goals></execution></executions>
+    </plugin>
+   </plugins></build>
+  </profile>
+ </profiles>
 </project>
