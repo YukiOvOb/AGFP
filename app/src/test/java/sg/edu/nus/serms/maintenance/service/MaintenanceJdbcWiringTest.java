@@ -28,6 +28,7 @@ class MaintenanceJdbcWiringTest {
   private AnnotationConfigApplicationContext context() {
     var context = new AnnotationConfigApplicationContext();
     context.register(TransactionConfig.class, MaintenanceConfiguration.class, MaintenanceService.class,
+        MaintenanceReportService.class, JdbcMaintenanceReportRepository.class,
         SpringMaintenanceEventPublisher.class, JdbcMaintenanceCaseRepository.class,
         JdbcMaintenanceHistoryRepository.class, JdbcEquipmentMaintenanceAdapter.class,
         JdbcTechnicianDirectoryAdapter.class);
@@ -45,6 +46,8 @@ class MaintenanceJdbcWiringTest {
   void wiresProductionAdaptersAndQualifiedDependenciesWithoutQueryingDatabase() {
     try (var context = context()) {
       assertThat(AopUtils.isCglibProxy(context.getBean(MaintenanceService.class))).isTrue();
+      assertThat(AopUtils.isCglibProxy(context.getBean(MaintenanceReportService.class))).isTrue();
+      assertThat(context.getBean(MaintenanceReportRepository.class)).isInstanceOf(JdbcMaintenanceReportRepository.class);
       assertThat(context.getBean(MaintenanceCaseRepository.class)).isInstanceOf(JdbcMaintenanceCaseRepository.class);
       assertThat(context.getBean(MaintenanceHistoryRepository.class)).isInstanceOf(JdbcMaintenanceHistoryRepository.class);
       assertThat(context.getBean(EquipmentMaintenancePort.class)).isInstanceOf(JdbcEquipmentMaintenanceAdapter.class);

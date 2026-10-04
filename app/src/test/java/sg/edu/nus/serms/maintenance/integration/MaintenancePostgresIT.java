@@ -3,6 +3,8 @@ package sg.edu.nus.serms.maintenance.integration;
 import static org.assertj.core.api.Assertions.*;
 
 import java.sql.Timestamp;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -431,6 +433,113 @@ class MaintenancePostgresIT {
     assertThat(db.service.getEquipmentCases(otherEquipment)).extracting(MaintenanceCase::maintenanceCaseId)
         .containsExactly(other.maintenanceCaseId());
     assertThat(db.service.getEquipmentCases(UUID.randomUUID())).isEmpty();
+  }
+
+  @Test
+  void reportingStatusCountsIncludeAllFiveStatesAgainstRealPostgres() {
+    Instant from = emptyReportingPeriodStart(), to = from.plusSeconds(10);
+    var baseline = db.reports.getMaintenanceReport(from, to).casesByStatus();
+    assertThat(AopUtils.isCglibProxy(db.reports)).isTrue();
+    for (var status : MaintenanceStatus.values()) {
+      var item = reportAt(from);
+      if (status != MaintenanceStatus.OPEN) {
+        db.service.assignTechnician(item.maintenanceCaseId(), technician, reporter);
+      }
+      if (status == MaintenanceStatus.IN_PROGRESS || status == MaintenanceStatus.RESOLVED
+          || status == MaintenanceStatus.UNREPAIRABLE) {
+        db.service.startMaintenance(item.maintenanceCaseId(), technician);
+      }
+      if (status == MaintenanceStatus.RESOLVED) db.service.resolve(item.maintenanceCaseId(), "Repaired", technician);
+      if (status == MaintenanceStatus.UNREPAIRABLE) db.service.markUnrepairable(item.maintenanceCaseId(), "No parts", technician);
+    }
+    var report = db.reports.getMaintenanceReport(from, to);
+    assertThat(report.casesByStatus()).containsOnlyKeys(MaintenanceStatus.values());
+    // Existing unrelated cases remain included in global counts; compare our exact additions.
+    for (var status : MaintenanceStatus.values()) {
+      assertThat(report.casesByStatus().get(status)).isEqualTo(baseline.get(status) + 1);
+    }
+    assertThat(report.reportedCaseCount()).isEqualTo(5);
+    assertThat(report.completedCaseCount()).isEqualTo(2);
+    assertThat(report.averageCompletionDuration()).contains(Duration.ZERO);
+  }
+
+  @Test
+  void reportingPeriodsIncludeFromAndExcludeToForBothReportAndCompletionTimes() {
+    Instant from = emptyReportingPeriodStart(), to = from.plusSeconds(10);
+    var times = List.of(from.minusNanos(1_000), from, from.plusSeconds(5), to, to.plusNanos(1_000));
+    for (int index = 0; index < times.size(); index++) {
+      var item = reportAt(times.get(index));
+      completeAt(item, index % 2 == 0 ? MaintenanceStatus.RESOLVED : MaintenanceStatus.UNREPAIRABLE, times.get(index));
+    }
+    var report = db.reports.getMaintenanceReport(from, to);
+    assertThat(report.fromInclusive()).isEqualTo(from);
+    assertThat(report.toExclusive()).isEqualTo(to);
+    assertThat(report.reportedCaseCount()).isEqualTo(2);
+    assertThat(report.completedCaseCount()).isEqualTo(2);
+    assertThat(report.averageCompletionDuration()).contains(Duration.ZERO);
+  }
+
+  @Test
+  void reportingAverageUsesBothTerminalOutcomesAndFullElapsedTimeWithoutIncompleteCases() {
+    Instant from = emptyReportingPeriodStart(), to = from.plusSeconds(10);
+    var resolved = reportAt(from.minusSeconds(2).minusNanos(123_456_000));
+    var unrepairable = reportAt(from.minusSeconds(2).minusNanos(1_000));
+    completeAt(resolved, MaintenanceStatus.RESOLVED, from.plusSeconds(1));
+    completeAt(unrepairable, MaintenanceStatus.UNREPAIRABLE, from.plusSeconds(2));
+    reportAt(from.plusSeconds(5));
+    var assigned = reportAt(from.plusSeconds(7));
+    db.service.assignTechnician(assigned.maintenanceCaseId(), technician, reporter);
+    var inProgress = reportAt(from.plusSeconds(9));
+    db.service.assignTechnician(inProgress.maintenanceCaseId(), technician, reporter);
+    db.service.startMaintenance(inProgress.maintenanceCaseId(), technician);
+    var report = db.reports.getMaintenanceReport(from, to);
+    assertThat(report.reportedCaseCount()).isEqualTo(3);
+    assertThat(report.completedCaseCount()).isEqualTo(2);
+    // (3.123456 seconds + 4.000001 seconds) / 2 = 3.5617285 seconds.
+    assertThat(report.averageCompletionDuration()).contains(Duration.ofSeconds(3, 561_728_500));
+  }
+
+  @Test
+  void reportingEmptyCompletionPeriodHasEmptyAverageDespiteIncompleteAndOutsideCompletions() {
+    Instant from = emptyReportingPeriodStart(), to = from.plusSeconds(10);
+    var before = reportAt(from.minusSeconds(2));
+    completeAt(before, MaintenanceStatus.RESOLVED, from.minusSeconds(1));
+    var atTo = reportAt(to);
+    completeAt(atTo, MaintenanceStatus.UNREPAIRABLE, to);
+    reportAt(from.plusSeconds(1));
+    var assigned = reportAt(from.plusSeconds(2));
+    db.service.assignTechnician(assigned.maintenanceCaseId(), technician, reporter);
+    var inProgress = reportAt(from.plusSeconds(3));
+    db.service.assignTechnician(inProgress.maintenanceCaseId(), technician, reporter);
+    db.service.startMaintenance(inProgress.maintenanceCaseId(), technician);
+    var report = db.reports.getMaintenanceReport(from, to);
+    assertThat(report.reportedCaseCount()).isEqualTo(3);
+    assertThat(report.completedCaseCount()).isZero();
+    assertThat(report.averageCompletionDuration()).isEmpty();
+  }
+
+  private MaintenanceCase reportAt(Instant at) {
+    db.clock.set(at);
+    return db.service.reportFault(db.equipment(), reporter, "Reporting fixture fault");
+  }
+
+  private void completeAt(MaintenanceCase item, MaintenanceStatus outcome, Instant at) {
+    db.clock.set(at);
+    db.service.assignTechnician(item.maintenanceCaseId(), technician, reporter);
+    db.service.startMaintenance(item.maintenanceCaseId(), technician);
+    if (outcome == MaintenanceStatus.RESOLVED) db.service.resolve(item.maintenanceCaseId(), "Repaired", technician);
+    else db.service.markUnrepairable(item.maintenanceCaseId(), "No parts", technician);
+  }
+
+  private Instant emptyReportingPeriodStart() {
+    // Choose a fixture interval without requiring an empty database or altering unrelated rows.
+    // This is test data selection, not a production reporting-period or timezone default.
+    Instant from = db.clock.instant().plusSeconds(365L * 24 * 60 * 60);
+    for (int attempt = 0; attempt < 10; attempt++, from = from.plusSeconds(60)) {
+      var baseline = db.reports.getMaintenanceReport(from.minusSeconds(3), from.plusSeconds(11));
+      if (baseline.reportedCaseCount() == 0 && baseline.completedCaseCount() == 0) return from;
+    }
+    throw new IllegalStateException("No unused reporting fixture interval found");
   }
 
   private static Comparator<MaintenanceCase> queryOrder(boolean newestFirst) {

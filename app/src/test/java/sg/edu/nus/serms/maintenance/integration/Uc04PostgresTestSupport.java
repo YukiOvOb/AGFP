@@ -44,6 +44,7 @@ final class Uc04PostgresTestSupport implements AutoCloseable {
   final JdbcTemplate jdbc;
   final TransactionTemplate transactions;
   final MaintenanceService service;
+  final MaintenanceReportService reports;
   final JdbcMaintenanceCaseRepository cases;
   final JdbcMaintenanceHistoryRepository history;
   final JdbcEquipmentMaintenanceAdapter equipment;
@@ -64,6 +65,7 @@ final class Uc04PostgresTestSupport implements AutoCloseable {
       transactions.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
       transactions.setTimeout(30);
       service = context.getBean(MaintenanceService.class);
+      reports = context.getBean(MaintenanceReportService.class);
       cases = context.getBean(JdbcMaintenanceCaseRepository.class);
       history = context.getBean(JdbcMaintenanceHistoryRepository.class);
       equipment = context.getBean(JdbcEquipmentMaintenanceAdapter.class);
@@ -212,7 +214,8 @@ final class Uc04PostgresTestSupport implements AutoCloseable {
 
   @TestConfiguration
   @EnableTransactionManagement(proxyTargetClass = true)
-  @Import({MaintenanceService.class, JdbcMaintenanceCaseRepository.class, JdbcMaintenanceHistoryRepository.class,
+  @Import({MaintenanceService.class, MaintenanceReportService.class, JdbcMaintenanceReportRepository.class,
+      JdbcMaintenanceCaseRepository.class, JdbcMaintenanceHistoryRepository.class,
       JdbcEquipmentMaintenanceAdapter.class, JdbcTechnicianDirectoryAdapter.class, SpringMaintenanceEventPublisher.class})
   static class Config {
     @Bean
@@ -250,6 +253,7 @@ final class Uc04PostgresTestSupport implements AutoCloseable {
 
   static final class MutableClock extends Clock {
     private Instant time = Instant.now().truncatedTo(ChronoUnit.MICROS);
+    void set(Instant value) { time = value; }
     void advance() { time = time.plusSeconds(1); }
     @Override public ZoneId getZone() { return ZoneOffset.UTC; }
     @Override public Clock withZone(ZoneId zone) {
