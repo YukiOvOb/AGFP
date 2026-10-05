@@ -3,8 +3,7 @@
 ## 依据和边界
 
 技术基准为 main 的 `README.md`、`docs/tech-stack.md`，身份约定参考 PR #7 的
-`docs/contracts/auth-and-approval.md`。审批事件基于 Draft PR #8 的 `1d3d7be`。
-本分支基于本地审批通知适配 `656dec9`；这些依赖尚未全部进入 main，因此提交 PR 时需要注明依赖。
+`docs/contracts/auth-and-approval.md`。审批事件合同以 Draft PR #8 为准。本 PR 从当前 main 创建，只包含平台登录、REST API 和 React 通知页；审批事件适配留在独立分支，等待审批 PR 合入后对接。
 
 目标技术栈：Java 17 / Spring Boot 3.5 / PostgreSQL 18 / 单一 Flyway 序列；
 React 19 / TypeScript 5 strict / Vite 7 / Router 7 / TanStack Query 5 + Table 8 /
@@ -84,4 +83,4 @@ pnpm test:e2e
 - Playwright：desktop 1440×1000、mobile 390×844 两项登录→收件箱→已读→退出测试通过（模拟 API）。
 - 本地真实 Spring Boot + Vite 代理的 CSRF 初始化和未登录页面已在浏览器检查。
 - PostgreSQL 18 / Testcontainers、真实账号、真实 Loan/审批数据库链路尚未验收；远端三道安全 CI 未在本次本地开发中运行。
-- 没有改动生产 Flyway 文件、根部署配置或 main；本分支依赖 PR #8 与公共数据迁移，提交 PR 时应说明这些依赖。
+- 没有改动生产 Flyway 文件或根部署配置。审批事件适配与公共数据迁移须在各自 PR 中完成。
