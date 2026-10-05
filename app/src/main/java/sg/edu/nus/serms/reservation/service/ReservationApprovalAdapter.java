@@ -1,53 +1,37 @@
 package sg.edu.nus.serms.reservation.service;
 
 import java.util.UUID;
-import org.springframework.transaction.annotation.Transactional;
 import sg.edu.nus.serms.approval.application.ApprovalReservationSnapshot;
 import sg.edu.nus.serms.approval.application.ReservationApprovalPort;
-import sg.edu.nus.serms.reservation.domain.ReservationStatus;
-import sg.edu.nus.serms.reservation.repository.ReservationRepository;
-import sg.edu.nus.serms.shared.domain.RecordNotFoundException;
+import sg.edu.nus.serms.reservation.domain.PendingReservation;
 
 /**
- * The reservation side of the approval port (UC02). Authorisation stays in ApprovalService; this
- * adapter only performs the version-checked PENDING_APPROVAL → CONFIRMED / REJECTED transition.
+ * Adapts {@link ReservationApprovalService} to the port the approval module's ApprovalService
+ * (UC02 branch) depends on, so approval never touches the reservation repository.
  */
 public class ReservationApprovalAdapter implements ReservationApprovalPort {
-  private final ReservationRepository repository;
+  private final ReservationApprovalService reservations;
 
-  public ReservationApprovalAdapter(ReservationRepository repository) {
-    this.repository = repository;
+  public ReservationApprovalAdapter(ReservationApprovalService reservations) {
+    this.reservations = reservations;
   }
 
   @Override
-  @Transactional(readOnly = true)
   public ApprovalReservationSnapshot get(UUID reservationId) {
-    var r = repository.findById(reservationId).orElseThrow(RecordNotFoundException::new);
-    return new ApprovalReservationSnapshot(r.reservationId(), r.requesterId());
+    return snapshot(reservations.get(reservationId));
   }
 
   @Override
-  @Transactional
   public ApprovalReservationSnapshot confirm(UUID reservationId, long expectedVersion) {
-    return move(reservationId, ReservationStatus.CONFIRMED, expectedVersion);
+    return snapshot(reservations.confirm(reservationId, expectedVersion));
   }
 
   @Override
-  @Transactional
   public ApprovalReservationSnapshot reject(UUID reservationId, long expectedVersion) {
-    return move(reservationId, ReservationStatus.REJECTED, expectedVersion);
+    return snapshot(reservations.reject(reservationId, expectedVersion));
   }
 
-  private ApprovalReservationSnapshot move(UUID id, ReservationStatus to, long version) {
-    var current = repository.findByIdForUpdate(id).orElseThrow(RecordNotFoundException::new);
-    boolean changed;
-    try {
-      changed =
-          repository.changeStatus(id, ReservationStatus.PENDING_APPROVAL, to, version);
-    } catch (org.springframework.dao.DataAccessException e) {
-      throw ReservationService.translate(e);
-    }
-    if (!changed) throw new ReservationException.StaleVersion();
-    return new ApprovalReservationSnapshot(id, current.requesterId());
+  private static ApprovalReservationSnapshot snapshot(PendingReservation r) {
+    return new ApprovalReservationSnapshot(r.reservationId(), r.requesterId());
   }
 }

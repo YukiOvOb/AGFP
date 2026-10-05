@@ -11,6 +11,7 @@ import java.util.UUID;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import sg.edu.nus.serms.reservation.domain.PendingReservation;
 import sg.edu.nus.serms.reservation.domain.Reservation;
 import sg.edu.nus.serms.reservation.domain.ReservationStatus;
 
@@ -182,6 +183,55 @@ public class ReservationRepository {
     return new Page(items, total == null ? 0 : total);
   }
 
+  private static final String PENDING_SELECT =
+      """
+      SELECT r.reservation_id, r.requester_id, u.display_name, r.equipment_id, e.asset_tag, e.name,
+             e.category, r.start_at, r.end_at, r.purpose, r.status, r.version, r.created_at,
+             (r.status = 'PENDING_APPROVAL' AND r.start_at <= :now) AS expired
+      FROM serms.reservation r
+      JOIN serms.equipment e ON e.equipment_id = r.equipment_id
+      JOIN serms.app_user u ON u.user_id = r.requester_id
+      """;
+
+  /** Pending requests, earliest start first; includes expired ones (UC02 list). */
+  public List<PendingReservation> findPendingApproval(Instant now, int limit, long offset) {
+    return jdbc.query(
+        PENDING_SELECT
+            + " WHERE r.status = 'PENDING_APPROVAL'"
+            + " ORDER BY r.start_at, r.created_at, r.reservation_id LIMIT :limit OFFSET :offset",
+        new MapSqlParameterSource("now", utc(now)).addValue("limit", limit).addValue("offset", offset),
+        (rs, row) -> pending(rs));
+  }
+
+  public long countPendingApproval() {
+    Long n =
+        jdbc.queryForObject(
+            "SELECT count(*) FROM serms.reservation WHERE status = 'PENDING_APPROVAL'",
+            new MapSqlParameterSource(),
+            Long.class);
+    return n == null ? 0 : n;
+  }
+
+  public Optional<PendingReservation> findPendingView(UUID reservationId, Instant now) {
+    return jdbc
+        .query(
+            PENDING_SELECT + " WHERE r.reservation_id = :id",
+            new MapSqlParameterSource("id", reservationId).addValue("now", utc(now)),
+            (rs, row) -> pending(rs))
+        .stream()
+        .findFirst();
+  }
+
+  public Optional<UUID> equipmentIdOf(UUID reservationId) {
+    return jdbc
+        .queryForList(
+            "SELECT equipment_id FROM serms.reservation WHERE reservation_id = :id",
+            new MapSqlParameterSource("id", reservationId),
+            UUID.class)
+        .stream()
+        .findFirst();
+  }
+
   /**
    * Compare-and-set status change. Returns false when the row is no longer in {@code from} or its
    * version moved on; the database trigger still validates the transition itself.
@@ -220,6 +270,25 @@ public class ReservationRepository {
         instant(rs, "created_at"),
         rs.getLong("version"),
         rs.getBoolean("checked_out"));
+  }
+
+  private static PendingReservation pending(ResultSet rs) throws SQLException {
+    return new PendingReservation(
+        rs.getObject("reservation_id", UUID.class),
+        rs.getObject("requester_id", UUID.class),
+        rs.getString("display_name"),
+        new PendingReservation.EquipmentSummary(
+            rs.getObject("equipment_id", UUID.class),
+            rs.getString("asset_tag"),
+            rs.getString("name"),
+            rs.getString("category")),
+        instant(rs, "start_at"),
+        instant(rs, "end_at"),
+        rs.getString("purpose"),
+        ReservationStatus.valueOf(rs.getString("status")),
+        rs.getLong("version"),
+        instant(rs, "created_at"),
+        rs.getBoolean("expired"));
   }
 
   private static OffsetDateTime utc(Instant instant) {

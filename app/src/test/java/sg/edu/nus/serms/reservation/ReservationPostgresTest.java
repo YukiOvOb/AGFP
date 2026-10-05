@@ -30,6 +30,7 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.support.TransactionTemplate;
 import sg.edu.nus.serms.equipment.domain.EquipmentSearchCriteria;
 import sg.edu.nus.serms.equipment.domain.EquipmentSummary;
 import sg.edu.nus.serms.equipment.domain.TimeWindow;
@@ -38,7 +39,14 @@ import sg.edu.nus.serms.equipment.service.EquipmentSearchService;
 import sg.edu.nus.serms.reservation.domain.ReservationRequest;
 import sg.edu.nus.serms.reservation.domain.ReservationStatus;
 import sg.edu.nus.serms.reservation.repository.ReservationRepository;
+import sg.edu.nus.serms.reservation.domain.PendingReservation;
+import sg.edu.nus.serms.reservation.service.DefaultReservationApprovalService;
 import sg.edu.nus.serms.reservation.service.ReservationApprovalAdapter;
+import sg.edu.nus.serms.reservation.service.ReservationApprovalService;
+import sg.edu.nus.serms.reservation.service.ReservationExpiredException;
+import sg.edu.nus.serms.reservation.service.ReservationNotFoundException;
+import sg.edu.nus.serms.reservation.service.ReservationStateConflictException;
+import sg.edu.nus.serms.reservation.service.ReservationVersionConflictException;
 import sg.edu.nus.serms.reservation.service.ReservationConfiguration;
 import sg.edu.nus.serms.reservation.service.ReservationException;
 import sg.edu.nus.serms.reservation.service.ReservationLimits;
@@ -51,7 +59,8 @@ import sg.edu.nus.serms.testsupport.SermsPostgres;
 
 /**
  * UC01 test bench against a real PostgreSQL 18 with the V001 + V002 schema: search, availability,
- * booking rules, the exclusion constraint under concurrency, cancellation and the approval port.
+ * booking rules, the exclusion constraint under concurrency, cancellation and the UC02
+ * ReservationApprovalService contract (auth-and-approval.md §3–4).
  * Method security is covered separately in {@code ReservationServiceSecurityTest}.
  */
 @SpringJUnitConfig(ReservationPostgresTest.Config.class)
@@ -99,8 +108,13 @@ class ReservationPostgresTest {
     }
 
     @Bean
-    ReservationApprovalAdapter reservationApprovalAdapter(ReservationRepository repository) {
-      return new ReservationApprovalAdapter(repository);
+    ReservationApprovalService reservationApprovalService(ReservationRepository repository) {
+      return new DefaultReservationApprovalService(repository, Clock.systemUTC());
+    }
+
+    @Bean
+    ReservationApprovalAdapter reservationApprovalAdapter(ReservationApprovalService service) {
+      return new ReservationApprovalAdapter(service);
     }
   }
 
@@ -121,7 +135,9 @@ class ReservationPostgresTest {
   @Autowired JdbcTemplate jdbc;
   @Autowired ReservationService reservations;
   @Autowired EquipmentSearchService search;
-  @Autowired ReservationApprovalAdapter approvals;
+  @Autowired ReservationApprovalService approvalService;
+  @Autowired ReservationApprovalAdapter approvalPort;
+  @Autowired PlatformTransactionManager transactions;
   @Autowired Events events;
   SermsFixtures fixtures;
   UUID borrower;
@@ -483,29 +499,98 @@ class ReservationPostgresTest {
   }
 
   @Nested
-  class ApprovalPort {
-    @Test
-    void approverDecisionMovesPendingReservationWithVersionCheck() {
-      UUID item = fixtures.equipment("Oscilloscope", category, "E4 Lab", true);
-      var r = reservations.submit(borrower, request(item, 1, 3));
-      assertThat(approvals.get(r.reservationId()).requesterId()).isEqualTo(borrower);
-      assertThatThrownBy(() -> approvals.confirm(r.reservationId(), r.version() + 1))
-          .isInstanceOf(ReservationException.StaleVersion.class);
-      approvals.confirm(r.reservationId(), r.version());
-      assertThat(fixtures.reservationStatus(r.reservationId())).isEqualTo("CONFIRMED");
-      assertThatThrownBy(() -> approvals.reject(r.reservationId(), r.version()))
-          .isInstanceOf(ReservationException.StaleVersion.class);
+  class ApprovalContract {
+    UUID pendingItem() {
+      return fixtures.equipment("Oscilloscope", category, "E4 Lab", true);
+    }
+
+    <T> T inTransaction(java.util.function.Supplier<T> work) {
+      return new TransactionTemplate(transactions).execute(status -> work.get());
     }
 
     @Test
-    void rejectionFreesTheSlot() {
-      UUID item = fixtures.equipment("Oscilloscope", category, "E4 Lab", true);
+    void pendingListShowsRequesterEquipmentAndExpiry() {
+      UUID item = pendingItem();
+      var future = reservations.submit(borrower, request(item, 1, 3));
+      UUID expired =
+          fixtures.reservation(
+              fixtures.user("BORROWER"), item, Instant.now().minusSeconds(3600), Instant.now().plusSeconds(1800),
+              "PENDING_APPROVAL");
+      var view = approvalService.get(future.reservationId());
+      assertThat(view.requesterName()).isEqualTo("UC01 test user");
+      assertThat(view.equipment().category()).isEqualTo(category);
+      assertThat(view.expired()).isFalse();
+      assertThat(approvalService.get(expired).expired()).isTrue();
+      var page = approvalService.findPendingApproval(org.springframework.data.domain.PageRequest.of(0, 500));
+      assertThat(page.getContent()).extracting(PendingReservation::reservationId)
+          .contains(future.reservationId(), expired);
+      assertThat(page.getContent()).allSatisfy(p -> assertThat(p.status()).isEqualTo(ReservationStatus.PENDING_APPROVAL));
+      assertThatThrownBy(() -> approvalService.get(UUID.randomUUID()))
+          .isInstanceOf(ReservationNotFoundException.class);
+    }
+
+    @Test
+    void confirmAndRejectMustRunInsideTheApproversTransaction() {
+      var r = reservations.submit(borrower, request(pendingItem(), 1, 3));
+      assertThatThrownBy(() -> approvalService.confirm(r.reservationId(), r.version()))
+          .isInstanceOf(org.springframework.transaction.IllegalTransactionStateException.class);
+      assertThatThrownBy(() -> approvalService.reject(r.reservationId(), r.version()))
+          .isInstanceOf(org.springframework.transaction.IllegalTransactionStateException.class);
+    }
+
+    @Test
+    void confirmChecksVersionAndStateThenConfirms() {
+      var r = reservations.submit(borrower, request(pendingItem(), 1, 3));
+      assertThatThrownBy(() -> inTransaction(() -> approvalService.confirm(r.reservationId(), r.version() + 1)))
+          .isInstanceOfSatisfying(
+              ReservationVersionConflictException.class,
+              e -> assertThat(e.currentVersion()).isEqualTo(r.version()));
+      var confirmed = inTransaction(() -> approvalService.confirm(r.reservationId(), r.version()));
+      assertThat(confirmed.status()).isEqualTo(ReservationStatus.CONFIRMED);
+      assertThat(confirmed.version()).isGreaterThan(r.version());
+      assertThatThrownBy(() -> inTransaction(() -> approvalService.reject(r.reservationId(), confirmed.version())))
+          .isInstanceOfSatisfying(
+              ReservationStateConflictException.class,
+              e -> assertThat(e.currentStatus()).isEqualTo(ReservationStatus.CONFIRMED));
+    }
+
+    @Test
+    void expiredRequestsCanOnlyBeRejected() {
+      UUID item = pendingItem();
+      UUID expired =
+          fixtures.reservation(
+              borrower, item, Instant.now().minusSeconds(3600), Instant.now().plusSeconds(1800), "PENDING_APPROVAL");
+      long version = approvalService.get(expired).version();
+      assertThatThrownBy(() -> inTransaction(() -> approvalService.confirm(expired, version)))
+          .isInstanceOf(ReservationExpiredException.class);
+      assertThat(inTransaction(() -> approvalService.reject(expired, version)).status())
+          .isEqualTo(ReservationStatus.REJECTED);
+    }
+
+    @Test
+    void equipmentThatBrokeWhileWaitingCannotBeConfirmed() {
+      UUID item = pendingItem();
       var r = reservations.submit(borrower, request(item, 1, 3));
-      approvals.reject(r.reservationId(), r.version());
+      fixtures.openMaintenanceCase(item, fixtures.user("BORROWER"));
+      assertThatThrownBy(() -> inTransaction(() -> approvalService.confirm(r.reservationId(), r.version())))
+          .isInstanceOf(ReservationStateConflictException.class)
+          .hasMessageContaining("unavailable");
+      assertThat(fixtures.reservationStatus(r.reservationId())).isEqualTo("PENDING_APPROVAL");
+    }
+
+    @Test
+    void rejectionFreesTheSlotAndTheApprovalPortDelegates() {
+      UUID item = pendingItem();
+      var r = reservations.submit(borrower, request(item, 1, 3));
+      assertThat(approvalPort.get(r.reservationId()).requesterId()).isEqualTo(borrower);
+      var snapshot = inTransaction(() -> approvalPort.reject(r.reservationId(), r.version()));
+      assertThat(snapshot.reservationId()).isEqualTo(r.reservationId());
       assertThat(fixtures.reservationStatus(r.reservationId())).isEqualTo("REJECTED");
       assertThat(reservations.submit(fixtures.user("BORROWER"), request(item, 1, 3)).status())
           .isEqualTo(ReservationStatus.PENDING_APPROVAL);
-      assertThatThrownBy(() -> approvals.get(UUID.randomUUID())).isInstanceOf(RecordNotFoundException.class);
+      var other = reservations.submit(fixtures.user("BORROWER"), request(item, 5, 6));
+      assertThat(inTransaction(() -> approvalPort.confirm(other.reservationId(), other.version())).requesterId())
+          .isNotEqualTo(borrower);
     }
   }
 
