@@ -47,7 +47,7 @@ Team 07 · Shared Equipment Reservation and Maintenance System（共享设备预
 | 运维端点 | Spring Boot Actuator（只开放 `health`、`info`） | 随 Boot | ⬜ |
 | 构建 | Maven（Maven Wrapper `./mvnw`） | 3.9 | ✅ |
 | 测试 | JUnit 5 · Mockito · AssertJ · Spring Boot Test | 随 Boot | ✅ |
-| 集成测试数据库 | Testcontainers（真实 PostgreSQL 18） | — | ⬜ |
+| 集成测试数据库 | Testcontainers（真实 PostgreSQL 18） | — | 🔶 UC01 分支（`testsupport/SermsPostgres`） |
 | 分层规则检查 | ArchUnit | — | ⬜ |
 | 覆盖率 | JaCoCo（service + domain ≥ 70% 作为合并门槛） | 0.8.x | ✅ 已生成报告，门槛待加 |
 | 代码规范 / 静态分析 | Spotless（google-java-format）· SpotBugs + FindSecBugs | — | ⬜ |

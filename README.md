@@ -101,7 +101,7 @@ CI 只能验证已经写好的测试。**每位成员必须为自己负责的用
 
 ## 协作与发布
 
-- 模块之间的接口合同放在 [`docs/contracts/`](docs/contracts/)，以仓库版本为准；修改合同需要提 PR，并由受影响模块的负责人确认。目前已有：[登录与审批（UC02）](docs/contracts/auth-and-approval.md)。
+- 模块之间的接口合同放在 [`docs/contracts/`](docs/contracts/)，以仓库版本为准；修改合同需要提 PR，并由受影响模块的负责人确认。目前已有：[登录与审批（UC02）](docs/contracts/auth-and-approval.md)、[设备搜索与预约（UC01）](docs/contracts/equipment-and-reservation.md)。
 - 所有改动走 PR。`main` 受分支保护，必须通过 CI 检查（gitleaks、Trivy、依赖审查）才能合并。
 - 所有有 Write 权限的协作者都可以自行合并自己的 PR，不需要他人审批，只要求 CI 全绿。
 - 线上地址：https://serms.midas.cyou （香港服务器，Let's Encrypt 证书自动续期）
@@ -112,6 +112,12 @@ CI 只能验证已经写好的测试。**每位成员必须为自己负责的用
 ## SERMS Sprint 1 application
 
 通知后端位于 `app/`，React 收件箱与登录页面位于 `frontend/`。本分支新增的 REST、Identity 和前端开发方式见 [对齐说明](docs/platform-rest-react.md)。公共 PostgreSQL 18 迁移、真实账号和部署整合仍待团队依赖合入；旧 H2 local 配置仅可运行通知测试基线，不能用于完整登录验收。
+
+## UC01 搜索和预约设备（Member 1）
+
+后端 `app/` 的 `equipment`、`reservation` 模块和前端 `frontend/src/features/{equipment,reservation}`：按名称 / 类别 / 位置 / 时间段搜索、查看占用时段、提交和取消预约、我的预约；预约规则用策略模式；按 UC02 合同提供 `ReservationApprovalService`。测试台包括在 PostgreSQL 18（Testcontainers，需要 Docker）上运行的并发冲突测试。说明见 [UC01 文档](docs/uc01-search-and-reserve.md)、[接口合同](docs/contracts/equipment-and-reservation.md)。
+
+需求清单、Sprint 计划、进度与风险、演示脚本和敏捷证据在 [docs/agile/](docs/agile/README.md)。
 
 ## SERMS Sprint 1 data foundation
 
