@@ -16,3 +16,4 @@ __pycache__/
 **/*.tsbuildinfo
 frontend/playwright-report/
 frontend/test-results/
+.cache/
