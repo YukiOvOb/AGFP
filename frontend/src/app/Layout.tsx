@@ -1,4 +1,4 @@
-import { Bell, Boxes, ChevronRight, LogOut } from 'lucide-react';
+import { Bell, Boxes, CalendarCheck, ChevronRight, LogOut, Search } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
 import { useState } from 'react';
 import { useAuth } from './AuthProvider';
@@ -33,6 +33,16 @@ export function Layout() {
         </a>
         <span className="nav-label">WORKSPACE</span>
         <nav aria-label="Main navigation">
+          <NavLink to="/equipment" end={false}>
+            <Search size={19} />
+            Find equipment
+          </NavLink>
+          {user?.roles?.includes('BORROWER') && (
+            <NavLink to="/reservations">
+              <CalendarCheck size={19} />
+              My reservations
+            </NavLink>
+          )}
           <NavLink to="/notifications">
             <Bell size={19} />
             Notifications

@@ -1,6 +1,9 @@
 import { Navigate, Route, Routes } from 'react-router';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { NotificationPage } from '@/features/notification/NotificationPage';
+import { EquipmentSearchPage } from '@/features/equipment/EquipmentSearchPage';
+import { ReservePage } from '@/features/reservation/ReservePage';
+import { MyReservationsPage } from '@/features/reservation/MyReservationsPage';
 import { RequireRole } from './RequireRole';
 import { Layout } from './Layout';
 export function App() {
@@ -11,6 +14,11 @@ export function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Navigate to="/notifications" replace />} />
           <Route path="/notifications" element={<NotificationPage />} />
+          <Route path="/equipment" element={<EquipmentSearchPage />} />
+          <Route element={<RequireRole role="BORROWER" />}>
+            <Route path="/equipment/:equipmentId/reserve" element={<ReservePage />} />
+            <Route path="/reservations" element={<MyReservationsPage />} />
+          </Route>
           <Route
             path="*"
             element={
