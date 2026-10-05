@@ -10,7 +10,7 @@
 
 | 用例 | 负责 | 后端 | 前端 | 测试台 | 位置 |
 | --- | --- | --- | --- | --- | --- |
-| UC01 搜索和预约 | Member 1 | ✅ | ✅ | ✅ 后端 69 + 前端 15 + E2E | 分支 `claude/elegant-bohr-ncki11` |
+| UC01 搜索和预约 | Member 1 | ✅ | ✅ | ✅ 后端 69 + 前端 15 + E2E | UC01 分支（本 PR） |
 | UC02 审批 | Member 2 | 🔶 领域 + 服务，无 REST | ⬜ | 🔶 单元测试 | [Draft PR #8](https://github.com/YukiOvOb/AGFP/pull/8) |
 | UC03 领用归还 | Member 3 | ⬜（表结构和约束已在 main） | ⬜ | 🔶 数据库测试（PR #10） | main `database/` |
 | UC04 维修 | Member 4 | 🔶 领域、服务、JDBC、报表读模型 | ⬜ | 🔶 含 PostgreSQL 集成测试 | [Draft PR #9](https://github.com/YukiOvOb/AGFP/pull/9) |
