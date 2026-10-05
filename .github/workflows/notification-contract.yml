@@ -1,0 +1,28 @@
+name: Notification PostgreSQL contract
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  notification-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          cache-dependency-path: integration/notifications/pom.xml
+      - name: Fetch the pinned notification contract
+        run: git fetch --no-tags origin 01b50778701ed8a729039790238581bb59e929b5
+      - name: Test actual upstream services with PostgreSQL
+        shell: pwsh
+        run: ./scripts/test-notification-integration.ps1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: notification-postgres-contract
+          path: integration/notifications/target/surefire-reports/
