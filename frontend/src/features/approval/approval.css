@@ -1,0 +1,198 @@
+.approval {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.approval .page-title {
+  margin-bottom: 0;
+  gap: 16px;
+}
+.approval .approval-panel {
+  padding: 26px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  min-width: 0;
+}
+.approval h2 {
+  margin: 0 0 12px;
+  font-size: 20px;
+}
+.approval h3 {
+  margin: 16px 0 10px;
+  font-size: 16px;
+}
+.approval .approval-panel-heading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.approval .approval-panel-heading h2 {
+  margin-bottom: 5px;
+}
+.approval .approval-panel-heading p {
+  margin-bottom: 0;
+  font-size: 13px;
+}
+.approval .approval-panel-heading > .badge {
+  margin-left: auto;
+}
+.approval .approval-table-scroll {
+  overflow-x: auto;
+}
+.approval table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+  font-size: 13px;
+}
+.approval th {
+  text-align: left;
+  font-size: 12px;
+  color: var(--muted);
+}
+.approval th,
+.approval td {
+  padding: 16px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.approval td small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+}
+.approval td .approval-expired {
+  color: #985a21;
+}
+.approval .approval-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 22px;
+  font-size: 12px;
+}
+.approval .approval-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.approval .approval-meta {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 12px 16px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.approval dt {
+  color: var(--muted);
+}
+.approval dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.approval .approval-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.approval .approval-back {
+  color: var(--primary);
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.approval .approval-notice {
+  background: #f7f5e9;
+  border: 1px solid #e5d9ad;
+  border-radius: 8px;
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.approval .approval-choice {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  margin: 12px 0;
+}
+.approval fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.approval legend {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.approval .approval-comment-label {
+  display: block;
+  margin: 22px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.approval textarea {
+  font: inherit;
+  font-size: 14px;
+  resize: vertical;
+  line-height: 1.6;
+}
+.approval textarea:focus-visible,
+.approval input[type='radio']:focus-visible {
+  outline: 3px solid #a78239;
+  outline-offset: 3px;
+}
+.approval .approval-help {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 7px;
+}
+.approval .field-error {
+  margin: 8px 0;
+}
+.approval .approval-confirmation {
+  background: #f0f5ee;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+}
+.approval .approval-confirmation h3 {
+  margin-top: 0;
+}
+.approval .approval-confirmation p {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.approval .approval-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+@media (max-width: 760px) {
+  .approval .approval-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .approval .approval-panel {
+    padding: 18px;
+  }
+  .approval .approval-panel-heading {
+    flex-wrap: wrap;
+  }
+  .approval .approval-panel-heading > .badge {
+    margin-left: 0;
+  }
+  .approval .approval-meta {
+    grid-template-columns: 85px minmax(0, 1fr);
+    gap: 10px;
+  }
+  .approval .approval-pagination .button {
+    padding: 9px;
+  }
+}
