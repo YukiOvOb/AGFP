@@ -47,8 +47,9 @@ class JdbcEquipmentMaintenanceAdapterTest {
   @Test
   void existenceUsesEquipmentUuidAndRejectsMissingRow() {
     when(jdbc.queryForObject(anyString(), eq(Boolean.class), eq(EQUIPMENT))).thenReturn(false);
-    assertThatIllegalArgumentException().isThrownBy(() -> adapter.ensureEquipmentExists(EQUIPMENT))
-        .withMessageContaining(EQUIPMENT.toString());
+    assertThatThrownBy(() -> adapter.ensureEquipmentExists(EQUIPMENT))
+        .isInstanceOf(sg.edu.nus.serms.maintenance.service.MaintenanceEquipmentNotFoundException.class)
+        .hasMessageContaining(EQUIPMENT.toString());
     verify(jdbc).queryForObject(contains("FROM serms.equipment WHERE equipment_id = ?"), eq(Boolean.class), eq(EQUIPMENT));
   }
 
@@ -63,8 +64,9 @@ class JdbcEquipmentMaintenanceAdapterTest {
   void missingEquipmentLockRejected() {
     when(jdbc.query(anyString(), org.mockito.ArgumentMatchers.<RowMapper<String>>any(), any(Object[].class)))
         .thenReturn(List.of());
-    assertThatIllegalArgumentException().isThrownBy(() -> adapter.lockForMaintenance(EQUIPMENT))
-        .withMessageContaining("does not exist");
+    assertThatThrownBy(() -> adapter.lockForMaintenance(EQUIPMENT))
+        .isInstanceOf(sg.edu.nus.serms.maintenance.service.MaintenanceEquipmentNotFoundException.class)
+        .hasMessageContaining("does not exist");
   }
 
   @Test
@@ -93,8 +95,9 @@ class JdbcEquipmentMaintenanceAdapterTest {
   @Test
   void reportingRetiredEquipmentIsRejectedWithoutWrite() {
     current("RETIRED");
-    assertThatIllegalArgumentException().isThrownBy(() -> adapter.markUnderMaintenance(EQUIPMENT))
-        .withMessageContaining("RETIRED");
+    assertThatThrownBy(() -> adapter.markUnderMaintenance(EQUIPMENT))
+        .isInstanceOf(sg.edu.nus.serms.maintenance.service.MaintenanceStateConflictException.class)
+        .hasMessageContaining("RETIRED");
     verify(jdbc, never()).update(anyString(), any(Object[].class));
   }
 

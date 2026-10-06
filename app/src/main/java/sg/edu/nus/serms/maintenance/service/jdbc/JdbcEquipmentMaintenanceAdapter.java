@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import sg.edu.nus.serms.maintenance.service.EquipmentMaintenancePort;
+import sg.edu.nus.serms.maintenance.service.MaintenanceEquipmentNotFoundException;
+import sg.edu.nus.serms.maintenance.service.MaintenanceStateConflictException;
 
 @Component
 public class JdbcEquipmentMaintenanceAdapter implements EquipmentMaintenancePort {
@@ -29,7 +31,7 @@ public class JdbcEquipmentMaintenanceAdapter implements EquipmentMaintenancePort
   @Transactional(propagation = Propagation.MANDATORY)
   public void markUnderMaintenance(UUID id) {
     String current = lockStatus(id);
-    if (current.equals("RETIRED")) throw new IllegalArgumentException("Equipment is RETIRED: " + id);
+    if (current.equals("RETIRED")) throw new MaintenanceStateConflictException("Equipment is RETIRED: " + id);
     changeStatus(id, current, "UNDER_MAINTENANCE");
   }
 
@@ -73,7 +75,7 @@ public class JdbcEquipmentMaintenanceAdapter implements EquipmentMaintenancePort
     }
   }
 
-  private static IllegalArgumentException missing(UUID id) {
-    return new IllegalArgumentException("Equipment does not exist: " + id);
+  private static MaintenanceEquipmentNotFoundException missing(UUID id) {
+    return new MaintenanceEquipmentNotFoundException(id);
   }
 }

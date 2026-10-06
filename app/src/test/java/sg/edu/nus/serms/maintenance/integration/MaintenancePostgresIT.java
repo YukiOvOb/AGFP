@@ -197,7 +197,7 @@ class MaintenancePostgresIT {
     assertThat(db.equipmentStatus(equipment)).isEqualTo("RETIRED");
     assertThat(db.equipmentVersion(equipment)).isEqualTo(version);
     assertThatThrownBy(() -> db.service.reportFault(equipment, reporter, "Another fault"))
-        .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("RETIRED");
+        .isInstanceOf(sg.edu.nus.serms.maintenance.service.MaintenanceStateConflictException.class).hasMessageContaining("RETIRED");
     assertThat(db.equipmentVersion(equipment)).isEqualTo(version);
     assertThat(db.jdbc.queryForObject("SELECT count(*) FROM serms.maintenance_case WHERE equipment_id = ?",
         Integer.class, equipment)).isEqualTo(1);

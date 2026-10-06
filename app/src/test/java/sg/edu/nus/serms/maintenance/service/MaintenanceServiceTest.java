@@ -104,7 +104,7 @@ class MaintenanceServiceTest {
   void repeatedAssignmentAndPrematureStartAreRejected() {
     report();
     assertThatThrownBy(() -> service.startMaintenance(CASE, ACTOR))
-        .isInstanceOf(InvalidMaintenanceTransitionException.class);
+        .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
     service.assignTechnician(CASE, TECHNICIAN, ACTOR);
     assertThatThrownBy(() -> service.assignTechnician(CASE, TECHNICIAN, ACTOR))
         .isInstanceOf(InvalidMaintenanceTransitionException.class);
@@ -146,9 +146,10 @@ class MaintenanceServiceTest {
       else item.markUnrepairable("No parts", NOW);
     }
     cases.saved.put(CASE, item);
-    assertThatThrownBy(() -> work(action, "Detail")).isInstanceOf(IllegalStateException.class);
+    assertThatThrownBy(() -> work(action, "Detail")).isInstanceOf(status == MaintenanceStatus.OPEN
+        ? org.springframework.security.access.AccessDeniedException.class : MaintenanceStateConflictException.class);
     assertThat(history.entries).isEmpty();
-    assertThat(calls).isEmpty();
+    assertThat(calls).containsExactly("lock");
   }
 
   @ParameterizedTest

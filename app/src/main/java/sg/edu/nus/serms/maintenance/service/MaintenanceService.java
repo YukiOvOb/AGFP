@@ -8,6 +8,9 @@ import java.util.UUID;
 import java.util.function.Supplier;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
+import sg.edu.nus.serms.maintenance.service.security.MaintenanceAccessPolicy;
 import org.springframework.transaction.annotation.Transactional;
 import sg.edu.nus.serms.maintenance.domain.MaintenanceAssigned;
 import sg.edu.nus.serms.maintenance.domain.MaintenanceCase;
@@ -44,10 +47,12 @@ public class MaintenanceService {
     this.clock = Objects.requireNonNull(clock, "clock");
   }
 
+  @PreAuthorize(MaintenanceAccessPolicy.REPORTER)
   public MaintenanceCase reportFault(UUID equipmentId, UUID reportedBy, String faultDescription) {
     return reportFault(equipmentId, reportedBy, faultDescription, null);
   }
 
+  @PreAuthorize(MaintenanceAccessPolicy.REPORTER)
   public MaintenanceCase reportFault(UUID equipmentId, UUID reportedBy, String faultDescription,
       UUID loanId) {
     Instant now = clock.instant();
@@ -61,6 +66,7 @@ public class MaintenanceService {
     return item.copy();
   }
 
+  @PreAuthorize(MaintenanceAccessPolicy.ASSIGNER)
   public MaintenanceCase assignTechnician(UUID caseId, UUID technicianId, UUID actorId) {
     Objects.requireNonNull(actorId, "actorId");
     Objects.requireNonNull(technicianId, "technicianId");
@@ -76,10 +82,13 @@ public class MaintenanceService {
     return item.copy();
   }
 
+  @PreAuthorize(MaintenanceAccessPolicy.TECHNICIAN_START)
   public MaintenanceCase startMaintenance(UUID caseId, UUID actorId) {
     Objects.requireNonNull(actorId, "actorId");
     var item = load(caseId);
     equipment.lockForMaintenance(item.equipmentId());
+    item = load(caseId);
+    requireAssignedTechnician(item, actorId);
     var before = item.status();
     item.start();
     item = cases.update(item);
@@ -87,14 +96,17 @@ public class MaintenanceService {
     return item.copy();
   }
 
+  @PreAuthorize(MaintenanceAccessPolicy.TECHNICIAN_WORK)
   public MaintenanceCase recordDiagnosis(UUID caseId, String diagnosis, UUID actorId) {
     return recordWork(caseId, diagnosis, actorId, MaintenanceHistoryAction.RECORD_DIAGNOSIS);
   }
 
+  @PreAuthorize(MaintenanceAccessPolicy.TECHNICIAN_WORK)
   public MaintenanceCase recordRepairAction(UUID caseId, String repairAction, UUID actorId) {
     return recordWork(caseId, repairAction, actorId, MaintenanceHistoryAction.RECORD_REPAIR_ACTION);
   }
 
+  @PreAuthorize(MaintenanceAccessPolicy.TECHNICIAN_WORK)
   public MaintenanceCase addMaintenanceNote(UUID caseId, String note, UUID actorId) {
     return recordWork(caseId, note, actorId, MaintenanceHistoryAction.ADD_NOTE);
   }
@@ -103,9 +115,6 @@ public class MaintenanceService {
       MaintenanceHistoryAction action) {
     Objects.requireNonNull(actorId, "actorId");
     var item = load(caseId);
-    if (item.status() != MaintenanceStatus.IN_PROGRESS) {
-      throw new IllegalStateException("Maintenance work requires IN_PROGRESS status");
-    }
     if (detail == null || detail.isBlank()) {
       throw new IllegalArgumentException("Maintenance detail must not be blank");
     }
@@ -113,17 +122,20 @@ public class MaintenanceService {
     // a case that became terminal while this transaction was waiting for that lock.
     equipment.lockForMaintenance(item.equipmentId());
     item = load(caseId);
+    requireAssignedTechnician(item, actorId);
     if (item.status() != MaintenanceStatus.IN_PROGRESS) {
-      throw new IllegalStateException("Maintenance work requires IN_PROGRESS status");
+      throw new MaintenanceStateConflictException("Maintenance work requires IN_PROGRESS status");
     }
     record(item, action, item.status(), actorId, clock.instant(), detail.strip());
     return item.copy();
   }
 
+  @PreAuthorize(MaintenanceAccessPolicy.TECHNICIAN_WORK)
   public MaintenanceCase resolve(UUID caseId, String resolutionNote, UUID actorId) {
     return complete(caseId, resolutionNote, actorId, false);
   }
 
+  @PreAuthorize(MaintenanceAccessPolicy.TECHNICIAN_WORK)
   public MaintenanceCase markUnrepairable(UUID caseId, String resolutionNote, UUID actorId) {
     return complete(caseId, resolutionNote, actorId, true);
   }
@@ -133,6 +145,8 @@ public class MaintenanceService {
     Objects.requireNonNull(actorId, "actorId");
     var item = load(caseId);
     equipment.lockForMaintenance(item.equipmentId());
+    item = load(caseId);
+    requireAssignedTechnician(item, actorId);
     var before = item.status();
     Instant now = clock.instant();
     if (unrepairable) item.markUnrepairable(resolutionNote, now);
@@ -149,19 +163,23 @@ public class MaintenanceService {
   }
 
   @Transactional(readOnly = true)
+  @PreAuthorize(MaintenanceAccessPolicy.CASE_READER)
   public MaintenanceCase getCase(UUID caseId) { return load(caseId); }
 
   @Transactional(readOnly = true)
+  @PreAuthorize(MaintenanceAccessPolicy.OPERATORS)
   public List<MaintenanceCase> getOpenCases() {
     return copies(cases.findOpenCases());
   }
 
   @Transactional(readOnly = true)
+  @PreAuthorize(MaintenanceAccessPolicy.OWN_CASES)
   public List<MaintenanceCase> getAssignedCases(UUID technicianId) {
     return copies(cases.findByAssignedTo(Objects.requireNonNull(technicianId, "technicianId")));
   }
 
   @Transactional(readOnly = true)
+  @PreAuthorize(MaintenanceAccessPolicy.OPERATORS)
   public List<MaintenanceCase> getEquipmentCases(UUID equipmentId) {
     return copies(cases.findByEquipmentId(Objects.requireNonNull(equipmentId, "equipmentId")));
   }
@@ -171,13 +189,22 @@ public class MaintenanceService {
   }
 
   @Transactional(readOnly = true)
+  @PreAuthorize(MaintenanceAccessPolicy.OPERATORS)
   public List<MaintenanceHistoryEntry> getEquipmentMaintenanceHistory(UUID equipmentId) {
     return List.copyOf(history.findByEquipmentId(Objects.requireNonNull(equipmentId)));
   }
 
   @Transactional(readOnly = true)
+  @PreAuthorize(MaintenanceAccessPolicy.CASE_READER)
   public List<MaintenanceHistoryEntry> getCaseHistory(UUID caseId) {
+    load(caseId);
     return List.copyOf(history.findByCaseId(Objects.requireNonNull(caseId)));
+  }
+
+  private static void requireAssignedTechnician(MaintenanceCase item, UUID actorId) {
+    if (item.assignedTo() == null || !item.assignedTo().equals(actorId)) {
+      throw new AccessDeniedException("Only the assigned technician may perform maintenance work");
+    }
   }
 
   private MaintenanceCase load(UUID caseId) {
