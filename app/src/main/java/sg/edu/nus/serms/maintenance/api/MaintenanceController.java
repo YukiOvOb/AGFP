@@ -48,6 +48,12 @@ public class MaintenanceController {
     return service.getOpenCases().stream().map(MaintenanceCaseResponse::from).toList();
   }
 
+  @GetMapping("/technicians")
+  @Operation(operationId = "listMaintenanceTechnicians")
+  public List<MaintenanceTechnicianResponse> technicians() {
+    return service.getActiveTechnicians().stream().map(MaintenanceTechnicianResponse::from).toList();
+  }
+
   @GetMapping("/cases/assigned")
   @Operation(operationId = "listMyMaintenanceCases")
   public List<MaintenanceCaseResponse> assigned(@AuthenticationPrincipal SermsUserPrincipal me) {

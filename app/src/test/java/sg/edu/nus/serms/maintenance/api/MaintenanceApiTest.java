@@ -36,6 +36,30 @@ class MaintenanceApiTest {
   static final String ROOT = "/api/v1/maintenance";
   static final UUID ME = new UUID(0, 1), OTHER = new UUID(0, 2), CASE = new UUID(0, 3), EQUIPMENT = new UUID(0, 4);
   static final Instant NOW = Instant.parse("2026-10-06T00:00:00Z");
+
+  @ParameterizedTest
+  @ValueSource(strings = {"CUSTODIAN", "ADMIN"})
+  void operatorCanListTechnicianProjection(String role) throws Exception {
+    when(technicians.findActiveTechnicians()).thenReturn(
+        List.of(new MaintenanceTechnician(OTHER, "tech@example.com", "Technician")));
+    mvc.perform(get(ROOT + "/technicians").with(as(role))).andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].userId").value(OTHER.toString()))
+        .andExpect(jsonPath("$[0].email").value("tech@example.com"))
+        .andExpect(jsonPath("$[0].displayName").value("Technician"));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"BORROWER", "APPROVER", "MAINTAINER"})
+  void technicianDirectoryDeniedToNonOperators(String role) throws Exception {
+    mvc.perform(get(ROOT + "/technicians").with(as(role))).andExpect(status().isForbidden());
+    verifyNoInteractions(technicians);
+  }
+
+  @Test
+  void technicianDirectoryRequiresAuthentication() throws Exception {
+    mvc.perform(get(ROOT + "/technicians")).andExpect(status().isUnauthorized());
+    verifyNoInteractions(technicians);
+  }
   @Autowired MockMvc mvc;
   @MockitoBean IdentityService identity;
   @MockitoBean MaintenanceCaseRepository cases;

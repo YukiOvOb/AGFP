@@ -26,7 +26,7 @@ class MaintenanceOpenApiTest {
         .andReturn().getResponse().getContentAsString();
     JsonNode document = mapper.readTree(json);
     var paths = document.path("paths");
-    var expectedPaths = List.of("/api/v1/maintenance/cases",
+    var expectedPaths = List.of("/api/v1/maintenance/technicians", "/api/v1/maintenance/cases",
         "/api/v1/maintenance/cases/open",
         "/api/v1/maintenance/cases/assigned",
         "/api/v1/maintenance/cases/{caseId}",
@@ -46,7 +46,7 @@ class MaintenanceOpenApiTest {
     paths.forEach(path -> path.forEach(operation -> {
       if (operation.has("operationId")) operations.add(operation.get("operationId").asText());
     }));
-    assertThat(operations).contains("reportMaintenanceFault",
+    assertThat(operations).contains("listMaintenanceTechnicians", "reportMaintenanceFault",
         "listOpenMaintenanceCases",
         "listMyMaintenanceCases",
         "getMaintenanceCase",
@@ -63,6 +63,13 @@ class MaintenanceOpenApiTest {
         "getMaintenanceReport");
     assertThat(new HashSet<>(operations)).hasSize(operations.size());
     JsonNode schemas = document.path("components").path("schemas");
+    var technician = schemas.path("MaintenanceTechnicianResponse");
+    assertThat(technician.path("properties").size()).isEqualTo(3);
+    assertThat(technician.path("properties").path("userId").path("format").asText()).isEqualTo("uuid");
+    assertThat(technician.path("required").toString()).contains("userId", "email", "displayName");
+    assertThat(paths.path("/api/v1/maintenance/technicians").path("get").path("responses")
+        .path("200").path("content").path("application/json").path("schema").path("items")
+        .path("$ref").asText()).endsWith("/MaintenanceTechnicianResponse");
     for (String name : List.of("ReportFaultRequest", "AssignTechnicianRequest",
         "MaintenanceDetailRequest", "CompleteMaintenanceRequest")) {
       JsonNode properties = schemas.path(name).path("properties");

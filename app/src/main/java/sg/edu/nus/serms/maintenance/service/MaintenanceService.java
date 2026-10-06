@@ -173,6 +173,12 @@ public class MaintenanceService {
   }
 
   @Transactional(readOnly = true)
+  @PreAuthorize(MaintenanceAccessPolicy.OPERATORS)
+  public List<MaintenanceTechnician> getActiveTechnicians() {
+    return List.copyOf(technicians.findActiveTechnicians());
+  }
+
+  @Transactional(readOnly = true)
   @PreAuthorize(MaintenanceAccessPolicy.OWN_CASES)
   public List<MaintenanceCase> getAssignedCases(UUID technicianId) {
     return copies(cases.findByAssignedTo(Objects.requireNonNull(technicianId, "technicianId")));

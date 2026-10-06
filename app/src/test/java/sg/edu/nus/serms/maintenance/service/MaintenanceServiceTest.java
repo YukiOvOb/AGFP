@@ -470,6 +470,7 @@ class MaintenanceServiceTest {
   }
 
   private final class FakeTechnicians implements TechnicianDirectoryPort {
+    @Override public List<MaintenanceTechnician> findActiveTechnicians() { return List.of(); }
     final List<UUID> checked = new ArrayList<>();
     boolean reject;
     public void ensureTechnician(UUID id) {

@@ -18,6 +18,13 @@ public final class MaintenanceDtos {
       @NotBlank String faultDescription) {}
 
   public record AssignTechnicianRequest(@NotNull UUID technicianId) {}
+  @Schema(requiredProperties = {"userId", "email", "displayName"})
+  public record MaintenanceTechnicianResponse(UUID userId, String email, String displayName) {
+    public static MaintenanceTechnicianResponse from(
+        sg.edu.nus.serms.maintenance.service.MaintenanceTechnician item) {
+      return new MaintenanceTechnicianResponse(item.userId(), item.email(), item.displayName());
+    }
+  }
   public record MaintenanceDetailRequest(@NotBlank String detail) {}
   public record CompleteMaintenanceRequest(@NotBlank String resolutionNote) {}
 

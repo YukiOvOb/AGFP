@@ -24,6 +24,7 @@ class MaintenanceMethodSecurityTest {
   final MaintenanceReportRepository reports = mock(MaintenanceReportRepository.class);
   final EquipmentMaintenancePort equipment = mock(EquipmentMaintenancePort.class);
   final MaintenanceEventPublisher events = mock(MaintenanceEventPublisher.class);
+  final TechnicianDirectoryPort technicians = mock(TechnicianDirectoryPort.class);
   AnnotationConfigApplicationContext context;
   MaintenanceService service;
   MaintenanceReportService reportService;
@@ -38,7 +39,7 @@ class MaintenanceMethodSecurityTest {
     context.register(Security.class);
     context.registerBean("maintenanceAccess", MaintenanceAccessPolicy.class, () -> new MaintenanceAccessPolicy(cases));
     context.registerBean(MaintenanceService.class, () -> new MaintenanceService(cases, history, equipment,
-        mock(TechnicianDirectoryPort.class), events, () -> CASE, Clock.systemUTC()));
+        technicians, events, () -> CASE, Clock.systemUTC()));
     context.registerBean(MaintenanceReportService.class, () -> new MaintenanceReportService(reports));
     context.refresh();
     service = context.getBean(MaintenanceService.class);
@@ -65,11 +66,25 @@ class MaintenanceMethodSecurityTest {
   @ValueSource(strings = {"BORROWER", "APPROVER", "MAINTAINER"})
   void directOperatorMethodsRejectUnprivilegedRole(String role) {
     login(role);
+    assertThatThrownBy(() -> service.getActiveTechnicians()).isInstanceOf(AccessDeniedException.class);
+    verifyNoInteractions(technicians);
     assertThatThrownBy(() -> service.getOpenCases()).isInstanceOf(AccessDeniedException.class);
     assertThatThrownBy(() -> service.assignTechnician(CASE, ME, ME)).isInstanceOf(AccessDeniedException.class);
     assertThatThrownBy(() -> service.getEquipmentCases(EQUIPMENT)).isInstanceOf(AccessDeniedException.class);
     assertThatThrownBy(() -> service.getEquipmentMaintenanceHistory(EQUIPMENT)).isInstanceOf(AccessDeniedException.class);
     verifyNoInteractions(equipment, history, events);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"CUSTODIAN", "ADMIN"})
+  void operatorsReadImmutableTechnicianProjection(String role) {
+    login(role);
+    var technician = new MaintenanceTechnician(ME, "me@example.com", "Me");
+    when(technicians.findActiveTechnicians()).thenReturn(new ArrayList<>(List.of(technician)));
+    var result = service.getActiveTechnicians();
+    assertThat(result).containsExactly(technician);
+    assertThatThrownBy(() -> result.clear()).isInstanceOf(UnsupportedOperationException.class);
+    verify(technicians).findActiveTechnicians();
   }
 
   @ParameterizedTest
