@@ -99,7 +99,8 @@ class NotificationContractTest {
 
     @Test void scannerCreatesRealLoanRemindersOnceAndStopsAfterReturn() {
         clock.time=due.minusSeconds(86401);
-        assertEquals(0,scanner.scan());
+        scanner.scan();
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM serms.notification_request WHERE loan_id=?",Integer.class,reminderId));
         clock.time=due.minusSeconds(86400);
         scanner.scan();
         scanner.scan();
