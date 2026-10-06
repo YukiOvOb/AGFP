@@ -58,6 +58,7 @@ class NotificationContractTest {
     @Autowired LoanReminderGuard guard;
     @Autowired NotificationRequestStore store;
     @Autowired LoanNotificationRequestFactory factory;
+    @Autowired PostgresLoanReminderScanner scanner;
     @Autowired NotificationRequestService requests;
     @Autowired NotificationDeliveryService delivery;
     @Autowired NotificationRepository repository;
@@ -94,6 +95,21 @@ class NotificationContractTest {
 
     LoanReminderGuard.Result check(String recipient, Instant expected, NotificationType type, Instant time) {
         return tx().execute(s->guard.check(reminderId,recipient,expected,type,time));
+    }
+
+    @Test void scannerCreatesRealLoanRemindersOnceAndStopsAfterReturn() {
+        clock.time=due.minusSeconds(86401);
+        assertEquals(0,scanner.scan());
+        clock.time=due.minusSeconds(86400);
+        scanner.scan();
+        scanner.scan();
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM serms.notification_request WHERE loan_id=?",Integer.class,reminderId));
+        clock.time=due.plusSeconds(1);
+        scanner.scan();
+        assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM serms.notification_request WHERE loan_id=?",Integer.class,reminderId));
+        tx().executeWithoutResult(status->returnLoanInsideTransaction());
+        scanner.scan();
+        assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM serms.notification_request WHERE loan_id=?",Integer.class,reminderId));
     }
 
     NotificationRequest reminder(NotificationType type) {

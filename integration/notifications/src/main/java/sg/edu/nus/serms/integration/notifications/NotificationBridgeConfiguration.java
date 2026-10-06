@@ -5,6 +5,8 @@ import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import sg.edu.nus.serms.notification.repository.NotificationRequestStore;
 import sg.edu.nus.serms.notification.domain.ReminderPolicy;
 
 @Configuration
@@ -25,4 +27,14 @@ public class NotificationBridgeConfiguration {
     public LoanNotificationRequestFactory loanNotificationRequestFactory(JdbcTemplate jdbc) {
         return new LoanNotificationRequestFactory(jdbc);
     }
+
+    @Bean
+    public PostgresLoanReminderScanner postgresLoanReminderScanner(JdbcTemplate jdbc,
+            PlatformTransactionManager manager, LoanNotificationRequestFactory requests,
+            NotificationRequestStore store, Clock clock,
+            @Value("${serms.notifications.due-soon-lead:PT24H}") Duration leadTime) {
+        return new PostgresLoanReminderScanner(jdbc, manager, requests, store,
+            new ReminderPolicy(leadTime), clock);
+    }
+
 }
