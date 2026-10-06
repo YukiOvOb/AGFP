@@ -48,6 +48,7 @@ class MaintenanceTransactionTest {
     context.registerBean(MaintenanceHistoryRepository.class, () -> history);
     context.registerBean(EquipmentMaintenancePort.class, () -> equipment);
     context.registerBean(TechnicianDirectoryPort.class, () -> technicians);
+    context.registerBean(MaintenanceLoanPort.class, () -> mock(MaintenanceLoanPort.class));
     context.registerBean(MaintenanceEventPublisher.class, () -> events);
     context.registerBean("maintenanceIdentifiers", java.util.function.Supplier.class, () -> () -> CASE);
     context.registerBean("maintenanceClock", Clock.class, () -> Clock.fixed(NOW, ZoneOffset.UTC));

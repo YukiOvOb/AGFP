@@ -36,7 +36,7 @@ public class JdbcMaintenanceHistoryRepository implements MaintenanceHistoryRepos
   @Transactional(propagation = Propagation.MANDATORY)
   public void append(MaintenanceHistoryEntry entry) {
     UUID auditId = UUID.randomUUID();
-    // Local correlation only. A future REST adapter may supply actual request correlation IDs.
+    // Local correlation only. Shared request correlation integration remains pending.
     String requestId = "maintenance:" + auditId;
     jdbc.update("""
         INSERT INTO serms.audit_log

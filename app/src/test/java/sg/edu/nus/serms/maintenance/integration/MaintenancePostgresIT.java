@@ -244,6 +244,64 @@ class MaintenancePostgresIT {
     assertThat(resolved.loanId()).isEqualTo(loan);
     assertThat(db.equipmentStatus(equipment)).isEqualTo("ON_LOAN");
     assertThat(db.jdbc.queryForObject("SELECT status FROM serms.loan WHERE loan_id = ?", String.class, loan)).isEqualTo("ACTIVE");
+    // V002 also permits historical RETURNED Loans; validate that association through real JDBC.
+    db.transactions.executeWithoutResult(tx -> {
+      db.equipment.lockForMaintenance(equipment);
+      db.jdbc.update("""
+          UPDATE serms.loan SET status = 'RETURNED', return_by = ?, returned_at = ?,
+            return_condition = 'GOOD' WHERE loan_id = ?
+          """, reporter, Timestamp.from(db.clock.instant()), loan);
+      db.jdbc.update("UPDATE serms.equipment SET status = 'AVAILABLE' WHERE equipment_id = ?", equipment);
+    });
+    db.clock.advance();
+    var historical = db.service.reportFault(equipment, reporter, "Fault linked to returned loan", loan);
+    assertThat(historical.loanId()).isEqualTo(loan);
+    assertThat(historical.status()).isEqualTo(MaintenanceStatus.OPEN);
+    assertPersisted(historical);
+    assertThat(db.jdbc.queryForObject("SELECT status FROM serms.loan WHERE loan_id = ?", String.class, loan))
+        .isEqualTo("RETURNED");
+    assertThat(db.equipmentStatus(equipment)).isEqualTo("UNDER_MAINTENANCE");
+  }
+
+  @Test
+  void nonexistentLoanRejectedBeforeCaseEquipmentAuditOrEventWrites() {
+    assertInvalidLoanReportHasNoSideEffects(UUID.randomUUID());
+  }
+
+  @Test
+  void loanForDifferentEquipmentRejectedBeforeCaseEquipmentAuditOrEventWrites() {
+    UUID otherEquipment = db.equipment();
+    UUID otherLoan = db.activeLoan(otherEquipment, reporter);
+    int otherVersion = db.equipmentVersion(otherEquipment);
+    assertInvalidLoanReportHasNoSideEffects(otherLoan);
+    assertThat(db.equipmentStatus(otherEquipment)).isEqualTo("ON_LOAN");
+    assertThat(db.equipmentVersion(otherEquipment)).isEqualTo(otherVersion);
+    assertThat(db.jdbc.queryForObject("SELECT status FROM serms.loan WHERE loan_id = ?", String.class, otherLoan))
+        .isEqualTo("ACTIVE");
+  }
+
+  private void assertInvalidLoanReportHasNoSideEffects(UUID loan) {
+    String status = db.equipmentStatus(equipment);
+    int version = db.equipmentVersion(equipment);
+    var casesBefore = db.service.getEquipmentCases(equipment);
+    var historyBefore = db.history.findByEquipmentId(equipment);
+    var assignedBefore = List.copyOf(db.events.assigned);
+    var completedBefore = List.copyOf(db.events.completed);
+    assertThatThrownBy(() -> db.service.reportFault(equipment, reporter, "Fault with invalid loan", loan))
+        .isInstanceOf(sg.edu.nus.serms.maintenance.service.InvalidMaintenanceLoanException.class);
+    assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
+    assertThat(db.identifiers.created).hasSize(1);
+    UUID generated = db.identifiers.created.iterator().next();
+    assertThat(db.jdbc.queryForObject(
+        "SELECT count(*) FROM serms.maintenance_case WHERE maintenance_case_id = ?", Integer.class, generated)).isZero();
+    assertThat(db.equipmentStatus(equipment)).isEqualTo(status);
+    assertThat(db.equipmentVersion(equipment)).isEqualTo(version);
+    assertThat(db.service.getEquipmentCases(equipment)).extracting(MaintenanceCase::snapshot)
+        .containsExactlyElementsOf(casesBefore.stream().map(MaintenanceCase::snapshot).toList());
+    assertThat(db.actionCount(generated, "MAINTENANCE_REPORT_FAULT")).isZero();
+    assertThat(db.history.findByEquipmentId(equipment)).containsExactlyElementsOf(historyBefore);
+    assertThat(db.events.assigned).containsExactlyElementsOf(assignedBefore);
+    assertThat(db.events.completed).containsExactlyElementsOf(completedBefore);
   }
 
   @ParameterizedTest

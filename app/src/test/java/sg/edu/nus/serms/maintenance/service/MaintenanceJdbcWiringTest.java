@@ -31,7 +31,7 @@ class MaintenanceJdbcWiringTest {
         MaintenanceReportService.class, JdbcMaintenanceReportRepository.class,
         SpringMaintenanceEventPublisher.class, JdbcMaintenanceCaseRepository.class,
         JdbcMaintenanceHistoryRepository.class, JdbcEquipmentMaintenanceAdapter.class,
-        JdbcTechnicianDirectoryAdapter.class);
+        JdbcTechnicianDirectoryAdapter.class, JdbcMaintenanceLoanAdapter.class);
     context.registerBean(JdbcOperations.class, () -> jdbc);
     context.registerBean("transactionManager", MaintenanceTransactionTest.RecordingTransactions.class,
         MaintenanceTransactionTest.RecordingTransactions::new);
@@ -52,6 +52,7 @@ class MaintenanceJdbcWiringTest {
       assertThat(context.getBean(MaintenanceHistoryRepository.class)).isInstanceOf(JdbcMaintenanceHistoryRepository.class);
       assertThat(context.getBean(EquipmentMaintenancePort.class)).isInstanceOf(JdbcEquipmentMaintenanceAdapter.class);
       assertThat(context.getBean(TechnicianDirectoryPort.class)).isInstanceOf(JdbcTechnicianDirectoryAdapter.class);
+      assertThat(context.getBean(MaintenanceLoanPort.class)).isInstanceOf(JdbcMaintenanceLoanAdapter.class);
       assertThat(context.getBean("maintenanceClock", Clock.class).getZone()).isEqualTo(java.time.ZoneOffset.UTC);
       assertThat(context.getBean("maintenanceIdentifiers", Supplier.class).get()).isInstanceOf(UUID.class);
       verifyNoInteractions(jdbc);
@@ -83,6 +84,16 @@ class MaintenanceJdbcWiringTest {
       assertThatThrownBy(() -> equipment.markUnderMaintenance(id)).isInstanceOf(IllegalTransactionStateException.class);
       assertThatThrownBy(() -> equipment.recomputeAfterResolvedMaintenance(id)).isInstanceOf(IllegalTransactionStateException.class);
       assertThatThrownBy(() -> equipment.markRetired(id)).isInstanceOf(IllegalTransactionStateException.class);
+      verifyNoInteractions(jdbc);
+    }
+  }
+
+  @Test
+  void loanValidationLockRequiresExistingTransaction() {
+    UUID id = new UUID(0, 1);
+    try (var context = context()) {
+      assertThatThrownBy(() -> context.getBean(MaintenanceLoanPort.class).ensureLoanMatchesEquipment(id, id))
+          .isInstanceOf(IllegalTransactionStateException.class);
       verifyNoInteractions(jdbc);
     }
   }

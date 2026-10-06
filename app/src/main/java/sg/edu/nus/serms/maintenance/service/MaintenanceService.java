@@ -29,12 +29,14 @@ public class MaintenanceService {
   private final MaintenanceHistoryRepository history;
   private final EquipmentMaintenancePort equipment;
   private final TechnicianDirectoryPort technicians;
+  private final MaintenanceLoanPort loans;
   private final MaintenanceEventPublisher events;
   private final Supplier<UUID> identifiers;
   private final Clock clock;
 
   public MaintenanceService(MaintenanceCaseRepository cases, MaintenanceHistoryRepository history,
       EquipmentMaintenancePort equipment, TechnicianDirectoryPort technicians,
+      MaintenanceLoanPort loans,
       MaintenanceEventPublisher events,
       @Qualifier("maintenanceIdentifiers") Supplier<UUID> identifiers,
       @Qualifier("maintenanceClock") Clock clock) {
@@ -42,6 +44,7 @@ public class MaintenanceService {
     this.history = Objects.requireNonNull(history, "history");
     this.equipment = Objects.requireNonNull(equipment, "equipment");
     this.technicians = Objects.requireNonNull(technicians, "technicians");
+    this.loans = Objects.requireNonNull(loans, "loans");
     this.events = Objects.requireNonNull(events, "events");
     this.identifiers = Objects.requireNonNull(identifiers, "identifiers");
     this.clock = Objects.requireNonNull(clock, "clock");
@@ -60,6 +63,7 @@ public class MaintenanceService {
         faultDescription, now);
     equipment.ensureEquipmentExists(equipmentId);
     equipment.lockForMaintenance(equipmentId);
+    if (loanId != null) loans.ensureLoanMatchesEquipment(loanId, equipmentId);
     equipment.markUnderMaintenance(equipmentId);
     item = cases.insert(item);
     record(item, MaintenanceHistoryAction.REPORT_FAULT, null, reportedBy, now, item.faultDescription());

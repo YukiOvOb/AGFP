@@ -36,9 +36,10 @@ class MaintenanceServiceTest {
   private final FakeHistory history = new FakeHistory();
   private final FakeEquipment equipment = new FakeEquipment();
   private final FakeTechnicians technicians = new FakeTechnicians();
+  private final MaintenanceLoanPort loans = mock(MaintenanceLoanPort.class);
   private final FakeEvents events = new FakeEvents();
   private final MaintenanceService service = new MaintenanceService(cases, history, equipment,
-      technicians, events, () -> CASE, Clock.fixed(NOW, ZoneOffset.UTC));
+      technicians, loans, events, () -> CASE, Clock.fixed(NOW, ZoneOffset.UTC));
 
   private MaintenanceCase report() { return service.reportFault(EQUIPMENT, REPORTER, "  Broken cable  "); }
 
@@ -58,6 +59,7 @@ class MaintenanceServiceTest {
     assertThat(item.reportedAt()).isEqualTo(NOW);
     assertThat(item.faultDescription()).isEqualTo("Broken cable");
     assertThat(item.loanId()).isNull();
+    verifyNoInteractions(loans);
     assertThat(equipment.state).isEqualTo("UNDER_MAINTENANCE");
     assertThat(history.entries).containsExactly(new MaintenanceHistoryEntry(CASE, EQUIPMENT,
         MaintenanceHistoryAction.REPORT_FAULT, null, MaintenanceStatus.OPEN, REPORTER, NOW, "Broken cable"));
@@ -65,8 +67,26 @@ class MaintenanceServiceTest {
 
   @Test
   void faultCanRetainOptionalLoan() {
+    doAnswer(call -> { calls.add("loan-validation"); return null; })
+        .when(loans).ensureLoanMatchesEquipment(LOAN, EQUIPMENT);
     assertThat(service.reportFault(EQUIPMENT, REPORTER, "Fault", LOAN).loanId()).isEqualTo(LOAN);
+    assertThat(calls).containsExactly("exists", "lock", "loan-validation", "under-maintenance", "insert", "history");
+    verify(loans).ensureLoanMatchesEquipment(LOAN, EQUIPMENT);
     assertThat(cases.findById(CASE).orElseThrow().loanId()).isEqualTo(LOAN);
+  }
+
+  @Test
+  void invalidLoanStopsBeforeEquipmentMutationCaseHistoryOrEvents() {
+    var rejected = new InvalidMaintenanceLoanException(LOAN, EQUIPMENT);
+    doAnswer(call -> { calls.add("loan-validation"); throw rejected; })
+        .when(loans).ensureLoanMatchesEquipment(LOAN, EQUIPMENT);
+    assertThatThrownBy(() -> service.reportFault(EQUIPMENT, REPORTER, "Fault", LOAN)).isSameAs(rejected);
+    assertThat(calls).containsExactly("exists", "lock", "loan-validation");
+    assertThat(equipment.state).isEqualTo("AVAILABLE");
+    assertThat(cases.saved).isEmpty();
+    assertThat(history.entries).isEmpty();
+    assertThat(events.assigned).isEmpty();
+    assertThat(events.completed).isEmpty();
   }
 
   @Test
@@ -318,7 +338,7 @@ class MaintenanceServiceTest {
   @ValueSource(strings = {"open", "assigned", "equipment"})
   void queriesDelegateOnlyToTheirRepositoryAndCopyMutableResults(String query) {
     var repository = mock(MaintenanceCaseRepository.class);
-    var queried = new MaintenanceService(repository, history, equipment, technicians, events,
+    var queried = new MaintenanceService(repository, history, equipment, technicians, loans, events,
         () -> CASE, Clock.fixed(NOW, ZoneOffset.UTC));
     var shared = new MaintenanceCase(CASE, EQUIPMENT, REPORTER, null, "Fault", NOW);
     if (query.equals("assigned")) shared.assign(TECHNICIAN);

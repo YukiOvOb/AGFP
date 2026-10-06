@@ -67,6 +67,7 @@ class MaintenanceApiTest {
   @MockitoBean MaintenanceReportRepository reports;
   @MockitoBean EquipmentMaintenancePort equipment;
   @MockitoBean TechnicianDirectoryPort technicians;
+  @MockitoBean MaintenanceLoanPort loans;
   @MockitoBean MaintenanceEventPublisher events;
 
   @TestConfiguration
@@ -154,7 +155,46 @@ class MaintenanceApiTest {
   void adminWithSeparatelyHeldBorrowerRoleCanReportWithLoanId() throws Exception {
     String body = fault().substring(0, fault().length() - 1) + ",\"loanId\":\"" + OTHER + "\"}";
     mvc.perform(mutation("/cases", body, "ADMIN", "BORROWER")).andExpect(status().isCreated())
-        .andExpect(jsonPath("$.loanId").value(OTHER.toString()));
+        .andExpect(jsonPath("$.loanId").value(OTHER.toString()))
+        .andExpect(header().string("Location", ROOT + "/cases/" + CASE));
+    verify(loans).ensureLoanMatchesEquipment(OTHER, EQUIPMENT);
+  }
+
+  @Test
+  void invalidLoanAssociationIsSanitizedValidationProblem() throws Exception {
+    doThrow(new InvalidMaintenanceLoanException(OTHER, EQUIPMENT)).when(loans)
+        .ensureLoanMatchesEquipment(OTHER, EQUIPMENT);
+    String body = fault().substring(0, fault().length() - 1) + ",\"loanId\":\"" + OTHER + "\"}";
+    String problem = mvc.perform(mutation("/cases", body, "BORROWER"))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
+        .andExpect(jsonPath("$.type").value("/problems/validation"))
+        .andExpect(jsonPath("$.detail").value("The selected loan is not associated with this equipment."))
+        .andExpect(jsonPath("$.errors").isArray()).andExpect(jsonPath("$.errors").isEmpty())
+        .andReturn().getResponse().getContentAsString();
+    assertThat(problem).doesNotContain(OTHER.toString(), EQUIPMENT.toString(), "SQL", "Exception", "sg.edu");
+    verify(equipment, never()).markUnderMaintenance(any());
+    verify(cases, never()).insert(any());
+    verifyNoInteractions(history, events);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"outage", "unexpected-integrity"})
+  void unrelatedDatabaseErrorsStillUseShared503Fallback(String kind) throws Exception {
+    org.springframework.dao.DataAccessException failure = kind.equals("outage")
+        ? new org.springframework.dao.DataAccessResourceFailureException("SQL secret database unavailable")
+        : new org.springframework.dao.DataIntegrityViolationException("SQL secret unrelated integrity constraint");
+    doThrow(failure).when(loans).ensureLoanMatchesEquipment(OTHER, EQUIPMENT);
+    String body = fault().substring(0, fault().length() - 1) + ",\"loanId\":\"" + OTHER + "\"}";
+    String problem = mvc.perform(mutation("/cases", body, "BORROWER"))
+        .andExpect(status().isServiceUnavailable())
+        .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
+        .andExpect(jsonPath("$.type").value("/problems/unavailable"))
+        .andReturn().getResponse().getContentAsString();
+    assertThat(problem).doesNotContain("SQL", "secret", "Exception", "sg.edu");
+    verify(equipment, never()).markUnderMaintenance(any());
+    verify(cases, never()).insert(any());
+    verifyNoInteractions(history, events);
   }
 
   @ParameterizedTest

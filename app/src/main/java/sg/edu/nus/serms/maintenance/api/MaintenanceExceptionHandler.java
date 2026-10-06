@@ -47,4 +47,11 @@ public class MaintenanceExceptionHandler {
   private ResponseEntity<ProblemDetail> problem(int status, String type, String detail) {
     return ResponseEntity.status(status).body(ApiProblem.of(status, type, detail));
   }
+
+  @ExceptionHandler(InvalidMaintenanceLoanException.class)
+  ResponseEntity<ProblemDetail> loan() {
+    var p = ApiProblem.of(400, "validation", "The selected loan is not associated with this equipment.");
+    p.setProperty("errors", java.util.List.of());
+    return ResponseEntity.badRequest().body(p);
+  }
 }

@@ -19,7 +19,7 @@ class AssignedTechnicianEnforcementTest {
   final EquipmentMaintenancePort equipment = mock(EquipmentMaintenancePort.class);
   final MaintenanceEventPublisher events = mock(MaintenanceEventPublisher.class);
   final MaintenanceService service = new MaintenanceService(cases, history, equipment,
-      mock(TechnicianDirectoryPort.class), events, () -> CASE, Clock.fixed(NOW, ZoneOffset.UTC));
+      mock(TechnicianDirectoryPort.class), mock(MaintenanceLoanPort.class), events, () -> CASE, Clock.fixed(NOW, ZoneOffset.UTC));
 
   MaintenanceCase item(String action, UUID technician) {
     var item = new MaintenanceCase(CASE, EQUIPMENT, A, null, "Fault", NOW);

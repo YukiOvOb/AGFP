@@ -39,7 +39,7 @@ class MaintenanceMethodSecurityTest {
     context.register(Security.class);
     context.registerBean("maintenanceAccess", MaintenanceAccessPolicy.class, () -> new MaintenanceAccessPolicy(cases));
     context.registerBean(MaintenanceService.class, () -> new MaintenanceService(cases, history, equipment,
-        technicians, events, () -> CASE, Clock.systemUTC()));
+        technicians, mock(MaintenanceLoanPort.class), events, () -> CASE, Clock.systemUTC()));
     context.registerBean(MaintenanceReportService.class, () -> new MaintenanceReportService(reports));
     context.refresh();
     service = context.getBean(MaintenanceService.class);

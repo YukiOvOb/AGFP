@@ -216,7 +216,8 @@ final class Uc04PostgresTestSupport implements AutoCloseable {
   @EnableTransactionManagement(proxyTargetClass = true)
   @Import({MaintenanceService.class, MaintenanceReportService.class, JdbcMaintenanceReportRepository.class,
       JdbcMaintenanceCaseRepository.class, JdbcMaintenanceHistoryRepository.class,
-      JdbcEquipmentMaintenanceAdapter.class, JdbcTechnicianDirectoryAdapter.class, SpringMaintenanceEventPublisher.class})
+      JdbcEquipmentMaintenanceAdapter.class, JdbcTechnicianDirectoryAdapter.class,
+      JdbcMaintenanceLoanAdapter.class, SpringMaintenanceEventPublisher.class})
   static class Config {
     @Bean
     DataSource dataSource() {
