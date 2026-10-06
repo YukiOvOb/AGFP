@@ -18,6 +18,8 @@ Add this module as a dependency of that branch's Spring Boot application. It pre
 
 The default advance reminder window is PT24H, configurable through `serms.notifications.due-soon-lead`. This is an integration default, not a team-approved business policy. When dueAt equals now, the type is DUE_SOON; only now > dueAt is OVERDUE, matching upstream ReminderPolicy. Equipment under maintenance or retired may still have an ACTIVE Loan and must not be assumed returned.
 
+With the `serms-postgres` profile and application scheduling enabled, the Loan scanner checks persisted ACTIVE loans every 60 seconds (`serms.notifications.scan-ms`). It locks Equipment then Loan, rechecks the due time and return state, and writes deduplicated DUE_SOON or OVERDUE requests for each Loan/due-time. The existing notification worker delivers requests separately. This adapter remains a separate integration module until the shared PostgreSQL runtime is incorporated into `app/`.
+
 ## Local Verification
 
 Run from this repository's root:
