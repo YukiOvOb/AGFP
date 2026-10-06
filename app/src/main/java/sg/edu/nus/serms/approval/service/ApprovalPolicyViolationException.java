@@ -1,4 +1,4 @@
-package sg.edu.nus.serms.approval.application;
+package sg.edu.nus.serms.approval.service;
 
 import java.util.Objects;
 import sg.edu.nus.serms.approval.domain.ApprovalFailure;

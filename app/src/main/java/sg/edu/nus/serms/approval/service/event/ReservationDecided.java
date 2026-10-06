@@ -1,6 +1,7 @@
 package sg.edu.nus.serms.approval.service.event;
 
 import java.util.Objects;
+import java.time.Instant;
 import java.util.UUID;
 import sg.edu.nus.serms.approval.domain.ApprovalDecisionType;
 
@@ -12,7 +13,8 @@ public record ReservationDecided(
     UUID requesterId,
     UUID approverId,
     ApprovalDecisionType decision,
-    String comment) {
+    String comment,
+    Instant decidedAt) {
 
   public ReservationDecided {
     Objects.requireNonNull(eventId, "eventId must not be null");
@@ -21,5 +23,6 @@ public record ReservationDecided(
     Objects.requireNonNull(requesterId, "requesterId must not be null");
     Objects.requireNonNull(approverId, "approverId must not be null");
     Objects.requireNonNull(decision, "decision must not be null");
+    Objects.requireNonNull(decidedAt, "decidedAt must not be null");
   }
 }
