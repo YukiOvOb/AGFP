@@ -20,7 +20,7 @@ public final class ApprovalApiDtos {
   public record DecisionRequest(
       @NotNull ApprovalDecisionType decision,
       @Size(max = 1000) String comment,
-      @NotNull @PositiveOrZero @Schema(type = "integer", format = "int64")
+      @NotNull @PositiveOrZero @Schema(implementation = Long.class, type = "integer", format = "int64")
       @JsonDeserialize(using = Int64VersionDeserializer.class) Long expectedVersion) {
     public ApprovalCommand command(UUID reservationId) {
       return new ApprovalCommand(reservationId, decision, comment, expectedVersion);

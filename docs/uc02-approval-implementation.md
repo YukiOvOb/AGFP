@@ -1,4 +1,4 @@
-# UC02 approval API foundation
+# UC02 approval API and React workspace
 
 Owner: Zhang Hanming. This increment extends PR #8 on top of main's merged Identity/REST platform
 and UC04 code. The shared business contract remains `docs/contracts/auth-and-approval.md`.
@@ -23,6 +23,15 @@ and UC04 code. The shared business contract remains `docs/contracts/auth-and-app
   is used for the API response and `ReservationDecided` event. No timestamp is invented at publish time.
 - `ApprovalReservationSnapshot` is an approval read projection, not a duplicate reservation entity.
   Its fields mirror the UC01 public view; `status` is the canonical reservation enum name as a string.
+- React `/approvals` pending queue and `/approvals/:reservationId` detail/decision pages reuse the
+  shared Layout, buttons, session, CSRF client, feedback components and generated OpenAPI types.
+  Navigation and routes require APPROVER; ADMIN alone is not sufficient.
+- Queue includes server pagination and Singapore times. The detail page requires an explicit
+  confirmation, validates comments, blocks self-decisions and unsafe JavaScript version numbers,
+  and makes final decisions read-only. Expired requests allow rejection only; expiration while
+  confirmation is open also disables approval. The server remains authoritative for these rules.
+- Failed writes are not automatically retried. A conflict requires manual refresh before another
+  attempt; server field errors retain editable input. The command does not contain actor/recipient IDs.
 
 ## Explicit activation
 
@@ -84,7 +93,7 @@ transaction-boundary behavior, not PostgreSQL persistence or atomic rollback of 
 
 Evidence locations: `app/target/surefire-reports/`, `app/target/site/jacoco/index.html`,
 `app/target/approval-openapi.json`. Retain the run summary and associated commit/CI run.
-React approval pages, real adapters, PostgreSQL integration and end-to-end acceptance remain pending.
+Real adapters, PostgreSQL integration and live end-to-end acceptance remain pending.
 
 Local verification on 2026-10-06 (Java 25 runtime, Java 17 compilation target):
 
@@ -96,6 +105,51 @@ Local verification on 2026-10-06 (Java 25 runtime, Java 17 compilation target):
 - Existing frontend regression: 36 Vitest tests, lint, TypeScript/build and `pnpm check:api` passed.
   These are the existing notification/maintenance tests; approval UI is not implemented yet.
 - No real PostgreSQL approval tests were run. The UC04 PostgresIT profile was not enabled.
+
+Local verification of the React increment on 2026-10-07:
+
+- `mvn verify`: 445 tests passed with no failures, errors or skips (59 approval tests).
+- `pnpm test`: 60 tests passed, including 24 new approval component/API-contract tests using MSW.
+- `pnpm test:e2e`: 10 browser tests passed across desktop (1440x1000) and mobile (390x844),
+  including 6 approval runs. Approval scenarios cover rejection with validation/confirmation,
+  conflict and refresh, and expiration during confirmation. Notification/maintenance regression
+  flows also passed. Desktop/mobile screenshots were visually checked.
+- Lint, TypeScript, production build and generated API drift check passed. Build warns about the
+  current shared entry bundle exceeding 500 kB and upstream Zod comments; this is not a build failure.
+- The existing OpenAPI-export test enables approval with mocked ports only in its Spring test
+  context. Production activation is unchanged. The exported schema now includes approval endpoints
+  and asserts that `expectedVersion` is an integer/int64, not a string.
+- Browser requests are explicitly mocked in test files, not in the application. These runs do not
+  establish real login/database connectivity, notification delivery, audit persistence or PostgreSQL
+  approval transactions. No deployed approval slice is claimed.
+
+## Running the frontend and inspecting UI evidence
+
+From `frontend/` in PowerShell, after the backend tests have exported `app/target/openapi.json`:
+
+```powershell
+$env:OPENAPI_FILE = '../app/target/openapi.json'
+pnpm check:api
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm exec playwright install chromium  # first browser-test run only
+pnpm test:e2e
+pnpm exec playwright show-report
+```
+
+The browser report is `frontend/playwright-report/index.html`; approval queue and confirmation
+screenshots are in `frontend/test-results/approval-*/`. They show test fixtures, not live data.
+These generated artifacts are ignored by Git; the existing frontend CI uploads them as evidence.
+
+For actual application use, start the shared backend and `pnpm dev`, then open
+`http://127.0.0.1:5173/approvals` and sign in with an actual APPROVER account. This will not yet
+complete a live approval: the backend's real adapters and database integration are still pending.
+Do not enable the approval property without its real ports, and do not replace them with mock
+implementations for deployment. Once Zhou's database runtime and UC01 are integrated, wire the
+ports and synchronous audit/notification listeners, enable approval and run the PostgreSQL
+acceptance scenarios above.
 
 ## Shi's Review follow-up
 

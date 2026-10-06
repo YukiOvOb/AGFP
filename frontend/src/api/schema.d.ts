@@ -175,6 +175,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/approvals/{reservationId}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["decideReservation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/notifications": {
         parameters: {
             query?: never;
@@ -367,6 +383,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/approvals/{reservationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getApprovalReservation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/approvals/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listPendingApprovals"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -424,6 +472,56 @@ export interface components {
             email: string;
             displayName: string;
             roles: string[];
+        };
+        DecisionRequest: {
+            /** @enum {string} */
+            decision: "APPROVED" | "REJECTED";
+            comment?: string;
+            /** Format: int64 */
+            expectedVersion: number;
+        };
+        ApprovalReservationSnapshot: {
+            /** Format: uuid */
+            reservationId?: string;
+            /** Format: uuid */
+            requesterId?: string;
+            requesterName?: string;
+            equipment?: components["schemas"]["EquipmentSummary"];
+            /** Format: date-time */
+            startAt?: string;
+            /** Format: date-time */
+            endAt?: string;
+            purpose?: string;
+            status?: string;
+            /** Format: int64 */
+            version?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            expired?: boolean;
+        };
+        DecisionOutcomeResponse: {
+            reservation?: components["schemas"]["ApprovalReservationSnapshot"];
+            decision?: components["schemas"]["DecisionResponse"];
+        };
+        DecisionResponse: {
+            /** Format: uuid */
+            approvalId?: string;
+            /** Format: uuid */
+            reservationId?: string;
+            /** Format: uuid */
+            approverId?: string;
+            /** @enum {string} */
+            decision?: "APPROVED" | "REJECTED";
+            comment?: string;
+            /** Format: date-time */
+            decidedAt?: string;
+        };
+        EquipmentSummary: {
+            /** Format: uuid */
+            equipmentId?: string;
+            assetTag?: string;
+            name?: string;
+            category?: string;
         };
         NotificationPage: {
             content: components["schemas"]["NotificationView"][];
@@ -490,6 +588,37 @@ export interface components {
             /** Format: date-time */
             occurredAt: string;
             detail: string | null;
+        };
+        DetailResponse: {
+            /** Format: uuid */
+            reservationId?: string;
+            /** Format: uuid */
+            requesterId?: string;
+            requesterName?: string;
+            equipment?: components["schemas"]["EquipmentSummary"];
+            /** Format: date-time */
+            startAt?: string;
+            /** Format: date-time */
+            endAt?: string;
+            purpose?: string;
+            status?: string;
+            /** Format: int64 */
+            version?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            expired?: boolean;
+            decision?: components["schemas"]["DecisionResponse"];
+        };
+        PendingPageResponse: {
+            content?: components["schemas"]["ApprovalReservationSnapshot"][];
+            /** Format: int32 */
+            number?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
         };
     };
     responses: never;
@@ -764,6 +893,32 @@ export interface operations {
             };
         };
     };
+    decideReservation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reservationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionOutcomeResponse"];
+                };
+            };
+        };
+    };
     listNotifications: {
         parameters: {
             query?: {
@@ -1014,6 +1169,52 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    getApprovalReservation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reservationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetailResponse"];
+                };
+            };
+        };
+    };
+    listPendingApprovals: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PendingPageResponse"];
+                };
             };
         };
     };

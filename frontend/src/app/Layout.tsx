@@ -1,4 +1,4 @@
-import { Bell, Boxes, ChevronRight, LogOut, Wrench } from 'lucide-react';
+import { Bell, Boxes, ChevronRight, ClipboardCheck, LogOut, Wrench } from 'lucide-react';
 import { hasAnyRole, workspaceRoles } from '@/features/maintenance/format';
 import { NavLink, Outlet } from 'react-router';
 import { useState } from 'react';
@@ -38,6 +38,12 @@ export function Layout() {
             <NavLink to="/maintenance">
               <Wrench size={19} />
               Maintenance
+            </NavLink>
+          )}
+          {user?.roles?.includes('APPROVER') && (
+            <NavLink to="/approvals">
+              <ClipboardCheck size={19} />
+              Approvals
             </NavLink>
           )}
           <NavLink to="/notifications">
