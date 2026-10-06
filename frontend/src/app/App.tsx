@@ -3,6 +3,10 @@ import { LoginPage } from '@/features/auth/LoginPage';
 import { NotificationPage } from '@/features/notification/NotificationPage';
 import { RequireRole } from './RequireRole';
 import { Layout } from './Layout';
+import { MaintenanceHomePage } from '@/features/maintenance/MaintenanceHomePage';
+import { MaintenanceCasePage } from '@/features/maintenance/MaintenanceCasePage';
+import { MaintenanceReportPage } from '@/features/maintenance/MaintenanceReportPage';
+import '@/features/maintenance/maintenance.css';
 export function App() {
   return (
     <Routes>
@@ -11,6 +15,9 @@ export function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Navigate to="/notifications" replace />} />
           <Route path="/notifications" element={<NotificationPage />} />
+          <Route path="/maintenance" element={<MaintenanceHomePage />} />
+          <Route path="/maintenance/cases/:caseId" element={<MaintenanceCasePage />} />
+          <Route path="/maintenance/report" element={<MaintenanceReportPage />} />
           <Route
             path="*"
             element={
