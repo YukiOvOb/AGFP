@@ -49,6 +49,134 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reportMaintenanceFault"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/cases/{caseId}/unrepairable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["markMaintenanceUnrepairable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/cases/{caseId}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["startMaintenance"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/cases/{caseId}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["resolveMaintenanceCase"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/cases/{caseId}/repair-actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["recordMaintenanceRepairAction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/cases/{caseId}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["addMaintenanceNote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/cases/{caseId}/diagnosis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["recordMaintenanceDiagnosis"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/cases/{caseId}/assignment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["assignMaintenanceTechnician"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/logout": {
         parameters: {
             query?: never;
@@ -139,6 +267,134 @@ export interface paths {
             cookie?: never;
         };
         get: operations["unreadCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/technicians": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listMaintenanceTechnicians"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMaintenanceReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/equipment/{equipmentId}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getEquipmentMaintenanceHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/equipment/{equipmentId}/cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listEquipmentMaintenanceCases"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/cases/{caseId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMaintenanceCase"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/cases/{caseId}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMaintenanceCaseHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/cases/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listOpenMaintenanceCases"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/cases/assigned": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listMyMaintenanceCases"];
         put?: never;
         post?: never;
         delete?: never;
@@ -264,6 +520,48 @@ export interface components {
             version: number;
             cancellable: boolean;
         };
+        ReportFaultRequest: {
+            /** Format: uuid */
+            equipmentId: string;
+            /** Format: uuid */
+            loanId?: string | null;
+            faultDescription: string;
+        };
+        MaintenanceCaseResponse: {
+            /** Format: uuid */
+            maintenanceCaseId: string;
+            /** Format: uuid */
+            equipmentId: string;
+            /** Format: uuid */
+            reportedBy: string;
+            /** Format: uuid */
+            assignedTo: string | null;
+            /** Format: uuid */
+            loanId: string | null;
+            /** @enum {string} */
+            status: "OPEN" | "ASSIGNED" | "IN_PROGRESS" | "RESOLVED" | "UNREPAIRABLE";
+            faultDescription: string;
+            resolutionNote: string | null;
+            /** Format: date-time */
+            reportedAt: string;
+            /** Format: date-time */
+            resolvedAt: string | null;
+            /**
+             * Format: int32
+             * @description Server-side version; mutations do not support If-Match or expectedVersion
+             */
+            version: number;
+        };
+        CompleteMaintenanceRequest: {
+            resolutionNote: string;
+        };
+        MaintenanceDetailRequest: {
+            detail: string;
+        };
+        AssignTechnicianRequest: {
+            /** Format: uuid */
+            technicianId: string;
+        };
         LoginRequest: {
             /** Format: email */
             email: string;
@@ -311,6 +609,47 @@ export interface components {
         UnreadCount: {
             /** Format: int64 */
             count: number;
+        };
+        MaintenanceTechnicianResponse: {
+            /** Format: uuid */
+            userId: string;
+            email: string;
+            displayName: string;
+        };
+        MaintenanceReportResponse: {
+            /** Format: date-time */
+            fromInclusive: string;
+            /** Format: date-time */
+            toExclusive: string;
+            casesByStatus: {
+                [key: string]: number;
+            };
+            /** Format: int64 */
+            reportedCaseCount: number;
+            /** Format: int64 */
+            completedCaseCount: number;
+            /**
+             * Format: duration
+             * @description ISO-8601 duration; null when the completion interval is empty
+             */
+            averageCompletionDuration: string | null;
+        };
+        MaintenanceHistoryResponse: {
+            /** Format: uuid */
+            maintenanceCaseId: string;
+            /** Format: uuid */
+            equipmentId: string;
+            /** @enum {string} */
+            action: "REPORT_FAULT" | "ASSIGN" | "START" | "RECORD_DIAGNOSIS" | "RECORD_REPAIR_ACTION" | "ADD_NOTE" | "RESOLVE" | "MARK_UNREPAIRABLE";
+            /** @enum {string|null} */
+            fromStatus: "OPEN" | "ASSIGNED" | "IN_PROGRESS" | "RESOLVED" | "UNREPAIRABLE" | null;
+            /** @enum {string} */
+            toStatus: "OPEN" | "ASSIGNED" | "IN_PROGRESS" | "RESOLVED" | "UNREPAIRABLE";
+            /** Format: uuid */
+            actorId: string;
+            /** Format: date-time */
+            occurredAt: string;
+            detail: string | null;
         };
         EquipmentPage: {
             content: components["schemas"]["EquipmentView"][];
@@ -430,6 +769,208 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    reportMaintenanceFault: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportFaultRequest"];
+            };
+        };
+        responses: {
+            /** @description Maintenance case created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceCaseResponse"];
+                };
+            };
+        };
+    };
+    markMaintenanceUnrepairable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                caseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteMaintenanceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceCaseResponse"];
+                };
+            };
+        };
+    };
+    startMaintenance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                caseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceCaseResponse"];
+                };
+            };
+        };
+    };
+    resolveMaintenanceCase: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                caseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteMaintenanceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceCaseResponse"];
+                };
+            };
+        };
+    };
+    recordMaintenanceRepairAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                caseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaintenanceDetailRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceCaseResponse"];
+                };
+            };
+        };
+    };
+    addMaintenanceNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                caseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaintenanceDetailRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceCaseResponse"];
+                };
+            };
+        };
+    };
+    recordMaintenanceDiagnosis: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                caseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaintenanceDetailRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceCaseResponse"];
+                };
+            };
+        };
+    };
+    assignMaintenanceTechnician: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                caseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignTechnicianRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceCaseResponse"];
+                };
             };
         };
     };
@@ -561,6 +1102,177 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UnreadCount"];
+                };
+            };
+        };
+    };
+    listMaintenanceTechnicians: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceTechnicianResponse"][];
+                };
+            };
+        };
+    };
+    getMaintenanceReport: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceReportResponse"];
+                };
+            };
+        };
+    };
+    getEquipmentMaintenanceHistory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                equipmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceHistoryResponse"][];
+                };
+            };
+        };
+    };
+    listEquipmentMaintenanceCases: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                equipmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceCaseResponse"][];
+                };
+            };
+        };
+    };
+    getMaintenanceCase: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                caseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceCaseResponse"];
+                };
+            };
+        };
+    };
+    getMaintenanceCaseHistory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                caseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceHistoryResponse"][];
+                };
+            };
+        };
+    };
+    listOpenMaintenanceCases: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceCaseResponse"][];
+                };
+            };
+        };
+    };
+    listMyMaintenanceCases: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceCaseResponse"][];
                 };
             };
         };

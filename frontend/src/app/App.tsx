@@ -6,6 +6,10 @@ import { ReservePage } from '@/features/reservation/ReservePage';
 import { MyReservationsPage } from '@/features/reservation/MyReservationsPage';
 import { RequireRole } from './RequireRole';
 import { Layout } from './Layout';
+import { MaintenanceHomePage } from '@/features/maintenance/MaintenanceHomePage';
+import { MaintenanceCasePage } from '@/features/maintenance/MaintenanceCasePage';
+import { MaintenanceReportPage } from '@/features/maintenance/MaintenanceReportPage';
+import '@/features/maintenance/maintenance.css';
 export function App() {
   return (
     <Routes>
@@ -19,6 +23,9 @@ export function App() {
             <Route path="/equipment/:equipmentId/reserve" element={<ReservePage />} />
             <Route path="/reservations" element={<MyReservationsPage />} />
           </Route>
+          <Route path="/maintenance" element={<MaintenanceHomePage />} />
+          <Route path="/maintenance/cases/:caseId" element={<MaintenanceCasePage />} />
+          <Route path="/maintenance/report" element={<MaintenanceReportPage />} />
           <Route
             path="*"
             element={

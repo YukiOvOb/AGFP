@@ -1,4 +1,5 @@
-import { Bell, Boxes, CalendarCheck, ChevronRight, LogOut, Search } from 'lucide-react';
+import { Bell, Boxes, CalendarCheck, ChevronRight, LogOut, Search, Wrench } from 'lucide-react';
+import { hasAnyRole, workspaceRoles } from '@/features/maintenance/format';
 import { NavLink, Outlet } from 'react-router';
 import { useState } from 'react';
 import { useAuth } from './AuthProvider';
@@ -41,6 +42,12 @@ export function Layout() {
             <NavLink to="/reservations">
               <CalendarCheck size={19} />
               My reservations
+            </NavLink>
+          )}
+          {hasAnyRole(user?.roles, ...workspaceRoles) && (
+            <NavLink to="/maintenance">
+              <Wrench size={19} />
+              Maintenance
             </NavLink>
           )}
           <NavLink to="/notifications">
