@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -20,10 +21,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.aop.support.AopUtils;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import sg.edu.nus.serms.maintenance.domain.*;
 import sg.edu.nus.serms.maintenance.repository.MaintenanceVersionConflictException;
 import sg.edu.nus.serms.maintenance.service.InvalidMaintenanceTechnicianException;
+import sg.edu.nus.serms.maintenance.service.MaintenanceTechnician;
 
 /** Explicit Failsafe profile only. All queries and writes use real V002 PostgreSQL. */
 @Execution(ExecutionMode.SAME_THREAD)
@@ -72,6 +75,93 @@ class MaintenancePostgresIT {
     assertThat(audit.get("occurred_at")).isEqualTo(Timestamp.from(item.reportedAt()));
     assertThat(db.events.assigned).isEmpty();
     assertThat(db.events.completed).isEmpty();
+  }
+
+  @Test
+  void activeMaintainerDirectoryUsesV002EligibilityMappingAndBothOrderingKeys() {
+    UUID other = db.user("ACTIVE", "MAINTAINER");
+    UUID disabled = db.user("DISABLED", "MAINTAINER");
+    String prefix = "UC04 directory " + UUID.randomUUID();
+    for (UUID id : List.of(technician, other, disabled, reporter)) {
+      db.jdbc.update("UPDATE serms.app_user SET display_name = ? WHERE user_id = ?", prefix, id);
+    }
+    var expected = List.of(technician, other).stream()
+        .sorted(Comparator.comparing(UUID::toString)).toList();
+    var directory = db.service.getActiveTechnicians();
+    // The database may contain other users. Scope membership to this fixture, not the whole table.
+    var own = directory.stream().filter(entry -> db.users.contains(entry.userId())).toList();
+    assertThat(own).extracting(MaintenanceTechnician::userId).containsExactlyElementsOf(expected);
+    for (var entry : own) {
+      assertThat(entry.email()).isEqualTo(entry.userId() + "@example.invalid");
+      assertThat(entry.displayName()).isEqualTo(prefix);
+    }
+    assertThat(directory).allSatisfy(entry -> assertThat(db.jdbc.queryForObject("""
+        SELECT EXISTS (SELECT 1 FROM serms.app_user u
+          JOIN serms.user_role ur ON ur.user_id = u.user_id
+          JOIN serms.role r ON r.role_id = ur.role_id
+          WHERE u.user_id = ? AND u.account_status = 'ACTIVE' AND r.code = 'MAINTAINER')
+        """, Boolean.class, entry.userId())).isTrue());
+    assertThatThrownBy(directory::clear).isInstanceOf(UnsupportedOperationException.class);
+    // Invert the UUID order using names to prove name priority as well as the preceding UUID tie.
+    db.jdbc.update("UPDATE serms.app_user SET display_name = ? WHERE user_id = ?", prefix + " Z", expected.get(0));
+    db.jdbc.update("UPDATE serms.app_user SET display_name = ? WHERE user_id = ?", prefix + " A", expected.get(1));
+    assertThat(db.service.getActiveTechnicians().stream()
+        .filter(entry -> db.users.contains(entry.userId())).toList())
+        .extracting(MaintenanceTechnician::userId).containsExactly(expected.get(1), expected.get(0));
+  }
+
+  @Test
+  void unrelatedTechnicianStartIsDeniedAfterRealEquipmentLockAndCaseReload() {
+    var open = db.report(equipment, reporter);
+    var assigned = db.service.assignTechnician(open.maintenanceCaseId(), technician, reporter);
+    UUID other = db.user("ACTIVE", "MAINTAINER");
+    assertDeniedAfterLock(assigned, "MAINTENANCE_START",
+        () -> db.service.startMaintenance(assigned.maintenanceCaseId(), other));
+  }
+
+  @Test
+  void unrelatedTechnicianResolveIsDeniedAfterRealEquipmentLockAndCaseReload() {
+    var started = db.started(equipment, reporter, technician);
+    UUID other = db.user("ACTIVE", "MAINTAINER");
+    assertDeniedAfterLock(started, "MAINTENANCE_RESOLVE",
+        () -> db.service.resolve(started.maintenanceCaseId(), "Unauthorized completion", other));
+  }
+
+  private void assertDeniedAfterLock(MaintenanceCase before, String action, Runnable attempt) {
+    UUID id = before.maintenanceCaseId();
+    var historyBefore = db.history.findByCaseId(id);
+    var assignedBefore = List.copyOf(db.events.assigned);
+    var completedBefore = List.copyOf(db.events.completed);
+    int equipmentVersion = db.equipmentVersion(equipment);
+    var locksAtRead = new ArrayList<Boolean>();
+    var versionsAtRead = new ArrayList<Integer>();
+    db.reads.afterRead = item -> {
+      if (!item.maintenanceCaseId().equals(id)) return;
+      assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
+      versionsAtRead.add(item.version());
+      // SELECT ... FOR UPDATE acquires RowShareLock on Equipment in this same PostgreSQL backend.
+      locksAtRead.add(db.jdbc.queryForObject("""
+          SELECT EXISTS (SELECT 1 FROM pg_locks
+          WHERE pid = pg_backend_pid() AND relation = 'serms.equipment'::regclass
+            AND mode = 'RowShareLock' AND granted)
+          """, Boolean.class));
+    };
+    try {
+      assertThatThrownBy(attempt::run).isInstanceOf(AccessDeniedException.class);
+    } finally {
+      db.reads.afterRead = item -> {};
+    }
+    // The internal check must follow both a real pre-lock read and a real post-lock reload.
+    assertThat(locksAtRead).containsExactly(false, true);
+    assertThat(versionsAtRead).containsExactly(before.version(), before.version());
+    assertPersisted(before); // Fresh committed PostgreSQL reads, including status/assigned_to/version.
+    assertThat(db.equipmentStatus(equipment)).isEqualTo("UNDER_MAINTENANCE");
+    assertThat(db.equipmentVersion(equipment)).isEqualTo(equipmentVersion);
+    assertThat(db.actionCount(id, action)).isZero();
+    assertThat(db.history.findByCaseId(id)).containsExactlyElementsOf(historyBefore);
+    assertThat(db.events.assigned).containsExactlyElementsOf(assignedBefore);
+    assertThat(db.events.completed).containsExactlyElementsOf(completedBefore);
+    assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
   }
 
   @Test

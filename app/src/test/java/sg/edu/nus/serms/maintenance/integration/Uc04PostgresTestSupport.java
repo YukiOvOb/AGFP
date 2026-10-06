@@ -297,6 +297,7 @@ final class Uc04PostgresTestSupport implements AutoCloseable {
     private final JdbcTemplate jdbc;
     final AtomicReference<MaintenanceCase> replayOnce = new AtomicReference<>();
     volatile CompetingReads competing;
+    Consumer<MaintenanceCase> afterRead = item -> {};
     CaseReads(JdbcMaintenanceCaseRepository delegate, JdbcTemplate jdbc) { this.delegate = delegate; this.jdbc = jdbc; }
     @Override public MaintenanceCase insert(MaintenanceCase item) { return delegate.insert(item); }
     @Override public MaintenanceCase update(MaintenanceCase item) { return delegate.update(item); }
@@ -305,6 +306,7 @@ final class Uc04PostgresTestSupport implements AutoCloseable {
     @Override public List<MaintenanceCase> findByEquipmentId(UUID id) { return delegate.findByEquipmentId(id); }
     @Override public Optional<MaintenanceCase> findById(UUID id) {
       var persisted = delegate.findById(id);
+      persisted.ifPresent(afterRead);
       var replay = replayOnce.get();
       if (replay != null && replay.maintenanceCaseId().equals(id) && replayOnce.compareAndSet(replay, null)) {
         return Optional.of(replay.copy());
