@@ -2,6 +2,7 @@ package sg.edu.nus.serms.notification.service;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,7 @@ import sg.edu.nus.serms.notification.repository.NotificationRepository;
         "spring.datasource.url=jdbc:h2:mem:approval_notification_contract;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
 @ActiveProfiles("test")
 class ApprovalNotificationTransactionTest {
+  private static final Instant DECIDED_AT = Instant.parse("2026-10-07T10:00:00Z");
   @Autowired ApplicationEventPublisher events;
   @Autowired PlatformTransactionManager transactions;
   @Autowired ApprovalNotificationFactory factory;
@@ -38,7 +40,8 @@ class ApprovalNotificationTransactionTest {
         UUID.randomUUID(),
         UUID.randomUUID(),
         decision,
-        comment);
+        comment,
+        DECIDED_AT);
   }
 
   private String key(ReservationDecided e) {
@@ -138,7 +141,8 @@ class ApprovalNotificationTransactionTest {
             e.requesterId(),
             e.approverId(),
             e.decision(),
-            "Updated replay text");
+            "Updated replay text",
+            e.decidedAt().plusSeconds(5));
     publish(replay);
     assertThat(saved(replay).getId()).isEqualTo(id);
     assertThat(saved(replay).getContent())
@@ -163,7 +167,8 @@ class ApprovalNotificationTransactionTest {
                       e.requesterId(),
                       e.approverId(),
                       e.decision(),
-                      null));
+                      null,
+                      e.decidedAt()));
               return saved(e).getId();
             });
       Set<String> ids = new HashSet<>();

@@ -2,6 +2,7 @@ package sg.edu.nus.serms.notification.service;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import sg.edu.nus.serms.approval.domain.ApprovalDecisionType;
@@ -9,6 +10,7 @@ import sg.edu.nus.serms.approval.service.event.ReservationDecided;
 import sg.edu.nus.serms.notification.domain.NotificationType;
 
 class ApprovalNotificationFactoryTest {
+  private static final Instant DECIDED_AT = Instant.parse("2026-10-07T10:00:00Z");
   private final ApprovalNotificationFactory factory = new ApprovalNotificationFactory();
 
   private ReservationDecided event(ApprovalDecisionType decision, String reason) {
@@ -19,7 +21,8 @@ class ApprovalNotificationFactoryTest {
         UUID.randomUUID(),
         UUID.randomUUID(),
         decision,
-        reason);
+        reason,
+        DECIDED_AT);
   }
 
   @Test
@@ -62,7 +65,8 @@ class ApprovalNotificationFactoryTest {
             e.requesterId(),
             e.approverId(),
             e.decision(),
-            "replayed");
+            "replayed",
+            e.decidedAt().plusSeconds(5));
     assertThat(factory.from(replay).dedupKey()).isEqualTo(factory.from(e).dedupKey());
   }
 
@@ -77,7 +81,8 @@ class ApprovalNotificationFactoryTest {
             e.requesterId(),
             e.approverId(),
             e.decision(),
-            null);
+            null,
+            e.decidedAt());
     assertThat(factory.from(other).dedupKey()).isNotEqualTo(factory.from(e).dedupKey());
   }
 }

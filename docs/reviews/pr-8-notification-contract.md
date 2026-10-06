@@ -1,14 +1,14 @@
 # PR 8 notification contract review and adapter
 
-Reviewed upstream: PR #8 at `1d3d7bedb9dea9e8a39c2716eda975f1a207d915`.
-Local adapter branch: `feature/wang-yuanmeng-approval-notification-adapter`.
+Reviewed upstream: PR #8 at `e800925`, including the `b2619c6` event contract update.
+Adapter branch: `feature/wang-yuanmeng-decided-at-adapter`.
 This is a dependent branch based on PR #8, not an independent replacement of its approval code.
 
 ## Review result
 
-The actual `approval.service.event.ReservationDecided` record is usable for notification integration. It contains eventId, approvalDecisionId, reservationId, requesterId, approverId, decision and comment. ApprovalService synchronously publishes after the reservation transition and decision persistence, within a declared transaction. It must be invoked through the Spring proxy with transactional database adapters for the transaction guarantee to hold.
+The actual `approval.service.event.ReservationDecided` record is usable for notification integration. It contains eventId, approvalDecisionId, reservationId, requesterId, approverId, decision, comment and the required, persisted `Instant decidedAt`. ApprovalService synchronously publishes after the reservation transition and decision persistence, within a declared transaction. It must be invoked through the Spring proxy with transactional database adapters for the transaction guarantee to hold.
 
-One contract difference remains: the original proposal included `Instant decidedAt`, but the current record does not. Current notification wording does not require it, so this is not an adapter blocker. The approval owner should confirm whether to add the persisted decision timestamp for audit/display; notification creation time must not be presented as approval time. This adapter does not modify the approval event.
+The notification listener does not read `decidedAt`, and the notification's creation time must not be presented as the approval time. Tests that construct the event now supply the required timestamp. Replayed events with a different timestamp retain the same business dedup key.
 
 The upstream unit tests use mocked ports and event publisher and do not demonstrate actual reservation/decision/audit database atomicity. That remains an integration test requirement once the shared PostgreSQL foundation is ready. Merely emitting an event before commit does not guarantee success: listeners participate in the transaction, and an audit/persistence failure must abort it.
 
@@ -28,6 +28,10 @@ The upstream unit tests use mocked ports and event publisher and do not demonstr
 New factory and transaction tests cover approved/rejected text and identity, maximum reason length, malformed payloads, same-event and business-key replays, concurrent replays, request visibility before commit, rollback after publication, mandatory transaction rejection, rollback-only propagation when a listener fails, and delivered/read ownership.
 
 The transaction tests temporarily use the already existing H2 test profile in a dedicated database and unique event/requester IDs. They do not clear shared tables. These are compatibility checks while Zhou Fanhao owns PostgreSQL 18 migration, not PostgreSQL acceptance evidence. The tests must move to the shared Testcontainers fixture before the migration is considered complete. No migration files, datasource configuration or shared schema were changed by this adapter.
+
+## 7 October 2026 event update
+
+PR #8 now requires `decidedAt` and supplies the timestamp persisted with `RecordedApprovalDecision`. All notification test event constructors include it. The replay cases deliberately vary `decidedAt` while retaining one notification for the same requester and reservation. No listener or dedup-key change was necessary. The two notification adapter suites passed: 13 tests, zero failures or errors, on the existing H2 compatibility profile. PR #11 still contains the previous approval event; its owner must first sync PR #8 before applying these test changes.
 
 No PR comment, review submission or message to teammates was sent by this local work.
 
