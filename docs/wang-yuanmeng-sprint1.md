@@ -1,5 +1,7 @@
 # Wang Yuanmeng Sprint 1 implementation
 
+> This document records the original notification foundation. The current REST/React and Identity implementation, run instructions, and remaining PostgreSQL dependencies are described in [platform-rest-react.md](platform-rest-react.md). The old Thymeleaf/default-login instructions below are historical and no longer apply.
+
 This branch implements the UC-05 notification foundation and shared UI/architecture baseline described in Report 01 sections 3.5, 4.3 and 4.5. The starting repository contained only a static welcome page and deployment/security workflows. `app/` is an independently runnable Spring Boot application for integration with the team's future application skeleton. The root Docker/Compose deployment remains the existing static site until the team integrates the application.
 
 ## Run and verify
