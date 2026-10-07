@@ -10,6 +10,9 @@ import { MaintenanceHomePage } from '@/features/maintenance/MaintenanceHomePage'
 import { MaintenanceCasePage } from '@/features/maintenance/MaintenanceCasePage';
 import { MaintenanceReportPage } from '@/features/maintenance/MaintenanceReportPage';
 import '@/features/maintenance/maintenance.css';
+import { ApprovalListPage } from '@/features/approval/ApprovalListPage';
+import { ApprovalDetailPage } from '@/features/approval/ApprovalDetailPage';
+import '@/features/approval/approval.css';
 export function App() {
   return (
     <Routes>
@@ -18,6 +21,10 @@ export function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Navigate to="/notifications" replace />} />
           <Route path="/notifications" element={<NotificationPage />} />
+          <Route element={<RequireRole role="APPROVER" />}>
+            <Route path="/approvals" element={<ApprovalListPage />} />
+            <Route path="/approvals/:reservationId" element={<ApprovalDetailPage />} />
+          </Route>
           <Route path="/equipment" element={<EquipmentSearchPage />} />
           <Route element={<RequireRole role="BORROWER" />}>
             <Route path="/equipment/:equipmentId/reserve" element={<ReservePage />} />
