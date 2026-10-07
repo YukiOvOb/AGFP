@@ -152,7 +152,7 @@
 | 等待期间设备进入维修 / 报废 / 有故障单 → 不可批准 | `ReservationStateConflictException`，触发器兜底同样转换 |
 | 不存在 → `ReservationNotFoundException` | 继承 `RecordNotFoundException`，全局处理为 404 |
 
-UC02（PR #8）中的 `ApprovalService` 依赖 `ReservationApprovalPort`。PR #8 合并后，由预约模块新增 `ReservationApprovalAdapter` 实现该端口并**委托给上面的 Service**，审批模块因此不需要访问预约表。适配器、冲突异常补充 `currentStatus`/`currentVersion` 以及审批通知的接入，在 PR #8 合并后的单独 PR 中完成。
+UC02 的 `ApprovalService` 依赖 `approval.service.ReservationApprovalPort`。预约模块的 `ReservationApprovalAdapter` 实现该端口并**委托给上面的 Service**，审批模块因此不需要访问预约表。适配器把 `ReservationStateConflictException`、`ReservationVersionConflictException`、`ReservationExpiredException` 分别转换为 `ApprovalConflictException` 的 STATE / VERSION / EXPIRED，三者都带加锁后读到的 `currentStatus` 和 `currentVersion`；`ReservationNotFoundException` 原样抛出，返回 404。
 
 ---
 
