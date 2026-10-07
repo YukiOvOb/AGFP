@@ -4,6 +4,8 @@
 
 ## 已实现内容
 
+全部工作和待团队对接事项的统一入口见 [Zhou 工作汇总](zhoufanhao-work-summary.md)。
+
 数据库沿用原 PostgreSQL 领域模型，不重复建立 User、Equipment、Reservation 或 Loan。生产迁移统一放入 `app/src/main/resources/db/migration`，默认启动按 V001、V002、V003、V004 初始化完整应用；`database/` 保留历史 JDBC 回归模块。V004 将审批结果迁移为 `APPROVED` / `REJECTED`，将四类聚合的版本升级为 BIGINT，增加借用列表和设备查询索引。旧迁移未修改；原审批主键、审批时间和拒绝理由保留，迁移结束后恢复不可修改历史的触发器。
 
 Identity 可按配置查询 `serms` 表，保持 UUID 与通知 principal 的映射。UC02 的 `ApprovalDecisionPort` 新增 PostgreSQL 适配器，使审批状态、不可变决定、审计及现有审批通知监听器进入同一事务。该适配器补齐数据库集成，审批规则仍由 Zhang Hanming 的模块负责。
