@@ -36,7 +36,6 @@ import org.springframework.context.event.EventListener;
 /** Full application: real Flyway V001/V002/V003/V004, security, UC03, UC04 and notification bridge. */
 @SpringBootTest(properties={"serms.notifications.worker-enabled=false", "springdoc.api-docs.enabled=true",
     "serms.security.secure-cookies=false", "server.servlet.session.cookie.secure=false"})
-@ActiveProfiles("serms-postgres")
 @AutoConfigureMockMvc
 @Import(LoanPostgresIT.EventsConfig.class)
 class LoanPostgresIT {
@@ -71,6 +70,7 @@ class LoanPostgresIT {
   @Autowired sg.edu.nus.serms.notification.service.LoanReminderGuard guard;
   @Autowired sg.edu.nus.serms.integration.notifications.LoanNotificationRequestFactory reminders;
   @Autowired org.springframework.security.crypto.password.PasswordEncoder passwords;
+  @Autowired org.springframework.core.env.Environment environment;
   @MockitoBean(name="clock") Clock clock;
   SermsFixtures fixtures;
   UUID borrower, custodian, equipment, reservation;
@@ -199,6 +199,11 @@ class LoanPostgresIT {
     }
   }
   @Test void schemaAndIdentityBridgeArePresent() {
+    assertThat(environment.getActiveProfiles()).isEmpty();
+    assertThat(environment.getDefaultProfiles()).contains("serms-postgres");
+    assertThat(environment.getProperty("spring.datasource.driver-class-name")).isEqualTo("org.postgresql.Driver");
+    assertThat(environment.getProperty("spring.flyway.locations")).isEqualTo("classpath:db/migration");
+    assertThat(environment.getProperty("serms.approval.enabled")).isEqualTo("true");
     assertThat(jdbc.queryForObject("SELECT max(version) FROM serms.schema_version",Integer.class)).isEqualTo(4);
     assertThat(jdbc.queryForObject("SELECT notification_principal FROM serms.app_user WHERE user_id=?",String.class,custodian)).isEqualTo(custodian.toString());
     assertThat(service.checkoutQueue(0,100)).anyMatch(r -> r.reservationId().equals(reservation));

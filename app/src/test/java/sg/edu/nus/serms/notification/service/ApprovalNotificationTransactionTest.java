@@ -21,7 +21,7 @@ import sg.edu.nus.serms.notification.repository.NotificationRepository;
 /** Temporary compatibility tests on the existing test profile, not PostgreSQL acceptance. */
 @SpringBootTest(
     properties =
-        "spring.datasource.url=jdbc:h2:mem:approval_notification_contract;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
+        "spring.datasource.url=jdbc:h2:mem:approval_notification_contract;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
 @ActiveProfiles("test")
 class ApprovalNotificationTransactionTest {
   @Autowired ApplicationEventPublisher events;

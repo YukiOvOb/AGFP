@@ -111,7 +111,7 @@ CI 只能验证已经写好的测试。**每位成员必须为自己负责的用
 
 ## SERMS Sprint 1 application
 
-后端位于 `app/`，React 页面位于 `frontend/`。完整业务使用 `serms-postgres` profile，已打包公共迁移、通知适配器与 Identity 数据映射；运行步骤见 [PostgreSQL 说明](docs/serms-postgres-runtime.md)。旧 H2 local 配置仅用于通知测试基线。真实演示账号与 web/app/db 部署仍需团队整合。
+后端位于 `app/`，React 页面位于 `frontend/`。默认启动即使用 PostgreSQL 18，并加载统一 Flyway 迁移、通知适配器与 Identity 数据映射；运行步骤见 [PostgreSQL 说明](docs/serms-postgres-runtime.md)。`local` 开发配置同样使用 PostgreSQL；H2 仅存在于测试依赖与测试资源中。真实演示账号与 web/app/db 部署仍需团队整合。
 
 ## UC01 搜索和预约设备（Member 1）
 
@@ -134,4 +134,4 @@ Local tests: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-n
 
 UC03 后端、React `/loans` 页面、完整 PostgreSQL profile、V004 数据对齐及审批持久化适配已提供。入口见 [交付说明](docs/zhoufanhao-delivery.md)、[接口合同](docs/contracts/checkout-and-return.md)、[其他成员对接清单](docs/zhoufanhao-handoffs.md) 和 [验证记录](docs/zhoufanhao-validation.md)。
 
-完整验证：`powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-zhoufanhao.ps1`；没有 Docker 时追加 `-PostgresBin 'C:/Program Files/PostgreSQL/18/bin'`。完整业务启用 `serms-postgres`，迁移与运行步骤见 [PostgreSQL 运行说明](docs/serms-postgres-runtime.md)。
+完整验证：`powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-zhoufanhao.ps1`；没有 Docker 时追加 `-PostgresBin 'C:/Program Files/PostgreSQL/18/bin'`。完整业务默认使用 PostgreSQL，无需指定数据库 profile；迁移与运行步骤见 [PostgreSQL 运行说明](docs/serms-postgres-runtime.md)。

@@ -9,7 +9,7 @@ foreach ($key in $variables) { $previous[$key] = [Environment]::GetEnvironmentVa
 $created = $false
 Push-Location $repoRoot
 try {
-    docker run -d --name $containerName -e POSTGRES_DB=serms_test -e POSTGRES_USER=serms_test -e "POSTGRES_PASSWORD=$testPassword" -p 127.0.0.1::5432 postgres:17-alpine
+    docker run -d --name $containerName -e POSTGRES_DB=serms_test -e POSTGRES_USER=serms_test -e "POSTGRES_PASSWORD=$testPassword" -p 127.0.0.1::5432 postgres:18-alpine
     if ($LASTEXITCODE -ne 0) { throw 'Unable to start test database' }
     $created = $true
     $ready = $false
@@ -19,7 +19,7 @@ try {
         Start-Sleep -Seconds 1
     }
     if (-not $ready) { throw 'Database did not become ready in 60 seconds' }
-    $migrationDir = 'database/src/main/resources/db/migration'
+    $migrationDir = 'app/src/main/resources/db/migration'
     $steps = @("$migrationDir/V001__sprint1.sql", 'database/src/test/resources/v1-upgrade-fixture.sql', "$migrationDir/V002__align_serms_model.sql")
     foreach ($sqlFile in $steps) {
         docker cp $sqlFile "${containerName}:/tmp/migration.sql"

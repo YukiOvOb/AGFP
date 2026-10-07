@@ -4,7 +4,7 @@
 
 ## 已实现内容
 
-数据库沿用 `database/` 的 PostgreSQL 领域模型，不重复建立 User、Equipment、Reservation 或 Loan。应用构建将公共迁移和通知适配器打包，启用 `serms-postgres` 时，按 V001、V002、V003、V004 初始化完整应用。V004 将审批结果迁移为 `APPROVED` / `REJECTED`，将四类聚合的版本升级为 BIGINT，增加借用列表和设备查询索引。旧迁移未修改；原审批主键、审批时间和拒绝理由保留，迁移结束后恢复不可修改历史的触发器。
+数据库沿用原 PostgreSQL 领域模型，不重复建立 User、Equipment、Reservation 或 Loan。生产迁移统一放入 `app/src/main/resources/db/migration`，默认启动按 V001、V002、V003、V004 初始化完整应用；`database/` 保留历史 JDBC 回归模块。V004 将审批结果迁移为 `APPROVED` / `REJECTED`，将四类聚合的版本升级为 BIGINT，增加借用列表和设备查询索引。旧迁移未修改；原审批主键、审批时间和拒绝理由保留，迁移结束后恢复不可修改历史的触发器。
 
 Identity 可按配置查询 `serms` 表，保持 UUID 与通知 principal 的映射。UC02 的 `ApprovalDecisionPort` 新增 PostgreSQL 适配器，使审批状态、不可变决定、审计及现有审批通知监听器进入同一事务。该适配器补齐数据库集成，审批规则仍由 Zhang Hanming 的模块负责。
 
@@ -40,7 +40,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-zhoufanhao.ps1 
 
 脚本建立新的隔离数据库，先运行原 V002 数据库回归，再验证含历史决定的 V004 升级，随后运行全部应用回归和 UC03 完整 PostgreSQL 集成测试。测试实例在结束时停止，日志和临时数据保留在被 Git 忽略的 `.cache/`。测试报告位于 `database/target/surefire-reports`、`app/target/surefire-reports`、`app/target/failsafe-reports`。
 
-完整开发应用需要 `SERMS_DB_URL`、`SERMS_DB_USER`、`SERMS_DB_PASSWORD` 和 `--spring.profiles.active=serms-postgres`。已有 V002/V003 数据库应先备份并核对迁移历史；手工 psql 管理的数据库不能直接启用自动 baseline 来绕过检查，具体转换见 [迁移说明](serms-postgres-runtime.md)。
+完整应用默认使用 PostgreSQL 18，需要配置 `SERMS_DB_URL`、`SERMS_DB_USER` 和 `SERMS_DB_PASSWORD`；不需要额外的数据库 profile。HTTP 开发使用 `--spring.profiles.active=local`。已有 V002/V003 数据库应先备份并核对迁移历史；手工 psql 管理的数据库不能直接启用自动 baseline 来绕过检查，具体转换见 [迁移说明](serms-postgres-runtime.md)。
 
 ## 交付状态与证据边界
 

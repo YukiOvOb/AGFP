@@ -53,7 +53,7 @@ try {
       if ($LASTEXITCODE -ne 0) { throw 'createdb failed' }
     }
   }
-  $base = 'database/src/main/resources/db/migration'
+  $base = 'app/src/main/resources/db/migration'
   SqlFile 'serms_test' "$base/V001__sprint1.sql"
   SqlFile 'serms_test' 'database/src/test/resources/v1-upgrade-fixture.sql'
   SqlFile 'serms_test' "$base/V002__align_serms_model.sql"
@@ -68,7 +68,7 @@ try {
   SqlFile 'serms_test' 'database/src/test/resources/v4-upgrade-fixture.sql'
   SqlFile 'serms_test' "$base/V004__loan_operations.sql"
   SqlFile 'serms_test' 'database/src/test/resources/v4-upgrade-assertions.sql'
-  mvn -B -f app/pom.xml -Puc03-postgres-it verify
+  mvn -B -f app/pom.xml -Puc03-postgres-it clean verify
   if ($LASTEXITCODE -ne 0) { throw 'Application or UC03 PostgreSQL tests failed' }
 } finally {
   if ($started) {

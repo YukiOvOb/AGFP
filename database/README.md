@@ -4,7 +4,7 @@ Full application integration now uses V004 for APPROVED/REJECTED decision codes,
 
 The notification application can integrate through optional V003; see the [notification adapter](../integration/notifications/README.md). This page describes the V002 foundation. After integration, notification_request / notification_attempt are authoritative, and the V2 table remains as read-only history.
 
-Owner: Zhou Fanhao. Java 17/JDBC + PostgreSQL 17; current schema: V002. The original SERMS ER diagram is implemented as ten business tables covering users, multiple roles, equipment, reservations, approval decisions, loans, maintenance cases, notifications and audits. The Java repository implements search, booking and cancellation by the requester; the other tables provide persistence for future business services.
+Owner: Zhou Fanhao. Java 17/JDBC + PostgreSQL 18; current schema: V002. The original SERMS ER diagram is implemented as ten business tables covering users, multiple roles, equipment, reservations, approval decisions, loans, maintenance cases, notifications and audits. The Java repository implements search, booking and cancellation by the requester; the other tables provide persistence for future business services.
 
 See the [domain model](../docs/sprint1-domain.md) for design and sources, and the [V002 alignment record](../docs/serms-database-alignment.md) for changes and test results.
 
@@ -24,11 +24,11 @@ Equivalent Linux/CI procedure (PGHOST/PGUSER/PGPASSWORD must point to a dedicate
 
 ```sh
 export PGDATABASE=serms_test
-psql -v ON_ERROR_STOP=1 -f database/src/main/resources/db/migration/V001__sprint1.sql
+psql -v ON_ERROR_STOP=1 -f app/src/main/resources/db/migration/V001__sprint1.sql
 psql -v ON_ERROR_STOP=1 -f database/src/test/resources/v1-upgrade-fixture.sql
-psql -v ON_ERROR_STOP=1 -f database/src/main/resources/db/migration/V002__align_serms_model.sql
+psql -v ON_ERROR_STOP=1 -f app/src/main/resources/db/migration/V002__align_serms_model.sql
 createdb serms_empty
-for migration in database/src/main/resources/db/migration/V*.sql; do
+for migration in app/src/main/resources/db/migration/V*.sql; do
   psql -d serms_empty -v ON_ERROR_STOP=1 -f "$migration"
 done
 export SERMS_TEST_JDBC_URL=jdbc:postgresql://localhost:5432/serms_test
@@ -48,12 +48,12 @@ $env:SERMS_DB_PASSWORD = '<your-local-password>'
 docker compose -f database/compose.yaml up -d --wait
 ```
 
-The default connection is `jdbc:postgresql://127.0.0.1:55432/serms`, with username serms; set SERMS_DB_PORT to change the port. On first startup, an empty volume applies V001 and V002 in filename order. Stop Compose with `docker compose -f database/compose.yaml down`, which preserves the data volume.
+The default connection is `jdbc:postgresql://127.0.0.1:55432/serms`, with username serms; set SERMS_DB_PORT to change the port. Compose starts an empty PostgreSQL 18 database only; the application applies the canonical V001–V004 Flyway sequence on default startup. Stop Compose with `docker compose -f database/compose.yaml down`, which preserves the data volume.
 
-Existing V001 volumes do not automatically run new SQL. Back up the database and stop business writes, then apply only V002:
+The following V001→V002 command is historical recovery guidance, not the normal application startup procedure. For an existing database, back up and check versions first; follow [the runtime migration guide](../docs/serms-postgres-runtime.md) to adopt Flyway. Never mount an old PostgreSQL 17 data directory directly into PostgreSQL 18.
 
 ```powershell
-docker compose -f database/compose.yaml cp database/src/main/resources/db/migration/V002__align_serms_model.sql db:/tmp/V002.sql
+docker compose -f database/compose.yaml cp app/src/main/resources/db/migration/V002__align_serms_model.sql db:/tmp/V002.sql
 docker compose -f database/compose.yaml exec -T db psql -U serms -d serms -v ON_ERROR_STOP=1 -f /tmp/V002.sql
 docker compose -f database/compose.yaml exec -T db psql -U serms -d serms -c "SELECT version, description FROM serms.schema_version ORDER BY version"
 ```

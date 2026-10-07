@@ -1,5 +1,7 @@
 # SERMS 技术栈说明
 
+2026-10-07 数据库收尾：默认启动和 local 开发均为 PostgreSQL 18，审批默认开启；生产迁移统一为 app/src/main/resources/db/migration；MySQL 驱动及生产旧迁移已移除，H2 仅供测试。后续服务器 web/app/db 部署由 Shi Wenqi 对接。
+
 Team 07 · Shared Equipment Reservation and Maintenance System（共享设备预约与维护系统）
 
 本文件是全组统一的技术选型基准。依据是 Project Proposal（功能需求第 5 章、业务规则第 6 章、非功能需求第 7 章、DevSecOps 第 8.3 节）和《项目规划》中的 Definition of Done。每一项选型都能在第 3 节找到对应的需求；和 Proposal 不一致的地方集中写在第 4 节，并说明理由。
@@ -367,6 +369,6 @@ flowchart LR
   - 数据库从 MySQL / H2 换成 PostgreSQL 18 / Testcontainers，删掉 `db/mysql` 迁移。
   - Spring Security 从表单登录页改成 JSON 登录接口 + `CookieCsrfTokenRepository`。
 - **`feat/zhoufanhao-sprint1-data-foundation`**（周凡浩，未合并）：PostgreSQL 表结构和约束设计与本文件一致。需要改动的地方：
-  - `database/compose.yaml`、`database.yml` 和测试脚本里的 `postgres:17-alpine` 改为 `postgres:18-alpine`，和他本地用的 18 保持一致。
+  - `database/compose.yaml`、`database.yml` 和测试脚本里的 `postgres:18-alpine` 改为 `postgres:18-alpine`，和他本地用的 18 保持一致。
   - SQL 迁移移进 `app` 的 Flyway 序列；包名 `edu.nus.serms` 改为 `sg.edu.nus.serms`；`ReservationRepository` 改为注入 Spring 的 `DataSource` / `JdbcTemplate`；`integration/notifications` 适配模块和补丁文件在合并后删除。
 - **根目录部署文件**：`Dockerfile` 和 `compose.yaml` 从 “welcome 静态页” 换成 `web`（React + nginx）、`app`（Spring Boot）、`db`（PostgreSQL 18）三个服务。同时更新 `.env.example`：增加数据库账号密码，`HEALTH_PATH=/api/v1/health`。

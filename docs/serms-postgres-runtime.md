@@ -1,8 +1,10 @@
 # 完整 SERMS PostgreSQL 运行与迁移
 
-完整业务使用 PostgreSQL 18 和应用 profile `serms-postgres`。构建时从仓库原目录打包公共数据库迁移与通知适配器，保持一份迁移源。默认 MySQL/H2 配置仍供旧通知基线测试，不能用于完整业务验收。
+默认启动和 `local` 开发配置统一使用 PostgreSQL 18，审批默认开启。唯一的生产迁移源为 `app/src/main/resources/db/migration`，按 V001→V004 执行。生产依赖不再包含 MySQL 或 H2，旧通知快速回归的 H2 依赖和迁移仅位于测试作用域。`serms-postgres` 名称保留为兼容别名。
 
 ## 新数据库
+
+本地可用 `docker compose -f compose.dev.yaml up -d` 启动 PostgreSQL 18。Compose 只启动数据库，Flyway 由后端执行，避免容器初始化 SQL 与 Flyway 重复管理历史。`.env` 文件由 Compose 读取；直接启动 Java 时仍需将数据库参数设置为进程环境变量。开发库使用新的 PG18 专用卷，不直接复用旧版本数据目录。
 
 准备空数据库和独立迁移账号，设置以下环境变量，再启动应用。开发环境若使用 HTTP，应显式关闭 Secure Cookie；测试或正式 HTTPS 环境保持开启。
 
@@ -11,7 +13,7 @@ $env:SERMS_DB_URL='jdbc:postgresql://127.0.0.1:55432/serms?currentSchema=serms,p
 $env:SERMS_DB_USER='serms'
 $env:SERMS_DB_PASSWORD='<本地账号密码>'
 mvn -B -f app/pom.xml package -DskipTests
-java -jar app/target/serms-0.1.0-SNAPSHOT.jar --spring.profiles.active=serms-postgres --serms.security.secure-cookies=false --server.servlet.session.cookie.secure=false
+java -jar app/target/serms-0.1.0-SNAPSHOT.jar --spring.profiles.active=local
 ```
 
 Flyway 在 `public.serms_flyway_history` 记录迁移，在 `serms` 建立业务表。执行顺序 V001 基础、V002 领域模型、V003 通知桥、V004 审批和版本对齐。DDL 应由迁移账号执行，部署完成后运行应用应改用最小权限账号。测试 fixture 不能作为演示或生产种子。

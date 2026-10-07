@@ -87,4 +87,4 @@ pnpm test:e2e
 
 # 2026-10-07 完整 PostgreSQL 整合更新
 
-完整业务现已提供 `serms-postgres` profile、共享迁移打包与 Identity 数据映射，历史文档中的待数据库合入事项由 [当前交付记录](zhoufanhao-delivery.md) 和 [运行迁移说明](serms-postgres-runtime.md) 更新。默认 MySQL/H2 配置保留用于通知回归，服务器 web/app/db 部署仍由团队对接完成。
+完整业务现已提供 `serms-postgres` profile、共享迁移打包与 Identity 数据映射，历史文档中的待数据库合入事项由 [当前交付记录](zhoufanhao-delivery.md) 和 [运行迁移说明](serms-postgres-runtime.md) 更新。默认和 local 配置均已切换 PostgreSQL 18，H2 仅保留为测试依赖及资源；服务器 web/app/db 部署仍由团队对接完成。

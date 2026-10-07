@@ -1,5 +1,15 @@
 # Zhou Fanhao 本地验证记录
 
+## 默认 PostgreSQL 配置收尾验证
+
+本次从干净构建重新执行 `scripts/test-zhoufanhao.ps1 -PostgresBin 'C:/Program Files/PostgreSQL/18/bin'`，完整命令成功。数据库 27 项、应用回归 536 项和默认运行配置的 PostgreSQL 集成 20 项均通过；另行验证固定版本通知合同 12 项通过。UC03 集成现在不设置 ActiveProfiles，检查默认 PostgreSQL driver、统一 Flyway 路径、默认开启审批和实际登录/交接链路。
+
+生产 JAR 已检查：不包含 MySQL Connector、Flyway MySQL、H2 或测试迁移；只包含 V001–V004 四份生产迁移。四份迁移的新旧 Git blob 一致，移动未改写迁移内容。所有数据库镜像配置统一为 PostgreSQL 18，开发数据库使用新的 PG18 专用数据卷。新版 OpenAPI 与现有前端类型一致。
+
+最新证据见 [default-postgres-summary.json](evidence/uc03/default-postgres-summary.json)。本次未修改前端功能，前端测试沿用下方已验证的 79 项结果。远端 Review、CI 和服务器部署仍未执行。
+
+## 前次业务实现验证
+
 验证日期为 2026-10-07，工作目录是用户提供的 AGFP 本地完整备份。使用独立临时 PostgreSQL 数据库，没有连接开发或正式业务数据库。环境实际为 PostgreSQL 18.6、JDK 25（Java release 17 编译）、Node 24.21.0 和 pnpm 11.19.0。
 
 | 检查 | 结果 | 证据 |
