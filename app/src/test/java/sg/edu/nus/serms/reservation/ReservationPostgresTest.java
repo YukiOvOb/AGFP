@@ -41,7 +41,6 @@ import sg.edu.nus.serms.reservation.domain.ReservationStatus;
 import sg.edu.nus.serms.reservation.repository.ReservationRepository;
 import sg.edu.nus.serms.reservation.domain.PendingReservation;
 import sg.edu.nus.serms.reservation.service.DefaultReservationApprovalService;
-import sg.edu.nus.serms.reservation.service.ReservationApprovalAdapter;
 import sg.edu.nus.serms.reservation.service.ReservationApprovalService;
 import sg.edu.nus.serms.reservation.service.ReservationExpiredException;
 import sg.edu.nus.serms.reservation.service.ReservationNotFoundException;
@@ -111,11 +110,6 @@ class ReservationPostgresTest {
     ReservationApprovalService reservationApprovalService(ReservationRepository repository) {
       return new DefaultReservationApprovalService(repository, Clock.systemUTC());
     }
-
-    @Bean
-    ReservationApprovalAdapter reservationApprovalAdapter(ReservationApprovalService service) {
-      return new ReservationApprovalAdapter(service);
-    }
   }
 
   static class Events {
@@ -136,7 +130,6 @@ class ReservationPostgresTest {
   @Autowired ReservationService reservations;
   @Autowired EquipmentSearchService search;
   @Autowired ReservationApprovalService approvalService;
-  @Autowired ReservationApprovalAdapter approvalPort;
   @Autowired PlatformTransactionManager transactions;
   @Autowired Events events;
   SermsFixtures fixtures;
@@ -579,17 +572,17 @@ class ReservationPostgresTest {
     }
 
     @Test
-    void rejectionFreesTheSlotAndTheApprovalPortDelegates() {
+    void rejectionFreesTheSlotAndConfirmReturnsTheUpdatedView() {
       UUID item = pendingItem();
       var r = reservations.submit(borrower, request(item, 1, 3));
-      assertThat(approvalPort.get(r.reservationId()).requesterId()).isEqualTo(borrower);
-      var snapshot = inTransaction(() -> approvalPort.reject(r.reservationId(), r.version()));
+      assertThat(approvalService.get(r.reservationId()).requesterId()).isEqualTo(borrower);
+      var snapshot = inTransaction(() -> approvalService.reject(r.reservationId(), r.version()));
       assertThat(snapshot.reservationId()).isEqualTo(r.reservationId());
       assertThat(fixtures.reservationStatus(r.reservationId())).isEqualTo("REJECTED");
       assertThat(reservations.submit(fixtures.user("BORROWER"), request(item, 1, 3)).status())
           .isEqualTo(ReservationStatus.PENDING_APPROVAL);
       var other = reservations.submit(fixtures.user("BORROWER"), request(item, 5, 6));
-      assertThat(inTransaction(() -> approvalPort.confirm(other.reservationId(), other.version())).requesterId())
+      assertThat(inTransaction(() -> approvalService.confirm(other.reservationId(), other.version())).requesterId())
           .isNotEqualTo(borrower);
     }
   }

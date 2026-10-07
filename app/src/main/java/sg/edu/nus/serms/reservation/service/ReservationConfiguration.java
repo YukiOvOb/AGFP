@@ -46,9 +46,4 @@ public class ReservationConfiguration {
   ReservationApprovalService reservationApprovalService(ReservationRepository repository, Clock clock) {
     return new DefaultReservationApprovalService(repository, clock);
   }
-
-  @Bean
-  ReservationApprovalAdapter reservationApprovalAdapter(ReservationApprovalService reservations) {
-    return new ReservationApprovalAdapter(reservations);
-  }
 }

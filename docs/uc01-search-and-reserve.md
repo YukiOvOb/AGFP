@@ -141,7 +141,7 @@ stateDiagram-v2
 | 层 | equipment 模块 | reservation 模块 |
 | --- | --- | --- |
 | `api` | `EquipmentController`、`EquipmentProblemHandler` | `ReservationController`、`ReservationProblemHandler` |
-| `service` | `EquipmentSearchService` | `ReservationService`、`ReservationApprovalService`（给 UC02）、`ReservationApprovalAdapter`、事件 |
+| `service` | `EquipmentSearchService` | `ReservationService`、`ReservationApprovalService`（给 UC02）、事件 |
 | `domain` | `EquipmentSearchCriteria`、`TimeWindow`、`EquipmentSummary` | `ReservationStatus`、`ReservationRequest`、`policy/*` |
 | `repository` | `EquipmentSearchRepository`（JdbcTemplate） | `ReservationRepository`（JdbcTemplate） |
 
@@ -154,7 +154,7 @@ stateDiagram-v2
 | Strategy | `ReservationPolicy` + 4 个实现，`ReservationRules` 组合 | 每条预约规则独立成类，增删规则不改 service |
 | State | `ReservationStatus.isOpen / isCancellable` + 数据库触发器 | 状态转换集中定义，数据库兜底 |
 | Observer | `ReservationSubmitted`、`ReservationCancelled` 事件 | 通知、审计订阅，不与预约模块耦合 |
-| Adapter | `ReservationApprovalAdapter` | 把 UC02 的端口接到预约模块的公开 Service |
+| Adapter | `ReservationApprovalAdapter`（PR #8 合并后加入） | 把 UC02 的端口接到预约模块的公开 Service |
 
 ### 5.3 一致性与并发
 
