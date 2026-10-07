@@ -1,0 +1,41 @@
+sequenceDiagram
+  actor Custodian
+  participant Page as LoanPage
+  participant API as LoanController
+  participant Service as LoanService transactional
+  participant State as EquipmentLoanState
+  participant Maintenance as MaintenanceService
+  participant DB as PostgreSQL
+  participant Events as ApplicationEventPublisher
+  Custodian->>Page: Select reservation and confirm identity
+  Page->>API: POST loans with CSRF and expectedVersion
+  API->>Service: checkout persisted reference
+  Service->>DB: Lock Equipment then Reservation
+  Service->>DB: Recheck active roles, borrower, version, window and possession
+  Service->>State: permitsCheckout()
+  Service->>DB: Insert Loan, fulfill Reservation, change Equipment, append Audit
+  Service->>Events: LoanEvent CHECKED_OUT
+  Service->>DB: Commit
+  API-->>Page: 201 LoanView
+  Custodian->>Page: Receive equipment and choose condition
+  Page->>API: POST loans/id/return with CSRF and expectedVersion
+  API->>Service: receive
+  Service->>DB: Lock Equipment, Reservation, Loan; recheck ACTIVE and version
+  Service->>DB: Update receipt with WHERE version
+  opt DAMAGED and equipment not RETIRED
+    Service->>Maintenance: reportFault with linked Loan in same transaction
+    Maintenance->>DB: Insert OPEN case and append maintenance audit
+  end
+  opt DAMAGED and equipment RETIRED
+    Service->>DB: Insert linked OPEN case and audit without restoring equipment
+  end
+  Service->>State: afterReturn(activeCases, activeLoans)
+  Service->>DB: Update Equipment and append return audit
+  Service->>Events: LoanEvent RETURNED
+  alt All writes and synchronous consumers succeed
+    Service->>DB: Commit
+    API-->>Page: 200 LoanView
+  else Any failure
+    Service->>DB: Rollback entire handover
+    API-->>Page: Safe ProblemDetail
+  end

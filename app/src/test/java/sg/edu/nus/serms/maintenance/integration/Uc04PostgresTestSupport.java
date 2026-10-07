@@ -330,7 +330,8 @@ final class Uc04PostgresTestSupport implements AutoCloseable {
   static final class CompetingReads {
     final UUID caseId;
     final CyclicBarrier barrier = new CyclicBarrier(2);
-    final ConcurrentLinkedQueue<Integer> versions = new ConcurrentLinkedQueue<>(), backends = new ConcurrentLinkedQueue<>();
+    final ConcurrentLinkedQueue<Long> versions = new ConcurrentLinkedQueue<>();
+    final ConcurrentLinkedQueue<Integer> backends = new ConcurrentLinkedQueue<>();
     CompetingReads(UUID caseId) { this.caseId = caseId; }
   }
 }

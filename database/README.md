@@ -1,5 +1,7 @@
 # SERMS Data Module
 
+Full application integration now uses V004 for APPROVED/REJECTED decision codes, BIGINT versions and UC03 indexes. V001/V002 remain unchanged. The standalone historical regression still targets V002; `scripts/test-zhoufanhao.ps1` additionally verifies preserved decision history through V004 and tests full checkout/return in the application. See [the current delivery](../docs/zhoufanhao-delivery.md).
+
 The notification application can integrate through optional V003; see the [notification adapter](../integration/notifications/README.md). This page describes the V002 foundation. After integration, notification_request / notification_attempt are authoritative, and the V2 table remains as read-only history.
 
 Owner: Zhou Fanhao. Java 17/JDBC + PostgreSQL 17; current schema: V002. The original SERMS ER diagram is implemented as ten business tables covering users, multiple roles, equipment, reservations, approval decisions, loans, maintenance cases, notifications and audits. The Java repository implements search, booking and cancellation by the requester; the other tables provide persistence for future business services.

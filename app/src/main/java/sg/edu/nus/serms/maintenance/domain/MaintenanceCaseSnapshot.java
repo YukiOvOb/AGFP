@@ -16,7 +16,7 @@ public record MaintenanceCaseSnapshot(
     String resolutionNote,
     Instant reportedAt,
     Instant resolvedAt,
-    int version) {
+    long version) {
 
   public MaintenanceCaseSnapshot {
     Objects.requireNonNull(maintenanceCaseId, "maintenanceCaseId");

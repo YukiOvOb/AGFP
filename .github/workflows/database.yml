@@ -47,6 +47,11 @@ jobs:
           done
       - name: Build and test with real PostgreSQL
         run: mvn -B -f database/pom.xml clean verify
+      - name: Verify V004 preserves immutable approval history
+        run: |
+          psql -v ON_ERROR_STOP=1 -f database/src/test/resources/v4-upgrade-fixture.sql
+          psql -v ON_ERROR_STOP=1 -f database/src/main/resources/db/migration/V004__loan_operations.sql
+          psql -v ON_ERROR_STOP=1 -f database/src/test/resources/v4-upgrade-assertions.sql
       - uses: actions/upload-artifact@v4
         if: always()
         with:

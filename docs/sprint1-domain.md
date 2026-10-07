@@ -1,5 +1,7 @@
 # SERMS Database and Domain Model
 
+Current integration update (2026-10-07): the full application adds V004, migrates decision codes to APPROVED/REJECTED and versions to BIGINT, and implements UC03 checkout/return orchestration. The historical V002 foundation and ERD below remain a design baseline; statements about future checkout services are superseded by [the UC03 delivery](zhoufanhao-delivery.md) and [runtime migration guide](serms-postgres-runtime.md).
+
 This page's ERD describes the V002 foundation. Wang Yuanmeng's notification interface is supported through optional V003; see the [interface alignment record](notification-interface-alignment.md) for current notification tables and identity mappings.
 
 Owner: Zhou Fanhao. Current database version: V002, revised on 2026-09-25 using the ER diagram, analysis class diagram, checkout/return sequence diagrams, state descriptions and system integration notes in the SERMS directory. Their entities and business rules replace V001's provisional single-role model, simplified states and blanket prohibition on booking equipment already on loan.

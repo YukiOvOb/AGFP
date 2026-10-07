@@ -1,0 +1,48 @@
+classDiagram
+  class LoanDesk {
+    <<boundary>>
+    showConfirmedReservations()
+    confirmBorrowerIdentity()
+    recordPhysicalReturn()
+  }
+  class LoanControl {
+    <<control>>
+    checkout()
+    receiveReturn()
+  }
+  class User {
+    userId
+    roles
+  }
+  class Equipment {
+    status
+  }
+  class Reservation {
+    requesterId
+    startAt
+    endAt
+    status
+  }
+  class Loan {
+    checkedOutAt
+    dueAt
+    returnedAt
+    status
+    returnCondition
+  }
+  class MaintenanceCase {
+    status
+    faultDescription
+  }
+  class AuditLog
+  LoanDesk --> LoanControl
+  LoanControl --> Equipment
+  LoanControl --> Reservation
+  LoanControl --> Loan
+  LoanControl --> MaintenanceCase
+  LoanControl --> AuditLog
+  User "1" --> "0..*" Reservation : requester
+  Equipment "1" --> "0..*" Reservation
+  Reservation "1" --> "0..1" Loan
+  User "1" --> "0..*" Loan : checkoutBy / returnBy
+  Loan "0..1" --> "0..*" MaintenanceCase

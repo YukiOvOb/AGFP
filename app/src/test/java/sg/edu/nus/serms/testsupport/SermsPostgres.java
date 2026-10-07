@@ -30,6 +30,22 @@ public final class SermsPostgres {
 
   public static synchronized DataSource dataSource() {
     if (dataSource == null) {
+      String external = System.getenv("SERMS_APP_TEST_JDBC_URL");
+      if (external != null && !external.isBlank()) {
+        var ds = new PGSimpleDataSource();
+        ds.setUrl(external);
+        ds.setUser(System.getenv("SERMS_APP_TEST_DB_USER"));
+        ds.setPassword(System.getenv("SERMS_APP_TEST_DB_PASSWORD"));
+        try (var c = ds.getConnection(); var s = c.createStatement();
+            var r = s.executeQuery("SELECT current_database()")) {
+          r.next();
+          if (!r.getString(1).matches("serms_test(_[a-z0-9_]+)?"))
+            throw new IllegalStateException("External database must be an isolated serms_test database");
+        } catch (SQLException e) { throw new IllegalStateException(e); }
+        migrate(ds);
+        dataSource = ds;
+        return dataSource;
+      }
       container = new PostgreSQLContainer<>("postgres:18-alpine").withDatabaseName("serms_test");
       container.start();
       var ds = new PGSimpleDataSource();

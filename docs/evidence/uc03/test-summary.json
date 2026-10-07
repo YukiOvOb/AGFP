@@ -1,0 +1,327 @@
+{
+  "date": "2026-10-07",
+  "scope": "Local verification; application reports include targeted reruns after int64 test alignment",
+  "groups": [
+    {
+      "group": "database",
+      "suites": [
+        {
+          "name": "edu.nus.serms.ReservationRepositoryTest",
+          "tests": 27,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ],
+      "totals": {
+        "tests": 27,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "group": "application",
+      "suites": [
+        {
+          "name": "sg.edu.nus.serms.IdentityApiTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.NotificationIntegrationTest",
+          "tests": 19,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.ReminderPolicyTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.approval.api.ApprovalApiTest",
+          "tests": 36,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.approval.api.ApprovalRuntimeTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.approval.domain.ApprovalPolicyChainTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.approval.service.ApprovalConfigurationTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.approval.service.ApprovalServiceTest",
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.equipment.domain.EquipmentSearchCriteriaTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.identity.repository.UserAccountRepositoryTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.loan.domain.EquipmentLoanStateTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.maintenance.api.MaintenanceApiTest",
+          "tests": 71,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.maintenance.api.MaintenanceOpenApiTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.maintenance.domain.MaintenanceCaseSnapshotTest",
+          "tests": 22,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.maintenance.domain.MaintenanceCaseTest",
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.maintenance.domain.MaintenanceStateMachineTest",
+          "tests": 29,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.maintenance.repository.jdbc.JdbcMaintenanceCaseRepositoryTest",
+          "tests": 28,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.maintenance.repository.jdbc.JdbcMaintenanceHistoryRepositoryTest",
+          "tests": 13,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.maintenance.repository.jdbc.JdbcMaintenanceReportRepositoryTest",
+          "tests": 13,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.maintenance.service.AssignedTechnicianEnforcementTest",
+          "tests": 24,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.maintenance.service.MaintenanceJdbcWiringTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.maintenance.service.MaintenanceMethodSecurityTest",
+          "tests": 25,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.maintenance.service.MaintenanceReportServiceTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.maintenance.service.MaintenanceReportSnapshotTest",
+          "tests": 18,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.maintenance.service.MaintenanceServiceTest",
+          "tests": 47,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.maintenance.service.MaintenanceTransactionTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.maintenance.service.SpringMaintenanceEventPublisherTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.maintenance.service.jdbc.JdbcEquipmentMaintenanceAdapterTest",
+          "tests": 17,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.maintenance.service.jdbc.JdbcMaintenanceLoanAdapterTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.maintenance.service.jdbc.JdbcTechnicianDirectoryAdapterTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.notification.service.ApprovalNotificationFactoryTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.notification.service.ApprovalNotificationTransactionTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.reservation.ReservationPostgresTest",
+          "tests": 30,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.reservation.api.ReservationApiTest",
+          "tests": 13,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.reservation.domain.ReservationPolicyTest",
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.reservation.service.ReservationApprovalAdapterTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.reservation.service.ReservationServiceSecurityTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "sg.edu.nus.serms.reservation.service.ReservationServiceTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ],
+      "totals": {
+        "tests": 536,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "group": "uc03-postgres",
+      "suites": [
+        {
+          "name": "sg.edu.nus.serms.loan.LoanPostgresIT",
+          "tests": 20,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ],
+      "totals": {
+        "tests": 20,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    }
+  ],
+  "frontend": {
+    "tests": 79,
+    "failures": 0,
+    "build": "passed",
+    "lint": "passed",
+    "openapiConsistency": "passed"
+  },
+  "remoteReviewAndDeployment": "pending"
+}

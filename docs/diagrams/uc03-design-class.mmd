@@ -1,0 +1,50 @@
+classDiagram
+  class LoanPage {
+    checkout confirmation
+    return condition form
+  }
+  class LoanController {
+    checkout(CheckoutRequest)
+    receive(loanId, ReturnRequest)
+    list(activeOnly, page, size)
+  }
+  class LoanService {
+    checkout(reservationId, borrowerId, expectedVersion, identityConfirmed)
+    receive(loanId, expectedVersion, condition, note)
+    checkoutQueue(page, size)
+    get(loanId)
+  }
+  class EquipmentLoanState {
+    <<enumeration>>
+    AVAILABLE
+    ON_LOAN
+    UNDER_MAINTENANCE
+    RETIRED
+    permitsCheckout()
+    afterReturn(activeMaintenance, activeLoan)
+  }
+  class LoanView {
+    <<record>>
+    UUID loanId
+    long version
+    boolean overdue
+  }
+  class JdbcTemplate
+  class MaintenanceService {
+    reportFault(equipmentId, actorId, detail, loanId)
+  }
+  class ApplicationEventPublisher
+  class LoanEvent {
+    <<record>>
+    action
+    loanId
+    maintenanceCaseId
+  }
+  LoanPage --> LoanController : Session and CSRF
+  LoanController --> LoanService
+  LoanService --> EquipmentLoanState : State delegation
+  LoanService --> JdbcTemplate : shared transaction
+  LoanService --> MaintenanceService : damage case
+  LoanService --> ApplicationEventPublisher
+  LoanService --> LoanView
+  ApplicationEventPublisher --> LoanEvent

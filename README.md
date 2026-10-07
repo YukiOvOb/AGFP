@@ -111,7 +111,7 @@ CI 只能验证已经写好的测试。**每位成员必须为自己负责的用
 
 ## SERMS Sprint 1 application
 
-通知后端位于 `app/`，React 收件箱与登录页面位于 `frontend/`。本分支新增的 REST、Identity 和前端开发方式见 [对齐说明](docs/platform-rest-react.md)。公共 PostgreSQL 18 迁移、真实账号和部署整合仍待团队依赖合入；旧 H2 local 配置仅可运行通知测试基线，不能用于完整登录验收。
+后端位于 `app/`，React 页面位于 `frontend/`。完整业务使用 `serms-postgres` profile，已打包公共迁移、通知适配器与 Identity 数据映射；运行步骤见 [PostgreSQL 说明](docs/serms-postgres-runtime.md)。旧 H2 local 配置仅用于通知测试基线。真实演示账号与 web/app/db 部署仍需团队整合。
 
 ## UC01 搜索和预约设备（Member 1）
 
@@ -129,3 +129,9 @@ Local verification: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts
 
 The PostgreSQL adapter for Wang Yuanmeng's notification branch is in [integration/notifications](integration/notifications/README.md), including the V003 migration, a real LoanReminderGuard and a minimal integration patch.
 Local tests: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-notification-integration.ps1`; see the [interface alignment record](docs/notification-interface-alignment.md) for results.
+
+## Zhou Fanhao 领用归还与数据库整合
+
+UC03 后端、React `/loans` 页面、完整 PostgreSQL profile、V004 数据对齐及审批持久化适配已提供。入口见 [交付说明](docs/zhoufanhao-delivery.md)、[接口合同](docs/contracts/checkout-and-return.md)、[其他成员对接清单](docs/zhoufanhao-handoffs.md) 和 [验证记录](docs/zhoufanhao-validation.md)。
+
+完整验证：`powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-zhoufanhao.ps1`；没有 Docker 时追加 `-PostgresBin 'C:/Program Files/PostgreSQL/18/bin'`。完整业务启用 `serms-postgres`，迁移与运行步骤见 [PostgreSQL 运行说明](docs/serms-postgres-runtime.md)。

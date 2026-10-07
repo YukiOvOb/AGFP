@@ -114,6 +114,6 @@ class MaintenanceCaseSnapshotTest {
         (String) values.getOrDefault("faultDescription", s.faultDescription()),
         (String) values.getOrDefault("resolutionNote", s.resolutionNote()), s.reportedAt(),
         (Instant) values.getOrDefault("resolvedAt", s.resolvedAt()),
-        (Integer) values.getOrDefault("version", s.version()));
+        ((Number) values.getOrDefault("version", s.version())).longValue());
   }
 }

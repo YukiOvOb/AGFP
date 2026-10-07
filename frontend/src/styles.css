@@ -916,3 +916,23 @@ footer {
     grid-column: span 1;
   }
 }
+/* UC03 shares the workspace typography and controls. */
+.loan-page section {
+  margin: 1.5rem 0;
+  padding: 1.25rem;
+  background: white;
+  border-radius: 12px;
+}
+.loan-page article {
+  padding: 1rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+.loan-page label {
+  display: block;
+  margin: 0.75rem 0;
+}
+.loan-page textarea {
+  display: block;
+  width: min(100%, 38rem);
+  min-height: 5rem;
+}

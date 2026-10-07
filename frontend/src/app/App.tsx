@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router';
 import { LoginPage } from '@/features/auth/LoginPage';
+import { LoanPage } from '@/features/loan/LoanPage';
 import { NotificationPage } from '@/features/notification/NotificationPage';
 import { EquipmentSearchPage } from '@/features/equipment/EquipmentSearchPage';
 import { ReservePage } from '@/features/reservation/ReservePage';
@@ -21,6 +22,7 @@ export function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Navigate to="/notifications" replace />} />
           <Route path="/notifications" element={<NotificationPage />} />
+          <Route path="/loans" element={<LoanPage />} />
           <Route element={<RequireRole role="APPROVER" />}>
             <Route path="/approvals" element={<ApprovalListPage />} />
             <Route path="/approvals/:reservationId" element={<ApprovalDetailPage />} />
