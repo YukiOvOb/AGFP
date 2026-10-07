@@ -1,0 +1,16 @@
+%% 预约状态机（V002 触发器 check_reservation 强制执行）
+stateDiagram-v2
+  [*] --> CONFIRMED: 提交（设备无需审批）
+  [*] --> PENDING_APPROVAL: 提交（设备需审批）
+  PENDING_APPROVAL --> CONFIRMED: 审批通过（UC02，未过期）
+  PENDING_APPROVAL --> REJECTED: 审批拒绝（UC02，可过期）
+  PENDING_APPROVAL --> CANCELLED: 借用人取消（UC01）
+  CONFIRMED --> CANCELLED: 借用人取消（UC01，未领用）
+  CONFIRMED --> FULFILLED: 领用（UC03）
+  REJECTED --> [*]
+  CANCELLED --> [*]
+  FULFILLED --> [*]
+  note right of PENDING_APPROVAL
+    PENDING_APPROVAL / CONFIRMED / FULFILLED
+    占用时段（排他约束 reservation_no_overlap）
+  end note
