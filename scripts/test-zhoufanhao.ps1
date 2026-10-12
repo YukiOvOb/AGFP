@@ -28,8 +28,14 @@ try {
     $listener.Start(); $testPort = $listener.LocalEndpoint.Port; $listener.Stop()
     & (Join-Path $PostgresBin 'initdb.exe') -D (Join-Path $testDir 'pg') -U serms_test -A trust --encoding=UTF8 --locale=C
     if ($LASTEXITCODE -ne 0) { throw 'initdb failed' }
-    & (Join-Path $PostgresBin 'pg_ctl.exe') -D (Join-Path $testDir 'pg') -l (Join-Path $testDir 'postgres.log') -o "-h 127.0.0.1 -p $testPort" -w start
-    if ($LASTEXITCODE -ne 0) { throw 'PostgreSQL startup failed' }
+    # Keep the server from inheriting PowerShell's captured output handles. Waiting
+    # for pg_ctl alone also avoids waiting for the long-running PostgreSQL process.
+    $pgStartup = Start-Process -FilePath (Join-Path $PostgresBin 'pg_ctl.exe') -ArgumentList @(
+      '-D', ('"{0}"' -f (Join-Path $testDir 'pg')),
+      '-l', ('"{0}"' -f (Join-Path $testDir 'postgres.log')),
+      '-o', ('"-h 127.0.0.1 -p {0}"' -f $testPort), '-w', 'start'
+    ) -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $testDir 'pg-start.out') -RedirectStandardError (Join-Path $testDir 'pg-start.err')
+    if (-not $pgStartup.WaitForExit(30000) -or $pgStartup.ExitCode -ne 0) { throw 'PostgreSQL startup failed' }
     $started = $true
     $env:PGPASSWORD = ''
     foreach ($database in @('serms_test','serms_test_app','serms_test_uc03')) {
