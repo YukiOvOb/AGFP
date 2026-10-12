@@ -4,6 +4,15 @@
 
 项目报告首次提及时使用完整名称 **Shared Equipment Reservation and Maintenance System (SERMS)**，后续正文及日常沟通统一使用简称 **SERMS**。仓库名称统一为 `shared-equipment-reservation-and-maintenance-system`。
 
+## 协作与 agent 入口
+
+- 团队参与方式、任务依赖、分支和交接：[协作指南](.github/CONTRIBUTING.md)。
+- Coding agent 启动与按任务读取的 skills：[AGENTS.md](AGENTS.md)。
+- 分工来源、工具边界及已确认/待确认决定：[责任边界](docs/collaboration/ownership.md)、[agent 工作流](docs/collaboration/agent-workflow.md)、[决策记录](docs/collaboration/decisions.md)。
+- 文档定位、接口合同及验证证据：[文档索引](docs/README.md)、[合同索引](docs/contracts/README.md)、[testing](docs/testing.md)。
+
+这些入口补充协作方法；技术栈、五人用例分工、已有合同和 Write 协作者自行合并制度继续沿用。
+
 ## 技术栈
 
 前后端分离：React 单页应用 + Spring Boot REST API（单体，内部按业务模块划分）+ PostgreSQL 18，用 Docker Compose 运行，GitHub Actions 负责从编译到部署后验证的整条流水线。每项技术对应哪条需求、目前是否已落地、与 Proposal 的差异，见 [docs/tech-stack.md](docs/tech-stack.md)。

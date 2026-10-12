@@ -1,0 +1,37 @@
+name: SERMS 缺陷
+description: 根据实际环境和证据记录可复现的问题。
+title: "[bug] "
+body:
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 复现步骤、预期与实际结果
+      description: 输入、角色、操作顺序、错误及用户或数据影响。
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 版本、环境与证据
+      description: HEAD / base、OS、Java / Node / PostgreSQL、相关日志或报告；移除凭据和个人数据。
+    validations:
+      required: true
+  - type: input
+    id: ownership
+    attributes:
+      label: 受影响用例 / 模块与主负责人
+      description: 未明确时写待确认，不自动变更已有分工。
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: 合同、依赖与修复约束
+      description: 需要保留的既有行为、相关任务和不应顺手修改的范围。
+  - type: textarea
+    id: verification
+    attributes:
+      label: 回归验证与恢复计划
+      description: 用什么行为测试证明修复、避免复发；可能的数据 / 部署恢复影响。
+    validations:
+      required: true
