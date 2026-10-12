@@ -115,6 +115,7 @@ CI 只能验证已经写好的测试。**每位成员必须为自己负责的用
 - 模块之间的接口合同放在 [`docs/contracts/`](docs/contracts/)，以仓库版本为准；修改合同需要提 PR，并由受影响模块的负责人确认。目前已有：[登录与审批（UC02）](docs/contracts/auth-and-approval.md)、[设备搜索与预约（UC01）](docs/contracts/equipment-and-reservation.md)。
 - 所有改动走 PR。`main` 受分支保护，必须通过 CI 检查（gitleaks、Trivy、依赖审查）才能合并。
 - 所有有 Write 权限的协作者都可以自行合并自己的 PR，不需要他人审批，只要求 CI 全绿。
+- 仓库准备和后续 CI/CD、云端部署交接见 [交接记录](docs/repository-preparation.md)。CI/CD 与部署继续由 Shi Wenqi（wenqi）负责；本次不修改流程，账号与权限邀请留待确认。
 - 线上地址：https://serms.midas.cyou （香港服务器，Let's Encrypt 证书自动续期）
 - 合并进 `main` 后自动部署到香港服务器 `/opt/agfp`（见 `.github/workflows/deploy.yml`、`scripts/deploy.sh`）。
 - 部署走 Docker Compose：仓库根目录需有 `compose.yaml` + `Dockerfile`，容器监听的端口映射到宿主机 `127.0.0.1:8789`，由 nginx 反代对外。
