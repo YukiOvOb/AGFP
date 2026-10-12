@@ -46,3 +46,11 @@
 本更新解决仓库中后端仍默认使用 MySQL 的问题，包含周凡浩同时交付的 UC03 和跨模块整合。现有生产部署仍为欢迎页，不能据此认定网站已运行完整业务系统。已有 MySQL 数据也不会自动转换为 PostgreSQL 数据；真实历史数据切换应按运行说明备份、核对和迁移。
 
 前端构建仍提示单个产物超过 500 kB，构建成功，可在后续优化代码拆分。本次没有宣称覆盖率门槛、端到端浏览器验收或云端安全检查已通过。
+
+## 首次托管 CI 诊断
+
+PR #1 首次运行的 Trivy 漏洞扫描通过。Dependency review 报告本仓库不支持该功能；私有仓库需满足 [GitHub 官方依赖审查的启用条件](https://docs.github.com/en/code-security/concepts/supply-chain-security/dependency-review)。此失败状态保留，没有跳过或降低依赖审查要求。
+
+Gitleaks 8.24.3 的 `generic-api-key` 规则将原始提交 `5559503` 中 `scripts/test-zhoufanhao.ps1` 第 10 行的环境变量名称列表误判为密钥。该行只是 `SERMS_APP_TEST_*` 名称，不包含密码值；测试密码由运行时 GUID 生成。`.gitleaksignore` 仅登记这一个提交、文件、规则和行号组成的指纹，依据 [Gitleaks 官方指纹排除机制](https://github.com/gitleaks/gitleaks/blob/v8.24.3/README.md#gitleaksignore)，没有排除整个文件、提交或扫描规则。
+
+已使用同版本本地 Gitleaks、相同的 PR 提交范围和日志选项复测：退出码 0，未发现泄漏。
