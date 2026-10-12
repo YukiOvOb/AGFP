@@ -2,7 +2,7 @@
 
 2026-10-07 数据库收尾：默认启动和 local 开发均为 PostgreSQL 18，审批默认开启；生产迁移统一为 app/src/main/resources/db/migration；MySQL 驱动及生产旧迁移已移除，H2 仅供测试。后续服务器 web/app/db 部署由 Shi Wenqi 对接。
 
-Team 07 · Shared Equipment Reservation and Maintenance System（共享设备预约与维护系统）
+Team 07 · Shared Equipment Reservation and Maintenance System (SERMS)（共享设备预约与维护系统）
 
 本文件是全组统一的技术选型基准。依据是 Project Proposal（功能需求第 5 章、业务规则第 6 章、非功能需求第 7 章、DevSecOps 第 8.3 节）和《项目规划》中的 Definition of Done。每一项选型都能在第 3 节找到对应的需求；和 Proposal 不一致的地方集中写在第 4 节，并说明理由。
 

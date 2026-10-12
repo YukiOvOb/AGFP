@@ -1,6 +1,8 @@
-# SERMS
+# Shared Equipment Reservation and Maintenance System (SERMS)
 
-Shared Equipment Reservation and Maintenance System（共享设备预约与维护系统）· SWE5006 Team 07
+共享设备预约与维护系统 · SWE5006 Team 07
+
+项目报告首次提及时使用完整名称 **Shared Equipment Reservation and Maintenance System (SERMS)**，后续正文及日常沟通统一使用简称 **SERMS**。仓库名称统一为 `shared-equipment-reservation-and-maintenance-system`。
 
 ## 技术栈
 
