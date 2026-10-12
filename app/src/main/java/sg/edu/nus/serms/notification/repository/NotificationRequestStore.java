@@ -30,7 +30,7 @@ public class NotificationRequestStore {
    INSERT INTO notification_request
    (id,dedup_key,recipient,type,loan_id,expected_due_at,content,status,attempts,created_at,next_attempt_at)
    VALUES (?,?,?,?,?,?,?,'PENDING',0,?,?)
-   ON DUPLICATE KEY UPDATE dedup_key=VALUES(dedup_key)
+   ON CONFLICT DO NOTHING
    """,
         UUID.randomUUID().toString(),
         r.dedupKey(),

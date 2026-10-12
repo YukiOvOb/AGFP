@@ -13,7 +13,7 @@ public final class MaintenanceCase {
   private final UUID loanId;
   private final String faultDescription;
   private final Instant reportedAt;
-  private final int version;
+  private final long version;
   private MaintenanceStatus status;
   private UUID assignedTo;
   private String resolutionNote;
@@ -61,7 +61,7 @@ public final class MaintenanceCase {
   public Instant reportedAt() { return reportedAt; }
   public Instant resolvedAt() { return resolvedAt; }
   /** Persisted version. Only the database trigger increments it; restoration loads the result. */
-  public int version() { return version; }
+  public long version() { return version; }
 
   public void assign(UUID technicianId) {
     MaintenanceStatus next = TRANSITIONS.transition(status, MaintenanceAction.ASSIGN);

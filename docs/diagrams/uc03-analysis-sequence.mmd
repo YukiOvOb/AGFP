@@ -1,0 +1,31 @@
+sequenceDiagram
+  actor Custodian
+  participant Desk as LoanDesk boundary
+  participant Control as LoanControl
+  participant Reservation
+  participant Equipment
+  participant Loan
+  participant MaintenanceCase
+  participant AuditLog
+  Custodian->>Desk: Select confirmed reservation and verify identity
+  Desk->>Control: Checkout reservation
+  Control->>Reservation: Check requester, status and time window
+  Control->>Equipment: Check physical availability
+  alt Legal checkout
+    Control->>Loan: Create ACTIVE possession
+    Control->>Reservation: Mark FULFILLED
+    Control->>Equipment: Mark ON_LOAN
+    Control->>AuditLog: Record checkout
+    Control-->>Desk: Handover recorded
+  else Illegal checkout
+    Control-->>Desk: Refuse handover without partial changes
+  end
+  Custodian->>Desk: Physically receive equipment and assess condition
+  Desk->>Control: Return ACTIVE loan
+  Control->>Loan: Record receipt and late-return fact
+  opt Damaged
+    Control->>MaintenanceCase: Create linked OPEN case
+  end
+  Control->>Equipment: Recompute with retired and maintenance precedence
+  Control->>AuditLog: Record return
+  Control-->>Desk: Return recorded

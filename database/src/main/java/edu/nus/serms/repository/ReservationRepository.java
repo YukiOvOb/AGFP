@@ -40,7 +40,7 @@ public final class ReservationRepository {
                 while (r.next()) result.add(new Equipment(r.getObject("equipment_id", UUID.class),
                     r.getString("asset_tag"), r.getString("name"), r.getString("category"),
                     r.getString("location"), Equipment.Status.valueOf(r.getString("status")),
-                    r.getBoolean("requires_approval"), r.getInt("version")));
+                    r.getBoolean("requires_approval"), r.getLong("version")));
             }
             return List.copyOf(result);
         }

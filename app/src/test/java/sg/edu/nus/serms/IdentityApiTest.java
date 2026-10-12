@@ -21,6 +21,7 @@ import sg.edu.nus.serms.identity.service.IdentityService;
 import sg.edu.nus.serms.shared.config.SecurityConfig;
 import sg.edu.nus.serms.shared.security.IdentityAuthenticationProvider;
 
+@org.springframework.test.context.ActiveProfiles("test")
 @WebMvcTest(controllers = AuthController.class, properties = "serms.security.secure-cookies=false")
 @Import({
   SecurityConfig.class,

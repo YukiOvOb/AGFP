@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-07",
+  "verification": "Complete clean build and verification, not aggregate reruns",
+  "groups": [
+    {
+      "group": "database",
+      "tests": 27,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "group": "application",
+      "tests": 536,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "group": "default-postgres-application",
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "group": "notification-contract",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "checks": {
+    "defaultRuntimePostgres": true,
+    "approvalEnabledByDefault": true,
+    "singleProductionMigrationDirectory": true,
+    "migrationBlobsUnchanged": true,
+    "productionJarHasNoMysqlOrH2": true,
+    "legacyDdlIsTestOnly": true,
+    "openapiTypesMatch": true
+  },
+  "remoteReviewAndDeployment": "pending"
+}

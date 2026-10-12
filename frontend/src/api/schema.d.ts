@@ -177,6 +177,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/loans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listLoans"];
+        put?: never;
+        post: operations["checkoutEquipment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/loans/{loanId}/return": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["receiveLoanReturn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/logout": {
         parameters: {
             query?: never;
@@ -419,6 +451,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/loans/{loanId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getLoan"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/loans/checkouts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listCheckoutQueue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/equipment": {
         parameters: {
             query?: never;
@@ -595,7 +659,7 @@ export interface components {
             /** Format: date-time */
             resolvedAt: string | null;
             /**
-             * Format: int32
+             * Format: int64
              * @description Server-side version; mutations do not support If-Match or expectedVersion
              */
             version: number;
@@ -609,6 +673,49 @@ export interface components {
         AssignTechnicianRequest: {
             /** Format: uuid */
             technicianId: string;
+        };
+        CheckoutRequest: {
+            /** Format: uuid */
+            reservationId: string;
+            /** Format: uuid */
+            borrowerId: string;
+            /** Format: int64 */
+            expectedVersion: number;
+            identityConfirmed?: boolean;
+        };
+        LoanView: {
+            /** Format: uuid */
+            loanId?: string;
+            /** Format: uuid */
+            reservationId?: string;
+            /** Format: uuid */
+            equipmentId?: string;
+            equipmentName?: string;
+            /** Format: uuid */
+            borrowerId?: string;
+            borrowerName?: string;
+            /** Format: uuid */
+            checkoutBy?: string;
+            /** Format: uuid */
+            returnBy?: string;
+            /** Format: date-time */
+            checkedOutAt?: string;
+            /** Format: date-time */
+            dueAt?: string;
+            /** Format: date-time */
+            returnedAt?: string;
+            status?: string;
+            returnCondition?: string;
+            returnNote?: string;
+            /** Format: int64 */
+            version?: number;
+            overdue?: boolean;
+        };
+        ReturnRequest: {
+            /** Format: int64 */
+            expectedVersion: number;
+            condition: string;
+            note?: string;
         };
         LoginRequest: {
             /** Format: email */
@@ -748,6 +855,22 @@ export interface components {
             /** Format: date-time */
             occurredAt: string;
             detail: string | null;
+        };
+        CheckoutCandidate: {
+            /** Format: uuid */
+            reservationId?: string;
+            /** Format: uuid */
+            equipmentId?: string;
+            equipmentName?: string;
+            /** Format: uuid */
+            borrowerId?: string;
+            borrowerName?: string;
+            /** Format: date-time */
+            startAt?: string;
+            /** Format: date-time */
+            endAt?: string;
+            /** Format: int64 */
+            version?: number;
         };
         EquipmentPage: {
             content: components["schemas"]["EquipmentView"][];
@@ -1103,6 +1226,80 @@ export interface operations {
             };
         };
     };
+    listLoans: {
+        parameters: {
+            query?: {
+                activeOnly?: boolean;
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LoanView"][];
+                };
+            };
+        };
+    };
+    checkoutEquipment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckoutRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LoanView"];
+                };
+            };
+        };
+    };
+    receiveLoanReturn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                loanId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReturnRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LoanView"];
+                };
+            };
+        };
+    };
     logout: {
         parameters: {
             query?: never;
@@ -1428,6 +1625,51 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MaintenanceCaseResponse"][];
+                };
+            };
+        };
+    };
+    getLoan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                loanId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LoanView"];
+                };
+            };
+        };
+    };
+    listCheckoutQueue: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CheckoutCandidate"][];
                 };
             };
         };

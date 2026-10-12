@@ -36,6 +36,7 @@ import sg.edu.nus.serms.shared.security.IdentityAuthenticationProvider;
 import sg.edu.nus.serms.shared.security.SecurityProblemWriter;
 import sg.edu.nus.serms.shared.security.SermsUserPrincipal;
 
+@org.springframework.test.context.ActiveProfiles("test")
 @WebMvcTest(
     controllers = {ReservationController.class, EquipmentController.class},
     properties = "serms.security.secure-cookies=false")

@@ -1,6 +1,10 @@
 # 登录与审批接口合同（UC02）
 
+默认运行配置收尾：后端默认使用 PostgreSQL 18 并开启审批，唯一生产迁移源为 `app/src/main/resources/db/migration`。MySQL 生产驱动和迁移已移除，H2 仅保留在测试作用域。web/app/db 的服务器部署仍由 Shi Wenqi 负责。
+
 状态：**已确认**，以仓库中本文件为准。修改需要提 PR，并由受影响模块的负责人确认。
+
+2026-10-07 本地整合记录：应用 `serms-postgres` 已打包公共迁移并启用真实 Identity、预约审批端口和 ApprovalDecisionPort。第 6 节约定已通过新增 V004 实现，旧 V002 校验和保持不变；原“直接修改未合并 V002”的操作说明不再适用于当前备份。MySQL/H2 仅保留为已有通知测试基线。远程 Review 和部署仍待仓库恢复后由团队完成，见 [Zhou 对接清单](../zhoufanhao-handoffs.md)。
 
 | 相关方 | 负责内容 |
 | --- | --- |

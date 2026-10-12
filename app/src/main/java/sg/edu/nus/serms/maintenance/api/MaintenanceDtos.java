@@ -39,7 +39,7 @@ public final class MaintenanceDtos {
       Instant reportedAt,
       @Schema(nullable = true) Instant resolvedAt,
       @Schema(description = "Server-side version; mutations do not support If-Match or expectedVersion")
-      int version) {
+      long version) {
     public static MaintenanceCaseResponse from(MaintenanceCase item) {
       return new MaintenanceCaseResponse(item.maintenanceCaseId(), item.equipmentId(),
           item.reportedBy(), item.assignedTo(), item.loanId(), item.status(), item.faultDescription(),

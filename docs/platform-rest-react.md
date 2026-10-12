@@ -84,3 +84,7 @@ pnpm test:e2e
 - 本地真实 Spring Boot + Vite 代理的 CSRF 初始化和未登录页面已在浏览器检查。
 - PostgreSQL 18 / Testcontainers、真实账号、真实 Loan/审批数据库链路尚未验收；远端三道安全 CI 未在本次本地开发中运行。
 - 没有改动生产 Flyway 文件或根部署配置。审批事件适配与公共数据迁移须在各自 PR 中完成。
+
+# 2026-10-07 完整 PostgreSQL 整合更新
+
+完整业务现已提供 `serms-postgres` profile、共享迁移打包与 Identity 数据映射，历史文档中的待数据库合入事项由 [当前交付记录](zhoufanhao-delivery.md) 和 [运行迁移说明](serms-postgres-runtime.md) 更新。默认和 local 配置均已切换 PostgreSQL 18，H2 仅保留为测试依赖及资源；服务器 web/app/db 部署仍由团队对接完成。

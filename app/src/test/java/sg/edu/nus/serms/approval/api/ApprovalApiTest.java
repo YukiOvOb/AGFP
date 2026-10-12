@@ -37,6 +37,7 @@ import sg.edu.nus.serms.shared.domain.RecordNotFoundException;
 import sg.edu.nus.serms.shared.security.*;
 
 /** Real controller, policy/service proxies and shared security; only outbound ports are mocked. */
+@org.springframework.test.context.ActiveProfiles("test")
 @WebMvcTest(controllers = {ApprovalController.class, AuthController.class}, properties = {
     "serms.approval.enabled=true", "serms.security.secure-cookies=false"})
 @Import({SecurityConfig.class, IdentityAuthenticationProvider.class, SecurityProblemWriter.class,

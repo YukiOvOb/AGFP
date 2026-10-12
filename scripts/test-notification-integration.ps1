@@ -10,7 +10,7 @@ $created=$false
 Push-Location $repoRoot
 try {
     & "$PSScriptRoot/prepare-notification-contract.ps1"
-    docker run -d --name $containerName -e POSTGRES_DB=serms_test -e POSTGRES_USER=serms_test -e "POSTGRES_PASSWORD=$testPassword" -p 127.0.0.1::5432 postgres:17-alpine
+    docker run -d --name $containerName -e POSTGRES_DB=serms_test -e POSTGRES_USER=serms_test -e "POSTGRES_PASSWORD=$testPassword" -p 127.0.0.1::5432 postgres:18-alpine
     if($LASTEXITCODE -ne 0){throw 'Cannot start isolated test database'}
     $created=$true
     $ready=$false
@@ -23,8 +23,8 @@ try {
     docker exec $containerName createdb -U serms_test serms_upgrade
     if($LASTEXITCODE -ne 0){throw 'Cannot create upgrade test database'}
     $steps=@(
-        'database/src/main/resources/db/migration/V001__sprint1.sql',
-        'database/src/main/resources/db/migration/V002__align_serms_model.sql',
+        'app/src/main/resources/db/migration/V001__sprint1.sql',
+        'app/src/main/resources/db/migration/V002__align_serms_model.sql',
         'integration/notifications/src/test/resources/v2-notification-fixture.sql'
     )
     foreach($path in $steps){

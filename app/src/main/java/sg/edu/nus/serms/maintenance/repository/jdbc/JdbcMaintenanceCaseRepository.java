@@ -98,7 +98,7 @@ public class JdbcMaintenanceCaseRepository implements MaintenanceCaseRepository 
         row.getObject("loan_id", UUID.class), MaintenanceStatus.valueOf(row.getString("status")),
         row.getString("fault_description"), row.getString("resolution_note"),
         row.getTimestamp("reported_at").toInstant(), resolvedAt == null ? null : resolvedAt.toInstant(),
-        row.getInt("version")));
+        row.getLong("version")));
   }
 
   private static Timestamp timestamp(java.time.Instant value) {

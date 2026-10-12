@@ -27,6 +27,7 @@ import sg.edu.nus.serms.maintenance.service.security.MaintenanceAccessPolicy;
 import sg.edu.nus.serms.shared.config.SecurityConfig;
 import sg.edu.nus.serms.shared.security.*;
 
+@org.springframework.test.context.ActiveProfiles("test")
 @WebMvcTest(controllers = {MaintenanceController.class, AuthController.class},
     properties = "serms.security.secure-cookies=false")
 @Import({SecurityConfig.class, IdentityAuthenticationProvider.class, SecurityProblemWriter.class,

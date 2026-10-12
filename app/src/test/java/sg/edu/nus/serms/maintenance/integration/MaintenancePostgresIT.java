@@ -134,7 +134,7 @@ class MaintenancePostgresIT {
     var completedBefore = List.copyOf(db.events.completed);
     int equipmentVersion = db.equipmentVersion(equipment);
     var locksAtRead = new ArrayList<Boolean>();
-    var versionsAtRead = new ArrayList<Integer>();
+    var versionsAtRead = new ArrayList<Long>();
     db.reads.afterRead = item -> {
       if (!item.maintenanceCaseId().equals(id)) return;
       assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
@@ -470,7 +470,7 @@ class MaintenancePostgresIT {
       executor.shutdownNow();
       assertThat(executor.awaitTermination(40, TimeUnit.SECONDS)).isTrue();
     }
-    assertThat(coordination.versions).containsExactlyInAnyOrder(0, 0);
+    assertThat(coordination.versions).containsExactlyInAnyOrder(0L, 0L);
     assertThat(coordination.backends).hasSize(2).doesNotHaveDuplicates();
     var successes = results.stream().filter(result -> result.persisted != null).toList();
     var conflicts = results.stream().filter(result -> result.conflict != null).toList();

@@ -13,14 +13,14 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 /**
  * One throw-away PostgreSQL 18 per test JVM, migrated with the repository's own V001 and V002
- * scripts ({@code database/src/main/resources/db/migration}). Tests create their own rows with
+ * scripts ({@code app/src/main/resources/db/migration}). Tests create their own rows with
  * random ids and never truncate, so they can share the database and run in any order.
  *
- * <p>Needs Docker. When the shared Flyway sequence moves into {@code app/}, replace {@link
- * #migrate} with Flyway and keep the rest.
+ * <p>This UC01 historical constraint bench intentionally uses V002; the default-runtime
+ * integration suite uses the complete Flyway sequence and verifies V004.
  */
 public final class SermsPostgres {
-  static final Path MIGRATIONS = Path.of("..", "database", "src", "main", "resources", "db", "migration");
+  static final Path MIGRATIONS = Path.of("src", "main", "resources", "db", "migration");
   static final String[] SCRIPTS = {"V001__sprint1.sql", "V002__align_serms_model.sql"};
 
   private static PostgreSQLContainer<?> container;
@@ -30,6 +30,22 @@ public final class SermsPostgres {
 
   public static synchronized DataSource dataSource() {
     if (dataSource == null) {
+      String external = System.getenv("SERMS_APP_TEST_JDBC_URL");
+      if (external != null && !external.isBlank()) {
+        var ds = new PGSimpleDataSource();
+        ds.setUrl(external);
+        ds.setUser(System.getenv("SERMS_APP_TEST_DB_USER"));
+        ds.setPassword(System.getenv("SERMS_APP_TEST_DB_PASSWORD"));
+        try (var c = ds.getConnection(); var s = c.createStatement();
+            var r = s.executeQuery("SELECT current_database()")) {
+          r.next();
+          if (!r.getString(1).matches("serms_test(_[a-z0-9_]+)?"))
+            throw new IllegalStateException("External database must be an isolated serms_test database");
+        } catch (SQLException e) { throw new IllegalStateException(e); }
+        migrate(ds);
+        dataSource = ds;
+        return dataSource;
+      }
       container = new PostgreSQLContainer<>("postgres:18-alpine").withDatabaseName("serms_test");
       container.start();
       var ds = new PGSimpleDataSource();
@@ -48,7 +64,7 @@ public final class SermsPostgres {
         s.execute(Files.readString(MIGRATIONS.resolve(script)));
       }
     } catch (IOException e) {
-      throw new UncheckedIOException("Run tests from app/ so ../database is reachable", e);
+      throw new UncheckedIOException("Run tests from app/ so src/main/resources/db/migration is reachable", e);
     } catch (SQLException e) {
       throw new IllegalStateException("Could not apply the SERMS migrations", e);
     }
