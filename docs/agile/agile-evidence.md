@@ -1,6 +1,8 @@
-# 敏捷开发证据索引
+# SERMS 敏捷开发证据索引
 
 Sprint 4 报告中 “敏捷开发过程” 一章的材料来源。Member 1 负责维护；每个 Sprint 结束时补充一行。
+
+报告首次提及时使用 **Shared Equipment Reservation and Maintenance System (SERMS)**，后续统一使用 **SERMS**。
 
 ## 1. 需求与计划
 
