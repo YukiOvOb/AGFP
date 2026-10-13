@@ -30,7 +30,7 @@ Implementation: clarify PR/DoD descriptions in the current Sprint plan only. REA
 
 See [Ownership](ownership.md#sources-of-shared-responsibilities-and-specific-deliveries): Sprint long-term responsibilities differ from platform, shared-testing, and CI/deployment delivery assignments in the technology stack and UC02 contract.
 
-Status: **Awaiting user confirmation**. A decision was requested in that conversation; this index did not reallocate responsibilities.
+Status: **Settled for the completion work by [D-007](#d-007-completion-task-ownership) on 2026-10-14**. It was originally awaiting user confirmation: a decision was requested in that conversation, and this index did not reallocate responsibilities.
 
 Options: retain sources while distinguishing long-term responsibility/specific delivery; unify according to the Sprint plan; or unify according to the technology stack and confirmed contracts. The latter two require identifying affected contracts/tasks before deciding changes. Until confirmed, keep all sources and continue independent collaboration improvements.
 
@@ -63,8 +63,93 @@ Tasks are Issues #5-#10. Database validation names Zhou Fanhao (`zfh-usedname`);
 
 Local startup and UC01-UC05 acceptance are P0. Server access is not yet handed over and must not block local progress; cloud handover/release is P1. Keep credential values outside Git/public Issues. Existing server configuration and production remain unchanged in the local-demo delivery. No new-account workaround or account-appeal result is assumed. PRs and evidence continue through the existing workflow; implementation/local verification does not imply CI, member review, cloud success or team Done.
 
+## D-005 Local Closeout and Cloud Last
+
+Status: **Confirmed by the user in this closeout conversation on 2026-10-13 (Asia/Singapore)**. The user requested completing local repository housekeeping, with cloud deployment last. Basic functionality must be completed first; the user will specify additional changes later.
+
+Scope: preserve the original maintenance checkout's changes/history, prepare a clean local branch from `d42e0a6`, update current progress/testing/navigation, reconcile local backup exclusions and earlier preparation notes. Existing use-case contracts, team membership, CI rules and production remain unchanged. Other sessions' active worktrees and local databases/services are retained. This conversation does not publish remote changes, merge PRs, invite accounts, or execute cloud work.
+
+Execution order: local repository closeout → complete local UC01-UC05 and member acceptance → implement the user's later, separately defined changes → final release/cloud deployment and post-deployment acceptance. No later feature scope, deadline, hours or approval is inferred. Original DoD remains applicable to team Done even while cloud publication is deferred.
+
 ## D-006 Spring Boot 4 Security Migration
 
 Status: **Confirmed by the user in this session on 2026-10-13 (Asia/Singapore)**. The built backend image revealed dependency vulnerabilities not detected by source scanning. Spring's corresponding 6.2 fixes require enterprise support, while the OSS fixes are in Framework 7. The existing technology stack selected Boot 3.5; options were to retain it with a blocked release or authorize Boot 4 and full regression. The user explicitly authorized **upgrading to Boot 4, updating the technical agreement and running complete regression**.
 
 Scope: PR #13 migrates the existing single application to Boot 4.0.8/Framework 7.0.9, compatible Springdoc/Jackson/Testcontainers, patched dependency versions and relocated MVC test imports. Preserve Java 17, React/PostgreSQL, JSON business interfaces, strict integer versions, identity/session/CSRF/RBAC, immutable migrations, test coverage and ownership. Existing tests must continue passing, and generated API types and real integrated flows must be verified. No paid Spring artifacts, security suppression, production action or teammate sign-off is authorized or claimed. Server handover remains unavailable; release stays draft until actual readiness.
+
+## D-007 Completion Task Ownership
+
+Status: **Confirmed by the user (repository owner Liu Tongyao) in conversation on 2026-10-14 (Asia/Singapore)**, after a read-only review of main `940bf42`, draft PRs #11-#14 and the Project Proposal. The review is recorded in the [development log](../devlog/2026-10-14-project-review-and-completion-plan.md).
+
+Sources: the differing shared-responsibility tables described in [D-002](#d-002-shared-responsibility-source-differences); requirement owners in the [backlog](../agile/backlog.md); task execution in [D-004](#d-004-local-first-integration-and-wenqi-task-execution).
+
+Decision: for the remaining completion work, the primary owner of each task is its Issue assignee.
+
+| Work | Owner | Issues |
+| --- | --- | --- |
+| Integration line, frontend foundation and polish, UC01 (on Shi Wenqi's behalf), UC04, reports, release | Liu Tongyao (`cpg25ncu`) | #15, #16, #21, #22, #23, #26, #10 |
+| User/role administration, first-admin bootstrap, audit viewer, quality gates | Zhang Hanming (`Hanming1008`) | #18, #24 |
+| Equipment and category management, UC03 lookup | Zhou Fanhao (`zfh-usedname`) | #17, #20 |
+| UC05 completion, CodeQL/Dependabot/backup/load/ZAP | Wang Yuanmeng (`ezmoneysniper0701`) | #19, #25 |
+
+The five-member use-case ownership is unchanged. Historical long-term responsibility tables stay as history; where they differ from this table for these tasks, this table applies. Shi Wenqi remains Member 1, receives no Issue while his account is unavailable, and takes part in the server handover.
+
+Limits: contracts, merge permissions and checks are unchanged; contract-affecting tasks still need the affected owner's confirmation. The owner made this allocation; other members' acceptance is shown by their own activity on the Issues and is not assumed here. Re-splits are recorded on [the plan Issue](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/issues/27).
+
+## D-008 Equipment and Maintenance State Models
+
+Status: **Confirmed by the user on 2026-10-14 (Asia/Singapore)**. This settles the two items left pending in [UC02 contract section 9](../contracts/auth-and-approval.md#9-items-pending-confirmation).
+
+Sources: Proposal 5.2 lists five equipment states (Available, Reserved, Issued, Under Maintenance, Retired) and 5.6 lists six maintenance states (Reported, Assigned, In Progress, Resolved, Not Repairable, Closed). Migration V002 implements four and five.
+
+Decision: keep the implemented models. No migration changes either state set. The project report explains the difference.
+
+| Proposal | Implemented | Reason |
+| --- | --- | --- |
+| Equipment: Reserved | Not an equipment state; derived per time window from `reservation` rows and shown as `RESERVED` busy slots | An item can hold several future reservations while being available now; one flag on the item cannot represent that, and the exclusion constraint already enforces the rule |
+| Equipment: Issued | `ON_LOAN` | Naming only |
+| Maintenance: Reported | `OPEN` | Naming only |
+| Maintenance: Not Repairable | `UNREPAIRABLE` | Naming only |
+| Maintenance: Closed | Folded into the terminal `RESOLVED` / `UNREPAIRABLE` | Both already require a resolution note and timestamp and accept no further transition; no post-resolution step exists that a separate state would guard |
+
+Follow-up: the wording of contract section 9 and of the technology document is updated by the tasks that next touch them (#21 for maintenance, #17 for equipment). New columns for fault category/priority and equipment details are additive migrations and are not affected by this decision.
+
+## D-009 Scope Freeze
+
+Status: **Confirmed by the user on 2026-10-14 (Asia/Singapore)**.
+
+Dropped for this delivery:
+
+| Item | Source that mentioned it |
+| --- | --- |
+| Email notifications | Proposal 5.7, "may be added if it can be completed within the project schedule" |
+| QR codes | Proposal 4.2, "may be generated if time permits" |
+| ArchUnit layering checks, Spotless, SpotBugs + FindSecBugs | [Technology stack](../tech-stack.md) targets |
+| Automatic cancellation of expired pending reservations (R1.11) | [Backlog](../agile/backlog.md), priority C |
+
+Kept: everything in Proposal chapters 5-7 not listed above, including user/role administration, equipment and category management, all listed reports, audit records and their viewer, the 70% service/domain coverage requirement, CodeQL, Dependabot and the backup runbook. k6 load testing and the OWASP ZAP baseline are best effort inside #25.
+
+The report states these as deviations from the technology document. Static analysis is covered by CodeQL and ESLint in place of SpotBugs.
+
+## D-010 Delivery Schedule
+
+Status: the presentation date **2026-10-26** was stated by the user on 2026-10-14, with the instruction to finish early enough to prepare the report and the demonstration. The intermediate dates below were proposed by the agent in that conversation and published on [the plan Issue](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/issues/27); the owner adjusts them there.
+
+| Date | Milestone |
+| --- | --- |
+| Thu 2026-10-15 | Integration line merged (#15); all work moves to the Spring Boot 4 baseline |
+| Fri 2026-10-16 | Component foundation merged (#16); #12 on the new baseline; server inventory requested |
+| Mon 2026-10-19 | P0 features merged (#17, #18, #19) |
+| Tue 2026-10-20 | P1 features merged (#20, #21, #22, #23); feature freeze |
+| Wed 2026-10-21 | Quality gates (#24), cross-module testing, fixes, visual polish (#26) |
+| Thu 2026-10-22 | Deployment and deployed acceptance (#10), #25; code freeze |
+| Fri 2026-10-23 to Sun 2026-10-25 | Report, demo script, rehearsal; critical fixes only |
+| Mon 2026-10-26 | Presentation |
+
+Cloud deployment stays the last engineering step, as in [D-005](#d-005-local-closeout-and-cloud-last).
+
+## D-011 Development Log
+
+Status: **Requested by the user on 2026-10-14 (Asia/Singapore)**: record the development process and the problems met in detail, as documents, to support the later project report.
+
+Decision: every completion task adds or updates its entry under [docs/devlog](../devlog/README.md) in the same PR; cross-cutting events (reviews, re-planning, integration, incidents, deployment) get dated entries. The template, naming and rules are in that README. The log records facts and does not replace this decision record, the contracts or the evidence folder.
