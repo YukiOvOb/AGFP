@@ -48,3 +48,7 @@ sequenceDiagram
 ```
 
 The Loan adapter and producers are Sprint 2 integration points. Pure reminder classification is independent of browser rendering and persistence.
+
+## UC04 maintenance recipients
+
+`MaintenanceAssigned` creates one in-app notification for the assigned technician. When a case reaches `RESOLVED` or `UNREPAIRABLE`, `MaintenanceCompleted` creates one notification for the original fault reporter (`maintenance_case.reported_by`), including the outcome. The listener reads the saved case by `maintenanceCaseId` inside the maintenance transaction and verifies its equipment, assigned technician, and terminal outcome. The source key is stable per case, so a duplicate completion event cannot create another request. Delivery remains the worker's post-commit responsibility; a rolled-back maintenance transaction leaves no request.
