@@ -1,59 +1,47 @@
 #!/usr/bin/env bash
-# Server deployment script, called over SSH by .github/workflows/deploy.yml or run manually.
-# Prerequisites: code synced to $APP_DIR (the workflow handles clone / reset), Docker Compose installed.
-#
-# Steps: read .env → docker compose up -d --build → health check.
-# Preserves existing .env and data/ to protect secrets and database data.
-#
-# Independent of the technology stack: Node / Python / Go use the same procedure if the repository root
-# contains compose.yaml (or docker-compose.yml) and a matching Dockerfile. Before first deployment:
-#   1. Add compose.yaml + Dockerfile, with the container listening on $PORT.
-#   2. Run cp .env.example /opt/agfp/.env on the server and fill in secrets (once).
+# Execute only after the exact main SHA passes verify-release.mjs and server handover.
 set -euo pipefail
-
-APP_DIR="${APP_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
+umask 077
+: "${APP_DIR:?Use the inventoried application path}"
+: "${RELEASE_SHA:?Use the gate-verified main SHA}"
+[[ "$RELEASE_SHA" =~ ^[a-f0-9]{40}$ ]] || { echo 'Invalid release SHA'; exit 1; }
 cd "$APP_DIR"
-echo "==> Application directory: $APP_DIR"
-
-# 1) Require a Compose file and fail explicitly if it is missing.
-COMPOSE=""
-for f in compose.yaml compose.yml docker-compose.yaml docker-compose.yml; do
-  [ -f "$f" ] && { COMPOSE="$f"; break; }
-done
-if [ -z "$COMPOSE" ]; then
-  echo "❌ No compose.yaml at the repository root; there is no deployable application yet. Add compose.yaml + Dockerfile before merging."
-  exit 1
-fi
-
-# 2) .env: keep secrets only on the server; never commit them to Git.
-if [ ! -f .env ]; then
-  if [ -f .env.example ]; then
-    echo "⚠️ No .env found; using .env.example as a placeholder. Connect over SSH, fill in /opt/agfp/.env, and redeploy as soon as possible."
-    cp .env.example .env && chmod 600 .env
-  else
-    echo "⚠️ Neither .env nor .env.example was found; starting without environment variables."
-    : > .env; chmod 600 .env
-  fi
-fi
-
-# 3) Build and replace the containers.
-HOST_PORT="$(grep -E '^HOST_PORT=' .env 2>/dev/null | cut -d= -f2 | tr -d ' ' || true)"; HOST_PORT="${HOST_PORT:-8789}"
-HEALTH_PATH="$(grep -E '^HEALTH_PATH=' .env 2>/dev/null | cut -d= -f2 | tr -d ' ' || true)"; HEALTH_PATH="${HEALTH_PATH:-/api/health}"
-echo "==> docker compose -f $COMPOSE up -d --build"
-docker compose -f "$COMPOSE" up -d --build --remove-orphans
-docker image prune -f >/dev/null 2>&1 || true
-
-# 4) Health check (local port only; public HTTPS is handled by nginx outside this script).
-echo "==> Waiting for http://127.0.0.1:$HOST_PORT$HEALTH_PATH …"
-ok=0
-for i in $(seq 1 30); do
-  if curl -fsS "http://127.0.0.1:$HOST_PORT$HEALTH_PATH" >/dev/null 2>&1; then ok=1; break; fi
-  sleep 2
-done
-if [ "$ok" -eq 1 ]; then
-  echo "✅ Deployment succeeded: $(git log --oneline -1)"
-else
-  echo "❌ Health check failed. Recent logs:"
-  docker compose -f "$COMPOSE" logs --tail=50
-  exit 1
-fi
+test -f .env
+exec 9> .deploy.lock
+flock -n 9 || { echo 'Another server release is running'; exit 1; }
+test "$(git rev-parse origin/main)" = "$RELEASE_SHA"
+git diff --quiet
+git diff --cached --quiet
+PREVIOUS_SHA=$(git rev-parse HEAD)
+# Read simple KEY=value entries, never execute the server-owned environment file.
+env_value() { sed -n "s/^$1=//p" .env | tail -1 | tr -d '\r'; }
+BACKUP_DIR=$(env_value SERMS_BACKUP_DIR)
+HOST_PORT=$(env_value HOST_PORT); HOST_PORT=${HOST_PORT:-8789}
+DB_NAME=$(env_value SERMS_DB_NAME)
+DB_USER=$(env_value SERMS_DB_USER)
+DB_VOLUME=$(env_value SERMS_DB_VOLUME)
+test -n "$BACKUP_DIR" && test -d "$BACKUP_DIR"
+[[ "$BACKUP_DIR" = /* && "$BACKUP_DIR" != "$APP_DIR" && "$BACKUP_DIR" != "$APP_DIR/"* ]]
+[[ "$HOST_PORT" =~ ^[0-9]+$ && "$DB_NAME" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ && "$DB_USER" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]
+test -n "$DB_VOLUME"
+docker volume inspect "$DB_VOLUME" >/dev/null
+# Back up the confirmed running PostgreSQL 18 BEFORE checkout/build/migration.
+DB_CONTAINER=$(docker ps -q --filter label=com.docker.compose.project=agfp --filter label=com.docker.compose.service=db)
+[[ -n "$DB_CONTAINER" && "$DB_CONTAINER" != *$'\n'* ]]
+test "$(docker inspect --format '{{.Config.Image}}' "$DB_CONTAINER")" = postgres:18-alpine
+test "$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/var/lib/postgresql"}}{{.Name}}{{end}}{{end}}' "$DB_CONTAINER")" = "$DB_VOLUME"
+BACKUP="$BACKUP_DIR/pre-release-$RELEASE_SHA-$(date -u +%Y%m%dT%H%M%SZ).dump"
+docker exec "$DB_CONTAINER" pg_dump -U "$DB_USER" -d "$DB_NAME" -Fc > "$BACKUP"
+test -s "$BACKUP"
+docker exec -i "$DB_CONTAINER" pg_restore --list < "$BACKUP" >/dev/null
+printf 'previous=%s\nrelease=%s\nbackup=%s\n' "$PREVIOUS_SHA" "$RELEASE_SHA" "$BACKUP" > "$BACKUP.release"
+git checkout --detach "$RELEASE_SHA"
+export RELEASE_SHA
+docker compose config --quiet
+# Compilation failures leave currently running containers intact.
+docker compose build
+docker compose up -d --wait --wait-timeout 180
+HEALTH=$(curl -fsS "http://127.0.0.1:$HOST_PORT/api/v1/health")
+[[ "$HEALTH" =~ \"status\"[[:space:]]*:[[:space:]]*\"UP\" ]]
+echo "Released $RELEASE_SHA. Verify real HTTPS login and workflows before acceptance."
+# Retain previous revision/images and backup; never downgrade or delete database data automatically.

@@ -28,7 +28,11 @@ Member names come from the [technology stack test scope](../tech-stack.md#52-eac
 
 Long-term responsibilities and a PR's delivery owner can differ, but do not treat these differences as confirmed delegation without agreement. See [Ownership decision](decisions.md#d-002-shared-responsibility-source-differences). Until confirmation, retain all sources and current delivery conventions; new cross-responsibility tasks need an explicit primary owner and affected participants.
 
+For the completion tasks created on 2026-10-14 (Issues #15-#27), [D-007](decisions.md#d-007-completion-task-ownership) names the delivery owner of each task; the use-case table above is unchanged.
+
 ## Shared Files at Risk of Concurrent Edits
+
+Current task execution is recorded in [D-004](decisions.md#d-004-local-first-integration-and-wenqi-task-execution): Liu Tongyao executes UC01 takeover/local integration and later release work; Shi Wenqi remains Member 1 and original UC01 contributor. Issues #5/#9/#10 are assigned to `cpg25ncu`, #6 to Zhou Fanhao (`zfh-usedname`), #7 to Wang Yuanmeng (`ezmoneysniper0701`), and #8 to Zhang Hanming (`Hanming1008`), as verified on 2026-10-13. These concrete assignments do not resolve every historical shared-responsibility difference in D-002. [D-005](decisions.md#d-005-local-closeout-and-cloud-last) records cloud publication as the final phase after local basic functionality and subsequent user-requested changes.
 
 | Area | Coordination needed |
 | --- | --- |

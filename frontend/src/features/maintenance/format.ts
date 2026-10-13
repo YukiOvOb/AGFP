@@ -3,8 +3,7 @@ import { z } from 'zod';
 import type { Status } from './queries';
 export const statuses: Status[] = ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'UNREPAIRABLE'];
 export const statusLabel = (status: Status) => status.replaceAll('_', ' ');
-export const hasAnyRole = (roles: readonly string[] | undefined, ...allowed: string[]) =>
-  allowed.some((role) => roles?.includes(role));
+export { hasAnyRole } from '@/lib/roles';
 export const workspaceRoles = ['BORROWER', 'CUSTODIAN', 'MAINTAINER', 'ADMIN'];
 export function singaporeDate(value: string | null) {
   if (!value) return '—';
@@ -24,7 +23,11 @@ export function durationLabel(value: string | null) {
     .filter(Boolean)
     .join(' ');
 }
-export const uuid = z.uuid('Enter a valid UUID.');
+// Match PostgreSQL/Java UUID syntax, including existing database identifiers whose
+// version/variant bits are not RFC-generated. The backend owns existence checks.
+export const uuid = z
+  .string()
+  .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, 'Enter a valid UUID.');
 export const nonBlank = z.string().trim().min(1, 'This field is required.');
 export const faultSchema = z.object({
   equipmentId: uuid,

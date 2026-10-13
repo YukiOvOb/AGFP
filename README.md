@@ -2,6 +2,12 @@
 
 Shared Equipment Reservation and Maintenance System · SWE5006 Team 07
 
+## Run the Complete Local Demo
+
+The integrated React, Spring Boot and PostgreSQL 18 system can run locally before server handover. See the [local demo guide](docs/local-demo.md) for isolated startup/shutdown, six role accounts and real API smoke checks. Local acceptance and cloud publication are tracked separately in Issues #5-#10.
+
+Current baseline: main `b3def12` (2026-10-14) includes the local demo (#11), the UC01/UC04 acceptance fixes (#14) and the Spring Boot 4 upgrade with `web` + `app` + `db` packaging and gated deployment (#13). UC01-UC04, shared login and the notification inbox are integrated; overdue production, the remaining Proposal scope (administration, equipment management, reports, audit viewer) and member acceptance are open and tracked with owners and dates on [Issue #27](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/issues/27). Cloud deployment is the last step. See [current progress](docs/agile/sprint-status.md#integration-update-2026-10-14), the [development log](docs/devlog/README.md) and the [local repository handover](docs/local-repository-closeout.md).
+
 Use the full name **Shared Equipment Reservation and Maintenance System (SERMS)** on first mention in the project report, then use **SERMS** throughout the remaining text and everyday communication. The repository name is `shared-equipment-reservation-and-maintenance-system`.
 
 ## Collaboration and Agent Entry Points
@@ -15,7 +21,7 @@ These entry points supplement collaboration practices; the technology stack, fiv
 
 ## Technology Stack
 
-The frontend and backend are separate: a React single-page application, a Spring Boot REST API organized as a modular monolith, and PostgreSQL 18. Docker Compose runs the services, and GitHub Actions handles the pipeline from compilation through post-deployment verification. See [docs/tech-stack.md](docs/tech-stack.md) for requirement mappings, implementation status, and differences from the Project Proposal.
+The frontend and backend are separate: a React single-page application, a Spring Boot REST API organized as a modular monolith, and PostgreSQL 18. The local demo runs native processes; Docker Compose packaging and cloud publication remain later release work. GitHub Actions runs the existing application and security checks. See [docs/tech-stack.md](docs/tech-stack.md) for implemented and planned technologies.
 
 ### Frontend (`frontend/`)
 
@@ -30,7 +36,7 @@ The frontend and backend are separate: a React single-page application, a Spring
 | Forms and validation | React Hook Form + Zod |
 | UI components / styling | shadcn/ui + Tailwind CSS 4 |
 | Tables | TanStack Table 8 |
-| Charts | Recharts 3 |
+| Charts | Recharts 3 (planned) |
 | Date and time | date-fns + date-fns-tz (displayed in Singapore time) |
 | Package manager / runtime | pnpm · Node.js 24 LTS |
 | Code style | ESLint + Prettier |
@@ -41,7 +47,7 @@ The frontend and backend are separate: a React single-page application, a Spring
 | Area | Technology |
 | --- | --- |
 | Language | Java 17 |
-| Framework | Spring Boot 3.5 (modular monolith) |
+| Framework | Spring Boot 4.0 (modular monolith; user-authorized migration in PR #13) |
 | Web API | Spring MVC JSON endpoints under `/api/v1` + Jakarta Bean Validation |
 | API documentation | springdoc-openapi (OpenAPI 3) |
 | Error format | RFC 9457 Problem Details |
@@ -50,20 +56,20 @@ The frontend and backend are separate: a React single-page application, a Spring
 | Scheduled tasks | Spring `@Scheduled` |
 | Operational endpoints | Spring Boot Actuator (only health and info exposed) |
 | Build | Maven 3.9 (`./mvnw`) |
-| Testing | JUnit 5 · Mockito · AssertJ · Spring Boot Test · Testcontainers · ArchUnit (layering checks) |
-| Coverage | JaCoCo (service + domain ≥ 70%) |
-| Code style / static analysis | Spotless (google-java-format) · SpotBugs + FindSecBugs |
+| Testing | JUnit Jupiter 6 · Mockito · AssertJ · Spring Boot Test · Testcontainers |
+| Coverage | JaCoCo reports; service + domain ≥ 70% required, automatic gate tracked in Issue #24 |
+| Code style / static analysis | CodeQL planned (Issue #25); Spotless, SpotBugs and ArchUnit were dropped by [D-009](docs/collaboration/decisions.md#d-009-scope-freeze) |
 
-Backend code is organized into business modules under `sg.edu.nus.serms`: `identity`, `equipment`, `reservation`, `approval`, `loan`, `maintenance`, `notification`, `report`, `audit`, and `shared`. Modules under `frontend/src/features/` correspond to the backend modules.
+Implemented backend packages under `sg.edu.nus.serms` are `identity`, `equipment`, `reservation`, `approval`, `loan`, `maintenance`, `notification`, and `shared`. Reporting queries currently live in maintenance, and audit writes use the shared database; standalone report/audit modules remain architectural targets. Frontend business pages live under `frontend/src/features/`.
 
 ### Database
 
 | Area | Technology |
 | --- | --- |
-| Database | PostgreSQL 18 (`postgres:18-alpine` across local development, CI, and the server) |
+| Database | PostgreSQL 18 in local development and CI; server runtime pending |
 | Schema migrations | Flyway |
 | Reservation overlap prevention | PostgreSQL exclusion constraints (`EXCLUDE USING gist` + `tstzrange`) |
-| Backups | Daily `pg_dump` backups retained for 7 days |
+| Backups | Daily `pg_dump` backups retained for 7 days (release target) |
 
 ### DevSecOps and Deployment
 
@@ -71,14 +77,14 @@ Backend code is organized into business modules under `sg.edu.nus.serms`: `ident
 | --- | --- |
 | CI/CD | GitHub Actions |
 | Secret scanning | gitleaks |
-| Vulnerability scanning | Trivy (filesystem + Docker images) |
-| Dependency checks | Dependency Review (PR stage) + Dependabot (weekly automated upgrades) |
-| Code security scanning | CodeQL (Java + TypeScript) |
-| Post-deployment security scanning | OWASP ZAP Baseline |
-| Load testing | k6 (50 concurrent users) |
-| Containers | Docker (multi-stage builds, non-root execution) + Docker Compose: three containers, `web` + `app` + `db` |
-| Image registry | GitHub Container Registry (GHCR) |
-| Server | Hong Kong server + nginx + Let's Encrypt, https://serms.midas.cyou |
+| Vulnerability scanning | Trivy filesystem scan; image scanning pending |
+| Dependency checks | Dependency Review on PRs; Dependabot planned |
+| Code security scanning | CodeQL (Java + TypeScript), planned |
+| Post-deployment security scanning | OWASP ZAP Baseline, planned |
+| Load testing | k6 (50 concurrent users), planned |
+| Containers | Current root deployment serves a static welcome page; `web` + `app` + `db` remains the release target |
+| Image registry | GitHub Container Registry (GHCR), planned |
+| Server | Existing Hong Kong endpoint https://serms.midas.cyou; complete-system release deferred |
 
 ### Optional Features (If Time Permits)
 
@@ -95,7 +101,7 @@ Backend code is organized into business modules under `sg.edu.nus.serms`: `ident
 | Project management | GitHub Projects |
 | Design diagrams | PlantUML / Mermaid (source files in `docs/diagrams/`), supplemented by draw.io |
 
-> Currently implemented on main: Java 17, Spring Boot 3.5, Spring Data JPA, Flyway, Maven, JUnit / Mockito, JaCoCo, GitHub Actions, gitleaks, Trivy, Dependency Review, Docker Compose, and server deployment. The PostgreSQL schema is on Zhou Fanhao's branch; the React frontend and remaining pipeline stages are still pending. See [Section 1 of docs/tech-stack.md](docs/tech-stack.md#1-complete-technology-stack) for individual status entries.
+> Main `b3def12` includes React, JSON login/RBAC, UC01-UC04, notification APIs/inbox, PostgreSQL 18, unified Flyway V001-V004, the reproducible local demo and the Spring Boot 4 release packaging. These results do not establish complete UC05 overdue behavior, the administration/equipment-management/report scope still to be built, member acceptance or cloud deployment.
 
 ## Testing: Each Member Owns Their Test Bench
 
@@ -106,23 +112,25 @@ CI can only run tests that have been written. **Each member must provide a compl
 - Frontend: component tests (Vitest + React Testing Library with MSW API mocks) + at least one Playwright end-to-end test for the main flow of the member's use case.
 - Cover the normal flow and all major exception flows.
 - Requirements: after installing Docker and Node, `./mvnw verify` and `pnpm test` must run the tests; each test prepares its own data and is independent of execution order and other tests.
-- CI: every PR runs all frontend and backend tests. Any failing test or backend service/domain coverage below 70% blocks merging; skipping or deleting tests to make CI pass is prohibited.
+- CI runs the existing frontend/backend suites; failing required checks block merging. Service/domain coverage ≥ 70% remains required, but JaCoCo currently generates reports without an automatic threshold gate. Explicit integration profiles are listed in [testing](docs/testing.md); skipping or deleting tests to make CI pass is prohibited.
 
 See [Section 5 of docs/tech-stack.md](docs/tech-stack.md#5-test-benches-each-member-owns-their-tests) for each member's test scope.
 
 ## Collaboration and Releases
 
+Release preparation for Issue #10 is documented in [the server handover and release runbook](docs/server-release.md). The candidate builds the real React/backend/PostgreSQL system and gates deployment on the current main SHA, successful checks and verified handover. Production readiness remains disabled until the actual server inventory and acceptance are complete.
+
 - Cross-module interface contracts live in [`docs/contracts/`](docs/contracts/); the repository version is authoritative. Changes require a PR and confirmation from the owners of affected modules. Available contracts: [Authentication and Approval (UC02)](docs/contracts/auth-and-approval.md), [Equipment Search and Reservation (UC01)](docs/contracts/equipment-and-reservation.md).
-- All changes go through PRs. `main` is protected, and CI checks (gitleaks, Trivy, and Dependency Review) must pass before merging.
+- All changes go through PRs. `main` is protected by eight required security/application checks; local commits await their own PR/CI before integration.
 - Collaborators with Write permission may merge their own PRs without another reviewer's approval, provided all CI checks pass.
-- Live site: https://serms.midas.cyou (Hong Kong server, automatically renewed Let's Encrypt certificate).
-- Merging into `main` automatically deploys to `/opt/agfp` on the Hong Kong server (see `.github/workflows/deploy.yml` and `scripts/deploy.sh`).
+- Existing server endpoint: https://serms.midas.cyou. A complete-system cloud release is deferred until local basic functionality and the user's later changes are accepted.
+- The deployment workflow runs on code pushes to `main` and on manual dispatch, and stops at its release gate until `SERMS_PRODUCTION_READY` is set and the release checks pass on the current `main` SHA. No deployment secrets are configured in this repository yet, so a red `Deploy` run after a merge is expected and does not reach the server.
 - Deployment uses Docker Compose: `compose.yaml` and `Dockerfile` must exist at the repository root. The container port maps to the host's `127.0.0.1:8789`, with nginx providing the public reverse proxy.
 - Secrets are stored only in `/opt/agfp/.env` on the server (template: `.env.example`) and must never be committed to Git.
 
 ## SERMS Sprint 1 application
 
-The backend lives in `app/`, and React pages live in `frontend/`. The default configuration uses PostgreSQL 18 and loads the shared Flyway migrations, notification adapter, and Identity data mapping; see the [PostgreSQL guide](docs/serms-postgres-runtime.md) for startup instructions. The `local` development configuration also uses PostgreSQL; H2 exists only in test dependencies and resources. Real demo accounts and web/app/db deployment still require team integration.
+The backend lives in `app/`, and React pages live in `frontend/`. The default configuration uses PostgreSQL 18 and loads the shared Flyway migrations, notification adapter, and Identity data mapping; see the [PostgreSQL guide](docs/serms-postgres-runtime.md). The `local` configuration also uses PostgreSQL; H2 is test-only. PR #11 explicitly provisions isolated local demo accounts; server web/app/db deployment remains deferred.
 
 ## UC01 Search and Reserve Equipment (Member 1)
 

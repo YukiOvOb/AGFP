@@ -1,6 +1,6 @@
 # SERMS Technology Stack
 
-2026-10-07 database finalization: default startup and local development use PostgreSQL 18, with approval enabled by default; production migrations are unified under `app/src/main/resources/db/migration`. The MySQL driver and legacy production migrations have been removed; H2 is test-only. Shi Wenqi owns subsequent server web/app/db deployment integration.
+Current implementation snapshot: 2026-10-14, main `b3def12`, which includes the local demo (#11), the UC01/UC04 acceptance fixes (#14) and the Spring Boot 4 release preparation (#13). Default/local startup uses PostgreSQL 18, approval is enabled by default, and production Flyway V001-V004 is unified under `app/src/main/resources/db/migration`. MySQL production dependencies are removed; H2 is test-only. Liu Tongyao executes local integration and later release work under [D-004](collaboration/decisions.md#d-004-local-first-integration-and-wenqi-task-execution), preserving Shi Wenqi's team membership and original contribution. [D-005](collaboration/decisions.md#d-005-local-closeout-and-cloud-last) defers cloud deployment until basic local functionality and subsequent user-defined changes are accepted.
 
 Team 07 · Shared Equipment Reservation and Maintenance System (SERMS)
 
@@ -12,73 +12,75 @@ This document defines the team's shared technology baseline. It is based on the 
 
 The system uses **separate frontend and backend applications**: a React single-page frontend, a Spring Boot backend exposing REST APIs only, and PostgreSQL 18 for storage.
 
-The Status column indicates implementation progress: ✅ implemented on main; 🔶 on an individual branch, not yet merged; ⬜ selected, not yet implemented.
+The Status column describes verified implementation at main `b3def12`: ✅ implemented; 🔶 partial delivery or pending integration/acceptance, described in the row; ⬜ selected, not implemented. Items dropped by [D-009](collaboration/decisions.md#d-009-scope-freeze) say so in their row. Sections 2-6 include target design and required practices; naming a technology there does not mean it is installed or its gate is enforced. See [current progress](agile/sprint-status.md#integration-update-2026-10-14) for version-bound evidence and remaining acceptance.
 
 ### 1.1 Frontend (`frontend/`)
 
 | Area | Technology | Version | Status |
 | --- | --- | --- | --- |
-| Language | TypeScript (`strict` mode) | 5.x | ⬜ |
-| Framework | React | 19 | ⬜ |
-| Build / development server | Vite | 7 | ⬜ |
-| Routing | React Router | 7 | ⬜ |
-| Server data fetching and caching | TanStack Query | 5 | ⬜ |
-| API client | openapi-typescript + openapi-fetch (types generated from the backend API specification) | — | ⬜ |
-| Forms and validation | React Hook Form + Zod | — | ⬜ |
-| UI components / styling | shadcn/ui (Radix-based, with built-in accessibility) + Tailwind CSS | Tailwind 4 | ⬜ |
-| Tables | TanStack Table | 8 | ⬜ |
+| Language | TypeScript (`strict` mode) | 5.x | ✅ |
+| Framework | React | 19 | ✅ |
+| Build / development server | Vite | 7 | ✅ |
+| Routing | React Router | 7 | ✅ |
+| Server data fetching and caching | TanStack Query | 5 | ✅ |
+| API client | openapi-typescript + openapi-fetch (types generated from the backend API specification) | — | ✅ Generated types and drift checks |
+| Forms and validation | React Hook Form + Zod | — | ✅ |
+| UI components / styling | shadcn/ui (Radix-based, with built-in accessibility) + Tailwind CSS | Tailwind 4 | ✅ Shared primitives/style |
+| Tables | TanStack Table | 8 | ✅ |
 | Charts | Recharts | 3 | ⬜ |
-| Date and time | date-fns + date-fns-tz (displayed in Singapore time) | — | ⬜ |
-| Package manager / runtime | pnpm · Node.js LTS | Node 24 | ⬜ |
-| Code style | ESLint + Prettier | — | ⬜ |
-| Unit / component tests | Vitest + React Testing Library + MSW (API mocks) | — | ⬜ |
-| End-to-end tests | Playwright | — | ⬜ |
+| Date and time | date-fns + date-fns-tz (displayed in Singapore time) | — | ✅ |
+| Package manager / runtime | pnpm · Node.js LTS | Node 24 | ✅ |
+| Code style | ESLint + Prettier | — | ✅ |
+| Unit / component tests | Vitest + React Testing Library + MSW (API mocks) | — | ✅ |
+| End-to-end tests | Playwright | — | 🔶 Existing mock browser suites; PR #11 adds limited real-browser checks; all-role acceptance open |
 
 ### 1.2 Backend (`app/`)
 
 | Area | Technology | Version | Status |
 | --- | --- | --- | --- |
 | Language | Java | 17 | ✅ |
-| Framework | Spring Boot (modular monolith) | 3.5.x | ✅ |
-| Web API | Spring MVC JSON endpoints under `/api/v1` + Jakarta Bean Validation | Bundled with Boot | 🔶 main currently uses Thymeleaf pages; REST conversion pending |
-| API documentation | springdoc-openapi (OpenAPI 3) | 2.x | ⬜ |
-| Error format | RFC 9457 Problem Details (Spring's built-in `ProblemDetail`) | Bundled with Boot | ⬜ |
-| Security | Spring Security: session cookie authentication, BCrypt password hashing, `@PreAuthorize` method authorization, and CSRF protection (cookie + request header) | Bundled with Boot | 🔶 Spring Security is on main; JSON login + RBAC conversion pending |
+| Framework | Spring Boot (modular monolith) | 4.0.x | ✅ Upgraded from 3.5 by the user-authorized security migration ([D-006](collaboration/decisions.md#d-006-spring-boot-4-security-migration), PR #13) |
+| Web API | Spring MVC JSON endpoints under `/api/v1` + Jakarta Bean Validation | Bundled with Boot | ✅ |
+| API documentation | springdoc-openapi (OpenAPI 3) | 3.0.x | ✅ Test export/type generation; public production docs disabled |
+| Error format | RFC 9457 Problem Details (Spring's built-in `ProblemDetail`) | Bundled with Boot | ✅ |
+| Security | Spring Security: session cookie authentication, BCrypt password hashing, `@PreAuthorize` method authorization, and CSRF protection (cookie + request header) | Bundled with Boot | ✅ JSON identity, roles and CSRF |
 | Data access | Spring Data JPA / Hibernate; handwritten SQL through JdbcTemplate for locking or complex queries | Bundled with Boot | ✅ |
-| Scheduled tasks | Spring `@Scheduled` | Bundled with Boot | ✅ |
-| Operational endpoints | Spring Boot Actuator (only `health` and `info` exposed) | Bundled with Boot | ⬜ |
+| Scheduled tasks | Spring `@Scheduled` | Bundled with Boot | 🔶 Notification delivery worker; overdue scanner/producer still open |
+| Operational endpoints | Spring Boot Actuator (only `health` and `info` exposed) | Bundled with Boot | ✅ |
 | Build | Maven (Maven Wrapper `./mvnw`) | 3.9 | ✅ |
-| Testing | JUnit 5 · Mockito · AssertJ · Spring Boot Test | Bundled with Boot | ✅ |
-| Integration test database | Testcontainers (real PostgreSQL 18) | — | 🔶 UC01 branch (`testsupport/SermsPostgres`) |
-| Layering checks | ArchUnit | — | ⬜ |
-| Coverage | JaCoCo (service + domain ≥ 70% as a merge gate) | 0.8.x | ✅ Reports generated; gate pending |
-| Code style / static analysis | Spotless (google-java-format) · SpotBugs + FindSecBugs | — | ⬜ |
+| Testing | JUnit Jupiter 6 · Mockito · AssertJ · Spring Boot Test | Bundled with Boot 4 | ✅ Transitional data/adapter benches retain JUnit 5 |
+| Integration test database | Testcontainers (real PostgreSQL 18) | — | ✅ UC01/UC03; UC04 PostgreSQL acceptance runs in its own workflow (`maintenance-tests.yml`) |
+| Layering checks | ArchUnit | — | ⬜ Dropped by D-009 |
+| Coverage | JaCoCo (service + domain ≥ 70% as a merge gate) | 0.8.x | ✅ Reports generated; gate pending (Issue #24) |
+| Code style / static analysis | Spotless (google-java-format) · SpotBugs + FindSecBugs | — | ⬜ Dropped by D-009; CodeQL covers static analysis (Issue #25) |
 
 ### 1.3 Database
 
 | Area | Technology | Version | Status |
 | --- | --- | --- | --- |
-| Database | PostgreSQL (`postgres:18-alpine` across local development, CI, and the server) | 18 | 🔶 Zhou Fanhao's branch still configures 17; upgrade to 18 pending |
+| Database | PostgreSQL (`postgres:18-alpine` in container-based checks; native local demo) | 18 | ✅ Default/local and CI; server acceptance deferred |
 | Schema migrations | Flyway (the only schema creation mechanism) | Bundled with Boot | ✅ |
-| Reservation overlap prevention | PostgreSQL exclusion constraints (`EXCLUDE USING gist` + `tstzrange`) | — | 🔶 Zhou Fanhao's branch |
+| Reservation overlap prevention | PostgreSQL exclusion constraints (`EXCLUDE USING gist` + `tstzrange`) | — | ✅ Shared migrations and concurrent reservation tests |
 | Backups | Daily `pg_dump` backups retained for 7 days | — | ⬜ |
 
 ### 1.4 DevSecOps and Deployment
 
 | Area | Technology | Status |
 | --- | --- | --- |
-| CI/CD | GitHub Actions | ✅ |
+| CI/CD | GitHub Actions | 🔶 Application/security checks pass; complete-system deployment pending |
 | Secret scanning | gitleaks | ✅ |
-| Vulnerability scanning | Trivy (filesystem + Docker images) | ✅ Filesystem scanning; image scanning pending |
+| Vulnerability scanning | Trivy (filesystem + Docker images) | ✅ Filesystem scan on every PR; `app` and `web` image scans in the `release-images` check |
 | Dependency checks | Dependency Review (PR stage) + Dependabot (weekly automated upgrades) | ✅ Dependency Review; Dependabot pending |
-| Code security scanning | CodeQL (Java + TypeScript) | ⬜ |
-| Post-deployment security scanning | OWASP ZAP Baseline | ⬜ |
-| Load testing | k6 (50 concurrent users) | ⬜ |
-| Containers | Docker (multi-stage builds, non-root execution) + Docker Compose: three containers, `web` + `app` + `db` | 🔶 Currently one container for the static welcome page |
+| Code security scanning | CodeQL (Java + TypeScript) | ⬜ Issue #25 |
+| Post-deployment security scanning | OWASP ZAP Baseline | ⬜ Best effort in Issue #25 |
+| Load testing | k6 (50 concurrent users) | ⬜ Best effort in Issue #25 |
+| Containers | Docker (multi-stage builds, non-root execution) + Docker Compose: three containers, `web` + `app` + `db` | ✅ Packaging on `main`: non-root `app` and `web` images, PostgreSQL 18, production-profile Compose smoke in CI; not yet run on the server |
 | Image registry | GitHub Container Registry (GHCR) | ⬜ |
-| Server | Hong Kong server + nginx + Let's Encrypt, https://serms.midas.cyou | ✅ |
+| Server | Hong Kong server + nginx + Let's Encrypt, https://serms.midas.cyou | 🔶 Existing endpoint; server handover pending; deployment is gated and deferred to Issue #10 |
 
 ### 1.5 Optional Features (If Time Permits)
+
+Both features below were dropped for this delivery by [D-009](collaboration/decisions.md#d-009-scope-freeze); the table records the original selection.
 
 | Feature | Technology |
 | --- | --- |
@@ -98,6 +100,8 @@ The Status column indicates implementation progress: ✅ implemented on main; �
 ## 2. Architecture
 
 ### 2.1 System Context and Deployment
+
+The diagram below is the final deployment target. The current complete local demo uses loopback native React/Spring/PostgreSQL processes; root Docker/Compose still packages a static welcome page.
 
 ```mermaid
 flowchart LR
@@ -230,7 +234,7 @@ frontend/src
 | Consistent UI; desktop and tablet support | shadcn/ui + responsive Tailwind layouts; shared layout, form, table, and status badge components |
 | Shared coding standards | Backend Spotless and frontend ESLint + Prettier enforced in CI; violations block merging |
 | Presentation / business / data layers | Separate frontend and backend; backend layers from Section 2.2 enforced by ArchUnit |
-| Unit tests for business rules | JUnit 5 + Mockito for strategies, state machines, and domain services |
+| Unit tests for business rules | JUnit Jupiter 6 + Mockito for strategies, state machines, and domain services |
 | Integration tests for security, persistence, and workflows | Spring Boot Test + Testcontainers (PostgreSQL 18), focusing on concurrent reservations, checkout/return races, and authorization |
 | service / domain coverage ≥ 70% | JaCoCo `check` counts only `**.service.**` and `**.domain.**`; coverage below 70% fails the build |
 | Consistent time handling | Database `timestamptz`, Java `Instant`, ISO-8601 UTC API strings, frontend display in `Asia/Singapore` |
@@ -261,7 +265,7 @@ flowchart LR
 | --- | --- |
 | Source code checkout | `actions/checkout` |
 | Application compilation | Backend `./mvnw verify`; frontend `pnpm typecheck && pnpm build` |
-| Unit and integration testing | Backend JUnit 5, Mockito, Spring Boot Test, Testcontainers; frontend Vitest + React Testing Library + MSW |
+| Unit and integration testing | Backend JUnit Jupiter 6, Mockito, Spring Boot Test, Testcontainers; frontend Vitest + React Testing Library + MSW |
 | Test coverage generation | JaCoCo (backend) + Vitest coverage (frontend), uploaded as CI artifacts |
 | Static code analysis | SpotBugs + FindSecBugs, CodeQL (Java + TypeScript), Spotless, ESLint, ArchUnit |
 | Dependency vulnerability checking | Dependency Review (PR stage, Maven + npm) + Dependabot (weekly upgrade PRs) + Trivy fs |
@@ -318,7 +322,7 @@ Local development, CI, and the server must use the same PostgreSQL major version
 
 1. Put **backend tests** in `app/src/test/java/sg/edu/nus/serms/<module>/`; colocate **frontend tests** with components at `frontend/src/features/<module>/**/*.test.tsx`.
 2. **All three backend test layers are required**:
-   - **Unit tests**: domain rules, strategies, and state machines; no database, completing in milliseconds (JUnit 5 + Mockito).
+   - **Unit tests**: domain rules, strategies, and state machines; no database, completing in milliseconds (JUnit Jupiter 6 + Mockito).
    - **Integration tests**: service + repository + real PostgreSQL 18 (Spring Boot Test + Testcontainers), covering transactions, constraints, and concurrency.
    - **API / authorization tests**: normal controller requests, validation failures (400 with field errors), unauthorized access (401 / 403), and missing CSRF headers (MockMvc + spring-security-test).
 3. **At least two frontend test layers are required**:
@@ -364,11 +368,8 @@ Local development, CI, and the server must use the same PostgreSQL major version
 
 ## 7. Aligning Existing Code
 
-- **`app/` on main** (Wang Yuanmeng, merged): existing notification domain, service, and scheduled delivery logic can be reused. Required changes:
-  - Replace Thymeleaf pages (`templates/`) and page controllers with REST endpoints under `/api/v1/notifications`; move the inbox to `frontend/src/features/notification/`.
-  - Replace MySQL / H2 with PostgreSQL 18 / Testcontainers and remove `db/mysql` migrations.
-  - Replace Spring Security form login with JSON login endpoints + `CookieCsrfTokenRepository`.
-- **`feat/zhoufanhao-sprint1-data-foundation`** (Zhou Fanhao, not merged): PostgreSQL schema and constraints align with this document. Required changes:
-  - Change `postgres:18-alpine` to `postgres:18-alpine` in `database/compose.yaml`, `database.yml`, and test scripts, matching his local version 18.
-  - Move SQL migrations into `app`'s Flyway sequence; rename `edu.nus.serms` to `sg.edu.nus.serms`; inject Spring's `DataSource` / `JdbcTemplate` into `ReservationRepository`; remove the `integration/notifications` adapter and patch files after integration.
-- **Root deployment files**: replace the static welcome deployment in `Dockerfile` and `compose.yaml` with three services: `web` (React + nginx), `app` (Spring Boot), and `db` (PostgreSQL 18). Update `.env.example` with database credentials and `HEALTH_PATH=/api/v1/health`.
+- **On main `b3def12`**: React pages and JSON identity/notification APIs replace the earlier page-only platform. Default/local app configuration uses PostgreSQL 18; MySQL production dependencies are removed and H2 is test-only. Flyway V001-V004, real approval persistence, UUID Identity mapping and the notification bridge are integrated. UC01-UC04 and their current test benches are present.
+- **Local runtime (merged from #11)**: isolated native PostgreSQL 18, explicit demo accounts, startup/shutdown, real API/data/browser checks and restart preservation. Its hosted CI passed; member acceptance remains separate.
+- **Retained transitional modules**: `database/` supplies data regression/history checks, and `integration/notifications/` supplies app-included PostgreSQL adapters plus pinned historical contract verification. Removing or renaming these modules requires its own integration task; this closeout does not remove them or rewrite merged migrations.
+- **Remaining local work**: full Issues #6-#9 acceptance, overdue scanner/producer, complete role/browser flows, shared test consolidation, automatic coverage enforcement, and the Proposal scope listed on Issue #27 (user/role administration, equipment and category management, reports, audit viewer). Existing requirements in §5 continue to apply; local reports are not an enabled CI gate.
+- **Final release work**: web/app/db packaging, the release-SHA gate and the deployment script are on `main` (from #13). Issue #10 still needs the server handover, the first-admin bootstrap (Issue #18), database storage/backups and actual deployed acceptance. Cloud execution is last under D-005.

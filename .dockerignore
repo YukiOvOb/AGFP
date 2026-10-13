@@ -1,0 +1,17 @@
+.git
+.agents
+.cache
+**/node_modules
+**/target
+**/dist
+**/test-results
+**/playwright-report
+**/*.log
+**/*.zip
+**/*.bundle
+**/.env
+**/.env.*
+!.env.example
+data
+AGFP*
+SERMS-*
