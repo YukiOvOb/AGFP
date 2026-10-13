@@ -1,16 +1,16 @@
 ---
 name: serms-issue
-description: 整理 SERMS 的开发任务、缺陷或设计决定，明确用例、负责人、依赖和验收条件。
+description: Define SERMS development tasks, defects, or design decisions with use cases, ownership, dependencies, and acceptance criteria.
 ---
 
-# 整理任务
+# Task Definition
 
-来源：[任务与依赖](../../../.github/CONTRIBUTING.md#任务和依赖)、[责任边界](../../../docs/collaboration/ownership.md)、[Issue 表单](../../../.github/ISSUE_TEMPLATE/)。
+Sources: [Tasks and dependencies](../../../.github/CONTRIBUTING.md#tasks-and-dependencies), [Ownership boundaries](../../../docs/collaboration/ownership.md), [Issue forms](../../../.github/ISSUE_TEMPLATE/).
 
-1. 选择 task、bug 或 design 表单。沿用 UC01–UC05、现有 backlog 和 Projects 状态，不另外发明需求或负责人。
-2. 写明可观察结果、主负责人、范围/排除项、前置依赖、验证计划及交付物。缺陷写复现条件与实际证据；设计冲突引用双方来源和选项。
-3. 区分单元测试可用 mock 的开发与真实库/完整链路验收。依赖未到位时写清可以先做什么、何时重新验证。
-4. 已有会话授权足够时直接整理和推进独立工作；必要的人类决定保持待确认。有 Issue/卡片后补链接，不虚构编号。
-5. 发布或更改远端任务前核对已有授权。草稿本身不授予额外操作权限，也不表示受影响负责人已确认。
+1. Choose a task, bug, or design form. Reuse UC01–UC05, existing backlog, and Projects states; do not invent requirements or owners.
+2. State observable outcomes, primary owner, scope/exclusions, prerequisites, verification, and deliverables. Defects need reproduction and evidence; design conflicts need both sources and options.
+3. Distinguish mock-based development/unit tests from real-database/full-flow acceptance. For missing dependencies, state independent work and when to revalidate.
+4. Proceed with definition and independent work when existing conversation authorization suffices; keep necessary human decisions pending. Add real Issue/card links when available without inventing numbers.
+5. Verify existing authorization before publishing or changing remote tasks. Drafts grant no extra permission and do not establish affected-owner confirmation.
 
-交付：任务草稿或实际链接、依赖顺序、待确认决定和下一步负责者。
+Deliver: task draft or actual link, dependency order, pending decisions, and next-step owner.

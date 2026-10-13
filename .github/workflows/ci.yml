@@ -1,17 +1,17 @@
-# CI 闸门：每个 PR 必须全绿才能合并（main 分支保护已把下面三个 job 设为 required checks）。
+# CI gate: every PR must pass all checks before merging (main branch protection requires the three jobs below).
 #
-# 参考 Lumie-platform/ci.yml 的结构，但 Lumie 只有 typecheck + test；
-# 这里加了三道安全检查，都与技术栈无关，现在就能跑：
-#   secrets-scan       gitleaks —— 扫整个 git 历史，防 API key / 私钥被提交
-#   vuln-scan          Trivy —— 扫依赖清单与配置文件里的已知漏洞 / 错配
-#   dependency-review  GitHub 依赖审查 —— PR 新引入的依赖若带高危漏洞或不合规许可证则拒绝
+# Based on Lumie-platform/ci.yml, which only has typecheck + test.
+# These three security checks are independent of the technology stack and can run now:
+#   secrets-scan       gitleaks: scans the full Git history for committed API keys / private keys
+#   vuln-scan          Trivy: scans dependency manifests and configuration for known vulnerabilities / misconfigurations
+#   dependency-review  GitHub Dependency Review: rejects new PR dependencies with high-severity vulnerabilities or disallowed licenses
 #
-# build-test：等 AGFP 技术栈确定后补（Node → pnpm typecheck/test；Python → ruff + pytest……），
-# 并加进分支保护的 required checks。CodeQL 也在那时一并开启，空仓库跑不了。
+# Add build-test when the AGFP stack is selected (Node → pnpm typecheck/test; Python → ruff + pytest, etc.),
+# and make it a required check. Enable CodeQL then as well; it cannot run on an empty repository.
 name: CI
 
 on:
-  # PR 不设 paths-ignore：分支保护要求三项检查必须报告，纯文档 PR 也得跑一遍才能合并
+  # No paths-ignore for PRs: branch protection requires all three checks, including for documentation-only PRs.
   pull_request:
   push:
     branches: [main]
@@ -33,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # 全历史，否则只扫最后一个 commit
+          fetch-depth: 0 # Full history; otherwise only the latest commit is scanned.
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -57,18 +57,18 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write # 在 PR 里贴审查摘要
+      pull-requests: write # Post the review summary in the PR.
     steps:
       - uses: actions/checkout@v4
-      # 只有 PR 事件才有 base/head 可比；push main 时直接通过，保证 required check 名字始终存在
+      # Only PR events have comparable base/head revisions; pushes to main pass without review so the required check remains present.
       - uses: actions/dependency-review-action@v4
         if: github.event_name == 'pull_request'
         with:
           fail-on-severity: high
           comment-summary-in-pr: always
 
-  # ── 构建 / 测试 ────────────────────────────────────────────────
-  # 技术栈确定后在这里加 job。例（Node/pnpm，和 Lumie 一致）：
+  # ── Build / test ─────────────────────────────────────────────
+  # Add jobs here after selecting the stack. Example (Node/pnpm, matching Lumie):
   #   build-test:
   #     runs-on: ubuntu-latest
   #     steps:

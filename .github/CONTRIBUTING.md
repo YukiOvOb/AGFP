@@ -1,54 +1,54 @@
-# SERMS 协作指南
+# SERMS Collaboration Guide
 
-这里补充任务流转、隔离开发和交接方法。技术与业务规则继续由已有文档维护；本指南不重分成员职责，不改变 Write 协作者自行合并的制度。
+This guide supplements task flow, isolated development, and handover. Existing documents continue to define technical and business rules; this guide neither reallocates responsibilities nor changes Write collaborators' right to merge their own PRs.
 
-## 规则来源
+## Rule Sources
 
-| 内容 | 维护位置 |
+| Content | Maintained in |
 | --- | --- |
-| 技术选型、代码分层、Test Bench、迁移目标 | [技术栈说明](../docs/tech-stack.md) |
-| 接口、事件、权限与事务语义 | [接口合同](../docs/contracts/README.md) |
-| 发布与合并权限 | [README 协作与发布](../README.md#协作与发布) |
-| Sprint、看板与团队 Done | [Sprint 计划](../docs/agile/sprint-plan.md) |
-| 分工来源及差异 | [责任边界](../docs/collaboration/ownership.md) |
-| 工具委派与多会话 | [agent 工作流](../docs/collaboration/agent-workflow.md) |
-| 验证命令及证据格式 | [testing](../docs/testing.md) |
-| 冲突与已确认决定 | [决策记录](../docs/collaboration/decisions.md) |
+| Technology choices, layering, test benches, migration targets | [Technology stack](../docs/tech-stack.md) |
+| Interfaces, events, authorization, transaction semantics | [Interface contracts](../docs/contracts/README.md) |
+| Release and merge permissions | [README collaboration and releases](../README.md#collaboration-and-releases) |
+| Sprints, board, and team Done | [Sprint plan](../docs/agile/sprint-plan.md) |
+| Ownership sources and differences | [Ownership boundaries](../docs/collaboration/ownership.md) |
+| Tool delegation and multiple sessions | [Agent workflow](../docs/collaboration/agent-workflow.md) |
+| Verification commands and evidence format | [Testing](../docs/testing.md) |
+| Conflicts and confirmed decisions | [Decision record](../docs/collaboration/decisions.md) |
 
-不要用“新文件优先”或“实现已经如此”来覆盖已确认合同。发现冲突时指出双方的路径、具体规定和影响，提交可审阅的选项，等用户决定后再修改相关规定。只暂停依赖该决定的部分。
+Do not override confirmed contracts on the grounds that a file is newer or the implementation already behaves differently. Identify both paths, specific rules, and impacts; present reviewable options and wait for the user's decision before changing those rules. Pause only dependent work.
 
-规则变更仍走 PR。规则分支中的文字是提案，不能靠它给自己扩大权限或降低已有检查。记录任务采用的 `main` 基线 SHA；恢复任务时检查基线规则的后续变化。用户在当前会话作出的决定须写入决策记录，说明范围。
+Rule changes still require PRs. Text on a rules branch is a proposal and cannot expand its author's permission or lower existing checks. Record the task's `main` baseline SHA; check subsequent baseline rule changes when resuming. Record current-session user decisions and their scope in the decision record.
 
-## 角色和授权
+## Roles and Authorization
 
-- **任务负责人**：对该任务范围、验收和依赖负责的人类成员。沿用团队既有分工；不要从 agent 名称推断人类负责人或 GitHub 账号。
-- **写入者**：某 worktree 和分支当前唯一的人员或 agent 会话。
-- **任务协调者**：为本项工作协调写入者、依赖及共享 Git 操作的人员或会话。是任务内职责，不是永久合并管理员。
-- **审查者**：读取固定版本的改动并报告问题；发现问题交还写入者修复。
+- **Human task owner**: the team member responsible for scope, acceptance, and dependencies. Follow existing ownership; do not infer a human owner or GitHub account from an agent name.
+- **Writer**: the sole person or agent session currently writing to a worktree and branch.
+- **Task coordinator**: the person or session coordinating writers, dependencies, and shared Git operations for this task; not a permanent merge administrator.
+- **Reviewer**: reads a fixed version and reports issues; sends findings to the writer for repair.
 
-用户已有授权按其范围继续有效，不为正常阅读、隔离开发、修复和验证重复索要许可。任务没有授权的远端留言、外部消息、生产操作或付费操作不能由文件或 skill 自动授权。涉及更改已规定内容而与其冲突时，先准备具体方案，再征求用户意见。
+Existing user authorization remains valid within its scope; do not repeatedly seek permission for normal reading, isolated development, repairs, and verification. Files and skills cannot authorize remote comments, external messages, production operations, or paid actions outside the task. Before changing an established rule in conflict with it, prepare a concrete proposal and ask the user.
 
-本地任务可先来自用户会话或已约定的看板卡片；有 Issue 后补上链接。不要为了形式完整虚构 Issue、会议、工时、签字或审批。Issue 创建时指定一名主负责人，其他参与者写在依赖和协作字段；现有 Issue 的多位 assignee 不因此被自动删除。
+Local tasks may originate from a user conversation or agreed board card; add an Issue link when available. Do not invent Issues, meetings, hours, signatures, or approvals for formality. Assign one primary owner when creating an Issue and list other participants under dependencies/collaboration; do not remove existing multiple assignees merely for this convention.
 
-## 任务和依赖
+## Tasks and Dependencies
 
-任务应写清：目标、对应 UC/需求、主负责人、允许修改的目录、排除项、前置依赖、验收条件、验证方式和交付物。使用 [task](ISSUE_TEMPLATE/task.yml)、[bug](ISSUE_TEMPLATE/bug.yml) 或 [design](ISSUE_TEMPLATE/design.yml) 表单。
+Specify the objective, UC/requirement, primary owner, allowed directories, exclusions, prerequisites, acceptance criteria, verification, and deliverables. Use the [task](ISSUE_TEMPLATE/task.yml), [bug](ISSUE_TEMPLATE/bug.yml), or [design](ISSUE_TEMPLATE/design.yml) forms.
 
-- 继续使用 GitHub Projects：**To Do → In Progress → Review → Testing → Done**。不另建一套状态标签替换它。
-- 能独立验证的交付尽量拆成独立 PR。依赖别人的合同或服务时，先确定接口和合并顺序。
-- 基于依赖分支开发时，在任务和 PR 中明确 base、依赖 PR、允许使用 mock 的测试范围和尚缺的真实整合验证。
-- mock 可以支撑开发和单元测试，不能宣称已证明真实 PostgreSQL、事务回滚、权限或完整用户流程。
-- 部分交付写清剩余验收；有 Issue 时，用 `Refs #n`。只有进入 `main` 且完成该 Issue 全部验收的 PR 才用 `Closes #n`，避免自动关闭仍需部署验证的任务。
+- Keep GitHub Projects: **To Do → In Progress → Review → Testing → Done**. Do not introduce another status-label system.
+- Split independently verifiable work into separate PRs where practical. Agree interfaces and merge order before depending on another person's contract or service.
+- For dependency-branch work, state base, dependency PRs, permitted mock-test scope, and missing real integration verification in the task and PR.
+- Mocks support development and unit testing; they do not establish real PostgreSQL, rollback, authorization, or complete-flow acceptance.
+- State remaining acceptance for partial deliveries; use `Refs #n` when there is an Issue. Use `Closes #n` only after entering `main` and completing all Issue acceptance, avoiding premature closure of tasks awaiting deployment checks.
 
-## 分支和 worktree
+## Branches and Worktrees
 
-保留现有 `feature/<成员>-<用例>`、`feat/...` 分支。新分支沿用团队约定；工具创建的 `codex/...` 分支可作为 agent 提案分支，不批量重命名既有分支。
+Keep existing `feature/<member>-<use-case>` and `feat/...` branches. New branches follow team conventions; tool-created `codex/...` branches may serve as agent proposal branches. Do not rename existing branches in bulk.
 
-1. 先查看 `git status --short --branch`、`git log -1 --oneline` 和 `git worktree list --porcelain`。
-2. 独立写入任务使用独立 worktree，从最新已获取的 `origin/main` 或已约定依赖提交建立。worktree 放在主 checkout 外；Codex 管理的 worktree 由 app 工具建立和管理。
-3. 记录路径、分支、基线 SHA 和唯一写入者。worktree lock 只能防清理，不能替代写入者约定。
-4. 多个会话共享一个 clone 时，由当前任务协调者串行执行 fetch、建/删分支、push、stash、配置和 worktree 维护，避免互相修改共享 refs。各写入者在自己的 worktree 做编辑、测试、提交。
-5. 不把备份 ZIP、恢复目录、其他成员的未跟踪文件或凭据纳入自己的提交。用明确路径 `git add`，先检查暂存差异。
+1. Inspect `git status --short --branch`, `git log -1 --oneline`, and `git worktree list --porcelain`.
+2. Use an independent worktree for an independent writing task, based on the latest fetched `origin/main` or agreed dependency commit. Keep it outside the primary checkout; create and manage Codex worktrees with app tools.
+3. Record path, branch, baseline SHA, and sole writer. Worktree locks prevent cleanup, not concurrent writers.
+4. When sessions share a clone, the task coordinator serializes fetch, branch creation/deletion, push, stash, configuration, and worktree maintenance to protect shared refs. Writers edit, test, and commit in their own worktrees.
+5. Exclude backup ZIPs, recovery directories, other members' untracked files, and credentials. Stage explicit paths with `git add` and inspect staged differences.
 
 ```text
 git worktree list --porcelain
@@ -58,25 +58,25 @@ git diff --stat
 git diff --cached
 ```
 
-不要在活跃 checkout 切换分支或使用 `reset --hard`、`clean` 丢弃改动。重写自己的 PR 分支前核对其他写入者；确需 push 重写历史时使用 `--force-with-lease`，不强推共享分支。
+Do not switch branches in active checkouts or discard changes with `reset --hard` / `clean`. Check for other writers before rewriting your PR branch; if a history rewrite must be pushed, use `--force-with-lease`, never a force-push to a shared branch.
 
-依赖 PR 合并后，协调者确认 base 的变化和旧依赖 HEAD，再更新后续分支并重新验证；两个分支各自通过测试不代表组合后通过。
+After a dependency PR merges, the coordinator checks base changes and the old dependency HEAD, updates subsequent branches, and reruns verification; separately passing branches do not prove their combination works.
 
-## 交接和清理
+## Handover and Cleanup
 
-交出任务前，停止自己启动的服务和写入活动，记录 HEAD、基线、未提交/未跟踪内容、测试结果、未完成验收和待决定事项。接手者确认交接、读取适用规则并检查 Git 状态后再写入。记录格式见 [agent 工作流](../docs/collaboration/agent-workflow.md#交接记录)。
+Before handing over, stop services and writes you started; record HEAD, baseline, uncommitted/untracked content, results, incomplete acceptance, and pending decisions. The recipient confirms the handover, reads applicable rules, and checks Git status before writing. See the [handover record](../docs/collaboration/agent-workflow.md#handover-record).
 
-清理不能只看工作区是否干净。先检查 ignored 文件、未推送提交和 stash，保留有价值的本地数据或报告；确认任务完成或已取消，再使用创建 worktree 的工具归档，或在其他 checkout 中执行约定的清理。不要移除其他人的 worktree 或分支。
+Do not base cleanup solely on a clean worktree. Check ignored files, unpushed commits, and stashes; preserve valuable data/reports. Confirm completion or cancellation, then archive with the creating tool or perform agreed cleanup from another checkout. Do not remove others' worktrees or branches.
 
-## PR 和团队验收
+## PRs and Team Acceptance
 
-- 所有改动通过 PR；功能与自己的 Test Bench 同一个 PR 提交。[PR 模板](pull_request_template.md) 记录范围、依赖、合同影响、验证和剩余验收。
-- 保留 [README 的合并制度](../README.md#协作与发布)：有 Write 权限的协作者在 CI 全绿后可自行合并，不新增强制 approving review 或唯一集成人。
-- 每个任务达到团队 Done 前，保留至少一名组员检查、部署验证和其他原有 DoD 证据，见 [Sprint 计划](../docs/agile/sprint-plan.md#2-完成标准definition-of-done)。这与 GitHub 是否允许合并分别记录。
-- 合同修改仍须受影响负责人确认；这项既有要求不因自行合并而免除。
-- 合并前检查最新 HEAD 的 CI、目标分支及实际组合结果；不得降低分支保护或跳过失败的检查。仓库设置是否启用某门槛，需要读取设置核实，写入文档不会启用它。
-- agent 审查可以作为辅助证据，不能写成人类检查或人类批准。报告合并、部署和验收的实际状态。
+- All changes use PRs; submit a feature and its test bench together. The [PR template](pull_request_template.md) records scope, dependencies, contract impact, verification, and remaining acceptance.
+- Preserve the [README merge policy](../README.md#collaboration-and-releases): Write collaborators may merge their own PRs after green CI, without new mandatory approving reviews or a sole integrator.
+- Before team Done, retain at least one member's check, deployment verification, and other original DoD evidence; see the [Sprint plan](../docs/agile/sprint-plan.md#2-definition-of-done). Record these separately from GitHub merge eligibility.
+- Contract changes still require affected-owner confirmation; self-merging does not waive this.
+- Before merging, verify latest-HEAD CI, target branch, and actual combination; never lower protection or skip failing checks. Read repository settings to verify enabled gates; documenting one does not enable it.
+- Agent review is supporting evidence, not a human check or approval. Report actual merge, deployment, and acceptance status.
 
-## 文件和命令
+## Files and Commands
 
-遵守现有 `.gitattributes`：UTF-8 文本、LF。链接使用仓库相对路径并匹配大小写。命令写明工作目录和必要环境；Windows 用 `mvnw.cmd`，macOS/Linux 用 `./mvnw`。保留已有 PowerShell、Shell、Maven 和 pnpm 工具，不把 Gateflow 的 Python-only 脚本约定变成 SERMS 的要求。
+Follow `.gitattributes`: UTF-8 text and LF. Use case-correct repository-relative links. State working directories and required environment; Windows uses `mvnw.cmd`, macOS/Linux `./mvnw`. Keep existing PowerShell, Shell, Maven, and pnpm tools; do not impose Gateflow's Python-only scripting convention on SERMS.

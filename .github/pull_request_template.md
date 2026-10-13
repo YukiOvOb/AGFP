@@ -1,27 +1,27 @@
-## 变化与范围
+## Change and Scope
 
-<!-- 解决什么问题，用户/系统行为如何变化；对应 UC/需求；允许范围与排除项。 -->
+<!-- Problem, observable user/system change, related UC/requirement, allowed scope and exclusions. -->
 
-## 任务与负责人
+## Task and Owner
 
-<!-- 关联真实 Issue、GitHub Projects 卡片或已约定会话任务，写明人类主负责人。有未完成验收用 Refs #n；全部验收完成且进入 main 才用 Closes #n。 -->
+<!-- Link a real Issue, GitHub Projects card, or agreed conversation task; name the primary human owner. Use Refs #n for incomplete acceptance; Closes #n only after full acceptance and entry into main. -->
 
-## 依赖、合同与公共文件
+## Dependencies, Contracts, and Shared Files
 
-<!-- base 分支/提交、依赖 PR 和合并顺序；受影响的合同与负责人确认；公共文件变化及跨模块影响。没有则写明无。 -->
+<!-- Base branch/commit, dependency PRs and merge order, affected contracts and owner confirmation, shared-file changes and cross-module impact. State none where applicable. -->
 
-## 交付与验收
+## Delivery and Acceptance
 
-<!-- 完整/部分交付；合并前已验证什么；合并后谁做部署/组员检查和其他验收；未完成事项。CI 全绿可自行合并，团队 Done 另须原有验收证据。 -->
+<!-- Full/partial delivery, pre-merge verification, post-merge deployment/member checks and other acceptance owners, remaining work. Green CI permits self-merging; team Done separately requires original acceptance evidence. -->
 
-## 验证证据
+## Verification Evidence
 
-<!-- 命令/场景、OS/版本、HEAD/base、未提交输入、passed/failed/not run/blocked、报告/Actions 链接。见 docs/testing.md；不要把 mock、本地通过或 agent 审查当成人类/真实整合验收。 -->
+<!-- Commands/scenarios, OS/versions, HEAD/base, uncommitted inputs, passed/failed/not run/blocked, reports/Actions links. See docs/testing.md; mocks, local success, and agent review are not human or real-integration acceptance. -->
 
-| 检查 | 版本与环境 | 结果及证据 |
+| Check | Version and environment | Result and evidence |
 | --- | --- | --- |
 | | | |
 
-## 风险、恢复与待决定事项
+## Risks, Recovery, and Pending Decisions
 
-<!-- 对用户/数据/接口/部署的影响、恢复方式；尚未确认的规则冲突及选项。文档改动也说明是否改变已有制度。 -->
+<!-- User/data/API/deployment impact, recovery, unresolved rule conflicts and options. For documentation changes, state whether existing policies change. -->

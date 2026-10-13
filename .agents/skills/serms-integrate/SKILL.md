@@ -1,16 +1,16 @@
 ---
 name: serms-integrate
-description: 核对 SERMS PR 的合并条件与依赖更新，并分别记录合并、部署和团队 Done 的证据。
+description: Check SERMS PR merge conditions and dependency updates, recording merge, deployment, and team Done evidence separately.
 ---
 
-# 合并核对与收尾
+# Merge Checks and Completion
 
-来源：[README 合并制度](../../../README.md#协作与发布)、[PR 和团队验收](../../../.github/CONTRIBUTING.md#pr-和团队验收)、[Sprint DoD](../../../docs/agile/sprint-plan.md#2-完成标准definition-of-done)、[testing](../../../docs/testing.md)。
+Sources: [README merge policy](../../../README.md#collaboration-and-releases), [PRs and team acceptance](../../../.github/CONTRIBUTING.md#prs-and-team-acceptance), [Sprint DoD](../../../docs/agile/sprint-plan.md#2-definition-of-done), [Testing](../../../docs/testing.md).
 
-1. 读取 PR 的最新 HEAD、目标分支及 CI 结果，核对任务范围、依赖、合同变更确认与实际权限。保留 Write 协作者自行合并的制度，不指定唯一 integrator。
-2. 说明尚缺的检查和验收。任务基于依赖分支时核对合并顺序、retarget 和更新后的组合；旧 HEAD/base 的通过不覆盖新组合。
-3. 合并操作按现有用户授权和 GitHub 实际保护执行；本 skill 本身不授权 agent 合并，不能借规则提案批准自身或绕过失败检查。
-4. 操作后读取实际 PR 状态和 merge SHA；记录部署与部署后检查，交回依赖任务重新验证。
-5. 尚缺组员检查、真实整合或其他 DoD 证据时保留 Testing/未完成验收，不自动关闭任务。全部验收完成后才更新 Done；清理按 worktree 指南保留成果。
+1. Read latest PR HEAD, target branch, and CI results; verify scope, dependencies, contract confirmation, and actual permissions. Preserve Write collaborators' self-merge policy without appointing a sole integrator.
+2. State missing checks/acceptance. For dependency-branch tasks, verify merge order, retargeting, and the updated combination; old HEAD/base passes do not cover the new combination.
+3. Merge according to existing user authorization and actual GitHub protection. This skill alone does not authorize merging; do not use rule proposals to approve themselves or bypass failures.
+4. Read actual PR status and merge SHA afterward; record deployment and post-deployment checks, and return dependency tasks for revalidation.
+5. Keep Testing/incomplete acceptance when member checks, real integration, or other DoD evidence is missing; do not close tasks automatically. Mark Done only after all acceptance; follow worktree preservation guidance for cleanup.
 
-交付：实际合并/部署状态、merge SHA（若有）、任务状态、后续负责人和保留的分支/worktree。
+Deliver: actual merge/deployment status, merge SHA if available, task status, subsequent owner, and retained branch/worktree.

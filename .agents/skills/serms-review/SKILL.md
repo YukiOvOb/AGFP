@@ -1,16 +1,16 @@
 ---
 name: serms-review
-description: 只读审查 SERMS 的固定提交或 PR，核对行为、合同、团队约定和证据，报告可复现问题。
+description: Review a fixed SERMS commit or PR read-only against behavior, contracts, team conventions, and evidence; report reproducible issues.
 ---
 
-# 只读审查
+# Read-only Review
 
-来源：[PR 和团队验收](../../../.github/CONTRIBUTING.md#pr-和团队验收)、[审查和人类身份](../../../docs/collaboration/agent-workflow.md#审查和人类身份)、[testing](../../../docs/testing.md)。
+Sources: [PRs and team acceptance](../../../.github/CONTRIBUTING.md#prs-and-team-acceptance), [Review and human identity](../../../docs/collaboration/agent-workflow.md#review-and-human-identity), [Testing](../../../docs/testing.md).
 
-1. 固定被审查的 HEAD、base 及任务范围。先读任务、相关合同、diff 和证据，再对照其他审查意见。
-2. 保持只读。允许跑检查时在自己的隔离资源中运行；修复交给 writer，不顺手编辑被审查分支。
-3. 每条发现给文件/行号、触发条件、用户或数据影响、证据和严重程度；分清确认的问题、可能问题和缺少证据。
-4. 核对测试输入、实际数据库版本、API 类型、授权/合同确认和部分交付。agent 分析不能计为人类检查。
-5. HEAD 变化后复查受影响部分，或明确结论只覆盖原 HEAD。远端发布按已有授权处理，注明 agent 身份；不以人类身份提交 approving review。
+1. Fix reviewed HEAD, base, and scope. Read the task, contracts, diff, and evidence, then compare other review opinions.
+2. Remain read-only. Run authorized checks with isolated resources; send fixes to the writer rather than editing the reviewed branch.
+3. Findings specify file/line, trigger, user/data impact, evidence, and severity; distinguish confirmed defects, possible issues, and missing evidence.
+4. Verify test inputs, actual database version, API types, authorization/contract confirmation, and partial delivery. Agent analysis is not a human check.
+5. Recheck affected scope after HEAD changes or explicitly limit conclusions to the original HEAD. Publish remotely only when authorized, identifying the agent; never submit an approving review as a human.
 
-交付：版本、按影响排序的发现、真实检查结果、未解决分歧和验收缺项。
+Deliver: versions, findings ordered by impact, actual checks, unresolved disagreements, and acceptance gaps.

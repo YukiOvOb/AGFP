@@ -103,7 +103,7 @@ export async function check(root = defaultRoot) {
       if (!raw.startsWith('---\n') || name !== path.basename(path.dirname(filename)) || !description) {
         problems.push(`${document}: invalid skill name or description`);
       }
-      if (!text.includes('来源：')) problems.push(`${document}: missing rule source links`);
+      if (!text.includes('Sources:')) problems.push(`${document}: missing rule source links`);
     }
   }
   const entry = await readFile(path.join(root, 'AGENTS.md'), 'utf8');
