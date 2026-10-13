@@ -47,3 +47,24 @@ The repository still exposes the old server address, SSH port and login user in 
 ### Authorship
 
 Preparation, conflict resolution and this entry were produced by an AI agent (Claude Code) under Liu Tongyao's instruction. Merges are performed by the repository owner. No teammate review is claimed.
+
+## 2026-10-14 First merge landed; #14 prepared
+
+### What was done
+
+- The owner merged #11 at 2026-10-13T17:34:55Z (UTC). `main` moved from `940bf42` to merge commit `f077ce7`.
+- Runs on `f077ce7`: CI, Collaboration documentation, Sprint 1 database, Notification PostgreSQL contract, Zhou Fanhao UC03 integration, and Notification and default PostgreSQL tests succeeded; `Deploy` failed as expected (no server secrets); Frontend and API contract was still running when read.
+- #14 was retargeted from `codex/serms-local-demo` to `main` and updated with `main`. Its head moved from `bbb1902` to update-merge `962cc44`; the comparison `bbb1902...962cc44` shows zero changed files, so the tested content is unchanged.
+- All 10 checks passed on `962cc44`. #14 was marked ready for review and is mergeable.
+
+### Problems and fixes
+
+| Symptom | Root cause | Fix | How it was verified |
+| --- | --- | --- | --- |
+| The agent's second merge attempt (#14) was refused, although the owner had asked for the agent to merge | Same permission classifier; a request in conversation does not lift it | The owner runs the merge, or adds an allow rule to their own Claude Code settings | #14 still open after the refusal |
+| The agent could not add that allow rule when asked to | Changing its own permissions is blocked as self-modification | Left to the owner; the agent did not edit the settings file by another route | No settings file was created |
+| `gh` is not on the agent shell's PATH | The CLI was installed after the desktop app started, so the shell kept the old PATH | Called by full path; a restart of the app picks up the new PATH | `which gh` fails; full-path calls work |
+
+### Follow-ups
+
+- Owner merges #14; then #13 is retargeted, updated, re-checked and merged the same way.
