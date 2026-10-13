@@ -3,8 +3,7 @@ import { z } from 'zod';
 import type { Status } from './queries';
 export const statuses: Status[] = ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'UNREPAIRABLE'];
 export const statusLabel = (status: Status) => status.replaceAll('_', ' ');
-export const hasAnyRole = (roles: readonly string[] | undefined, ...allowed: string[]) =>
-  allowed.some((role) => roles?.includes(role));
+export { hasAnyRole } from '@/lib/roles';
 export const workspaceRoles = ['BORROWER', 'CUSTODIAN', 'MAINTAINER', 'ADMIN'];
 export function singaporeDate(value: string | null) {
   if (!value) return '—';

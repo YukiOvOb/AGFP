@@ -1,5 +1,7 @@
-import { Navigate, Route, Routes } from 'react-router';
+import { lazy, Suspense } from 'react';
+import { Link, Route, Routes } from 'react-router';
 import { LoginPage } from '@/features/auth/LoginPage';
+import { HomePage } from '@/features/home/HomePage';
 import { LoanPage } from '@/features/loan/LoanPage';
 import { NotificationPage } from '@/features/notification/NotificationPage';
 import { EquipmentSearchPage } from '@/features/equipment/EquipmentSearchPage';
@@ -7,20 +9,21 @@ import { ReservePage } from '@/features/reservation/ReservePage';
 import { MyReservationsPage } from '@/features/reservation/MyReservationsPage';
 import { RequireRole } from './RequireRole';
 import { Layout } from './Layout';
+import { LoadingState } from '@/components/Feedback';
 import { MaintenanceHomePage } from '@/features/maintenance/MaintenanceHomePage';
 import { MaintenanceCasePage } from '@/features/maintenance/MaintenanceCasePage';
 import { MaintenanceReportPage } from '@/features/maintenance/MaintenanceReportPage';
-import '@/features/maintenance/maintenance.css';
 import { ApprovalListPage } from '@/features/approval/ApprovalListPage';
 import { ApprovalDetailPage } from '@/features/approval/ApprovalDetailPage';
-import '@/features/approval/approval.css';
+// Component gallery for developers; the import is dropped from production builds.
+const Gallery = import.meta.env.DEV ? lazy(() => import('@/components/ui/Gallery')) : null;
 export function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route element={<RequireRole />}>
         <Route element={<Layout />}>
-          <Route path="/" element={<Navigate to="/notifications" replace />} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/notifications" element={<NotificationPage />} />
           <Route path="/loans" element={<LoanPage />} />
           <Route element={<RequireRole role="APPROVER" />}>
@@ -35,12 +38,22 @@ export function App() {
           <Route path="/maintenance" element={<MaintenanceHomePage />} />
           <Route path="/maintenance/cases/:caseId" element={<MaintenanceCasePage />} />
           <Route path="/maintenance/report" element={<MaintenanceReportPage />} />
+          {Gallery && (
+            <Route
+              path="/dev/components"
+              element={
+                <Suspense fallback={<LoadingState />}>
+                  <Gallery />
+                </Suspense>
+              }
+            />
+          )}
           <Route
             path="*"
             element={
               <div>
                 <h1>Page not found</h1>
-                <a href="/notifications">Back to notifications</a>
+                <Link to="/">Back to the overview</Link>
               </div>
             }
           />
