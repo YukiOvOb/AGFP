@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import sg.edu.nus.serms.loan.domain.LoanView;
 import sg.edu.nus.serms.loan.domain.CheckoutCandidate;
 import sg.edu.nus.serms.loan.service.LoanService;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonDeserialize;
 import sg.edu.nus.serms.shared.api.StrictVersionDeserializer;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.HttpStatus;

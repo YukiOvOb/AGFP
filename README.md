@@ -47,7 +47,7 @@ The frontend and backend are separate: a React single-page application, a Spring
 | Area | Technology |
 | --- | --- |
 | Language | Java 17 |
-| Framework | Spring Boot 3.5 (modular monolith) |
+| Framework | Spring Boot 4.0 (modular monolith; user-authorized migration in PR #13) |
 | Web API | Spring MVC JSON endpoints under `/api/v1` + Jakarta Bean Validation |
 | API documentation | springdoc-openapi (OpenAPI 3) |
 | Error format | RFC 9457 Problem Details |
@@ -56,9 +56,9 @@ The frontend and backend are separate: a React single-page application, a Spring
 | Scheduled tasks | Spring `@Scheduled` |
 | Operational endpoints | Spring Boot Actuator (only health and info exposed) |
 | Build | Maven 3.9 (`./mvnw`) |
-| Testing | JUnit 5 · Mockito · AssertJ · Spring Boot Test · Testcontainers; ArchUnit planned |
-| Coverage | JaCoCo reports; service + domain ≥ 70% required, automatic gate pending |
-| Code style / static analysis | Spotless (google-java-format) · SpotBugs + FindSecBugs (planned) |
+| Testing | JUnit Jupiter 6 · Mockito · AssertJ · Spring Boot Test · Testcontainers |
+| Coverage | JaCoCo reports; service + domain ≥ 70% required, automatic gate tracked in Issue #24 |
+| Code style / static analysis | CodeQL planned (Issue #25); Spotless, SpotBugs and ArchUnit were dropped by [D-009](docs/collaboration/decisions.md#d-009-scope-freeze) |
 
 Implemented backend packages under `sg.edu.nus.serms` are `identity`, `equipment`, `reservation`, `approval`, `loan`, `maintenance`, `notification`, and `shared`. Reporting queries currently live in maintenance, and audit writes use the shared database; standalone report/audit modules remain architectural targets. Frontend business pages live under `frontend/src/features/`.
 
@@ -117,6 +117,8 @@ CI can only run tests that have been written. **Each member must provide a compl
 See [Section 5 of docs/tech-stack.md](docs/tech-stack.md#5-test-benches-each-member-owns-their-tests) for each member's test scope.
 
 ## Collaboration and Releases
+
+Release preparation for Issue #10 is documented in [the server handover and release runbook](docs/server-release.md). The candidate builds the real React/backend/PostgreSQL system and gates deployment on the current main SHA, successful checks and verified handover. Production readiness remains disabled until the actual server inventory and acceptance are complete.
 
 - Cross-module interface contracts live in [`docs/contracts/`](docs/contracts/); the repository version is authoritative. Changes require a PR and confirmation from the owners of affected modules. Available contracts: [Authentication and Approval (UC02)](docs/contracts/auth-and-approval.md), [Equipment Search and Reservation (UC01)](docs/contracts/equipment-and-reservation.md).
 - All changes go through PRs. `main` is protected by eight required security/application checks; local commits await their own PR/CI before integration.

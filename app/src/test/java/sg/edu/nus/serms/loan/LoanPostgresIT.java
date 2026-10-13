@@ -10,7 +10,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,7 +25,7 @@ import sg.edu.nus.serms.loan.service.*;
 import sg.edu.nus.serms.loan.domain.*;
 import sg.edu.nus.serms.testsupport.SermsFixtures;
 import sg.edu.nus.serms.shared.security.SermsUserPrincipal;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import static org.mockito.Mockito.when;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -51,7 +51,7 @@ class LoanPostgresIT {
     String user = System.getenv("SERMS_UC03_TEST_DB_USER");
     String pass = System.getenv("SERMS_UC03_TEST_DB_PASSWORD");
     if (url == null || url.isBlank()) {
-      var pg = new PostgreSQLContainer<>("postgres:18-alpine").withDatabaseName("serms_test_uc03");
+      var pg = new PostgreSQLContainer("postgres:18-alpine").withDatabaseName("serms_test_uc03");
       pg.start(); url = pg.getJdbcUrl(); user = pg.getUsername(); pass = pg.getPassword();
     } else if (!url.matches("jdbc:postgresql://[^/]+/serms_test_uc03[a-z0-9_]*(\\?.*)?")) {
       throw new IllegalStateException("UC03 requires a fresh isolated serms_test_uc03 database");

@@ -71,11 +71,15 @@ Scope: preserve the original maintenance checkout's changes/history, prepare a c
 
 Execution order: local repository closeout → complete local UC01-UC05 and member acceptance → implement the user's later, separately defined changes → final release/cloud deployment and post-deployment acceptance. No later feature scope, deadline, hours or approval is inferred. Original DoD remains applicable to team Done even while cloud publication is deferred.
 
+## D-006 Spring Boot 4 Security Migration
+
+Status: **Confirmed by the user in this session on 2026-10-13 (Asia/Singapore)**. The built backend image revealed dependency vulnerabilities not detected by source scanning. Spring's corresponding 6.2 fixes require enterprise support, while the OSS fixes are in Framework 7. The existing technology stack selected Boot 3.5; options were to retain it with a blocked release or authorize Boot 4 and full regression. The user explicitly authorized **upgrading to Boot 4, updating the technical agreement and running complete regression**.
+
+Scope: PR #13 migrates the existing single application to Boot 4.0.8/Framework 7.0.9, compatible Springdoc/Jackson/Testcontainers, patched dependency versions and relocated MVC test imports. Preserve Java 17, React/PostgreSQL, JSON business interfaces, strict integer versions, identity/session/CSRF/RBAC, immutable migrations, test coverage and ownership. Existing tests must continue passing, and generated API types and real integrated flows must be verified. No paid Spring artifacts, security suppression, production action or teammate sign-off is authorized or claimed. Server handover remains unavailable; release stays draft until actual readiness.
+
 ## D-007 Completion Task Ownership
 
 Status: **Confirmed by the user (repository owner Liu Tongyao) in conversation on 2026-10-14 (Asia/Singapore)**, after a read-only review of main `940bf42`, draft PRs #11-#14 and the Project Proposal. The review is recorded in the [development log](../devlog/2026-10-14-project-review-and-completion-plan.md).
-
-Numbering: D-006 (Spring Boot 4 security migration) is recorded on the release-preparation branch in PR #13 and joins this file when that PR merges.
 
 Sources: the differing shared-responsibility tables described in [D-002](#d-002-shared-responsibility-source-differences); requirement owners in the [backlog](../agile/backlog.md); task execution in [D-004](#d-004-local-first-integration-and-wenqi-task-execution).
 
