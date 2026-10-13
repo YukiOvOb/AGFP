@@ -27,6 +27,8 @@ Build logs, runtime JAR, database, access file and process state live under the 
 node scripts/smoke-local.mjs
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-local-data.ps1
 node scripts/check-local-browser.mjs
+node scripts/check-uc01-uc04.mjs
+node scripts/check-uc01-uc04-browser.mjs
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-local.ps1
 ```
 

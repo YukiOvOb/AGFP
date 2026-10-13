@@ -123,6 +123,33 @@ function detail(initial = item()) {
   return { requests, reads: () => ({ caseReads, historyReads }) };
 }
 describe('UC04 maintenance workspace', () => {
+  it('reports equipment selected in the catalogue and clears the selection after success', async () => {
+    let body: unknown;
+    server.use(
+      http.post(ROOT + '/cases', async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json(item('OPEN', null), { status: 201 });
+      }),
+    );
+    mount(['BORROWER'], '/maintenance?equipmentId=' + EQUIPMENT);
+    expect(await screen.findByLabelText('Equipment ID', { exact: true })).toHaveValue(EQUIPMENT);
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText('Fault description'), 'Selected camera fault');
+    await user.click(screen.getByRole('button', { name: 'Submit fault report' }));
+    await screen.findByText(/Fault reported successfully/);
+    expect(body).toEqual({ equipmentId: EQUIPMENT, faultDescription: 'Selected camera fault' });
+    expect(screen.getByLabelText('Equipment ID', { exact: true })).toHaveValue('');
+  });
+  it('ignores an invalid catalogue equipment parameter', async () => {
+    mount(['BORROWER'], '/maintenance?equipmentId=invalid');
+    expect(await screen.findByLabelText('Equipment ID', { exact: true })).toHaveValue('');
+  });
+  it('accepts the existing PostgreSQL demo UUID format', async () => {
+    mount(['BORROWER'], '/maintenance?equipmentId=20000000-0000-0000-0000-000000000008');
+    expect(await screen.findByLabelText('Equipment ID', { exact: true })).toHaveValue(
+      '20000000-0000-0000-0000-000000000008',
+    );
+  });
   it.each(['BORROWER', 'CUSTODIAN', 'MAINTAINER', 'ADMIN'])(
     'shows Maintenance navigation to %s',
     async (role) => {

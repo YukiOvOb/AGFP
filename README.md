@@ -45,7 +45,7 @@ The frontend and backend are separate: a React single-page application, a Spring
 | Area | Technology |
 | --- | --- |
 | Language | Java 17 |
-| Framework | Spring Boot 3.5 (modular monolith) |
+| Framework | Spring Boot 4.0 (modular monolith; user-authorized migration in PR #13) |
 | Web API | Spring MVC JSON endpoints under `/api/v1` + Jakarta Bean Validation |
 | API documentation | springdoc-openapi (OpenAPI 3) |
 | Error format | RFC 9457 Problem Details |
@@ -54,7 +54,7 @@ The frontend and backend are separate: a React single-page application, a Spring
 | Scheduled tasks | Spring `@Scheduled` |
 | Operational endpoints | Spring Boot Actuator (only health and info exposed) |
 | Build | Maven 3.9 (`./mvnw`) |
-| Testing | JUnit 5 · Mockito · AssertJ · Spring Boot Test · Testcontainers · ArchUnit (layering checks) |
+| Testing | JUnit Jupiter 6 · Mockito · AssertJ · Spring Boot Test · Testcontainers · ArchUnit (layering checks) |
 | Coverage | JaCoCo (service + domain ≥ 70%) |
 | Code style / static analysis | Spotless (google-java-format) · SpotBugs + FindSecBugs |
 
@@ -115,6 +115,8 @@ CI can only run tests that have been written. **Each member must provide a compl
 See [Section 5 of docs/tech-stack.md](docs/tech-stack.md#5-test-benches-each-member-owns-their-tests) for each member's test scope.
 
 ## Collaboration and Releases
+
+Release preparation for Issue #10 is documented in [the server handover and release runbook](docs/server-release.md). The candidate builds the real React/backend/PostgreSQL system and gates deployment on the current main SHA, successful checks and verified handover. Production readiness remains disabled until the actual server inventory and acceptance are complete.
 
 - Cross-module interface contracts live in [`docs/contracts/`](docs/contracts/); the repository version is authoritative. Changes require a PR and confirmation from the owners of affected modules. Available contracts: [Authentication and Approval (UC02)](docs/contracts/auth-and-approval.md), [Equipment Search and Reservation (UC01)](docs/contracts/equipment-and-reservation.md).
 - All changes go through PRs. `main` is protected, and CI checks (gitleaks, Trivy, and Dependency Review) must pass before merging.
