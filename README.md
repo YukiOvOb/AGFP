@@ -45,7 +45,7 @@ The frontend and backend are separate: a React single-page application, a Spring
 | Area | Technology |
 | --- | --- |
 | Language | Java 17 |
-| Framework | Spring Boot 3.5 (modular monolith) |
+| Framework | Spring Boot 4.0 (modular monolith; user-authorized migration in PR #13) |
 | Web API | Spring MVC JSON endpoints under `/api/v1` + Jakarta Bean Validation |
 | API documentation | springdoc-openapi (OpenAPI 3) |
 | Error format | RFC 9457 Problem Details |
@@ -54,7 +54,7 @@ The frontend and backend are separate: a React single-page application, a Spring
 | Scheduled tasks | Spring `@Scheduled` |
 | Operational endpoints | Spring Boot Actuator (only health and info exposed) |
 | Build | Maven 3.9 (`./mvnw`) |
-| Testing | JUnit 5 · Mockito · AssertJ · Spring Boot Test · Testcontainers · ArchUnit (layering checks) |
+| Testing | JUnit Jupiter 6 · Mockito · AssertJ · Spring Boot Test · Testcontainers · ArchUnit (layering checks) |
 | Coverage | JaCoCo (service + domain ≥ 70%) |
 | Code style / static analysis | Spotless (google-java-format) · SpotBugs + FindSecBugs |
 

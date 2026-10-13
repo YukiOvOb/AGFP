@@ -27,6 +27,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
       - run: docker build --target app -t serms-app:ci .
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -41,3 +44,15 @@ jobs:
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: '1'
+      - name: Run real production-profile Compose smoke in isolated CI storage
+        env:
+          SERMS_DB_NAME: serms_ci
+          SERMS_DB_USER: serms_ci
+          SERMS_DB_PASSWORD: ci-only-${{ github.run_id }}
+          SERMS_DB_VOLUME: serms-ci-${{ github.run_id }}-${{ github.run_attempt }}
+          RELEASE_SHA: ci
+        run: |
+          docker volume create "$SERMS_DB_VOLUME"
+          trap 'docker compose down; docker volume rm "$SERMS_DB_VOLUME"' EXIT
+          docker compose up -d --wait --wait-timeout 180
+          node scripts/verify-compose.mjs

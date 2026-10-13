@@ -39,16 +39,16 @@ The Status column indicates implementation progress: ✅ implemented on main; �
 | Area | Technology | Version | Status |
 | --- | --- | --- | --- |
 | Language | Java | 17 | ✅ |
-| Framework | Spring Boot (modular monolith) | 3.5.x | ✅ |
+| Framework | Spring Boot (modular monolith) | 4.0.x | 🔶 User-authorized security migration in PR #13; main remains 3.5 until integration |
 | Web API | Spring MVC JSON endpoints under `/api/v1` + Jakarta Bean Validation | Bundled with Boot | 🔶 main currently uses Thymeleaf pages; REST conversion pending |
-| API documentation | springdoc-openapi (OpenAPI 3) | 2.x | ⬜ |
+| API documentation | springdoc-openapi (OpenAPI 3) | 3.0.x | 🔶 Boot 4 compatible migration in PR #13 |
 | Error format | RFC 9457 Problem Details (Spring's built-in `ProblemDetail`) | Bundled with Boot | ⬜ |
 | Security | Spring Security: session cookie authentication, BCrypt password hashing, `@PreAuthorize` method authorization, and CSRF protection (cookie + request header) | Bundled with Boot | 🔶 Spring Security is on main; JSON login + RBAC conversion pending |
 | Data access | Spring Data JPA / Hibernate; handwritten SQL through JdbcTemplate for locking or complex queries | Bundled with Boot | ✅ |
 | Scheduled tasks | Spring `@Scheduled` | Bundled with Boot | ✅ |
 | Operational endpoints | Spring Boot Actuator (only `health` and `info` exposed) | Bundled with Boot | ⬜ |
 | Build | Maven (Maven Wrapper `./mvnw`) | 3.9 | ✅ |
-| Testing | JUnit 5 · Mockito · AssertJ · Spring Boot Test | Bundled with Boot | ✅ |
+| Testing | JUnit Jupiter 6 · Mockito · AssertJ · Spring Boot Test | Bundled with Boot 4 | 🔶 Existing API/domain tests retained in PR #13; transitional data/adapter benches retain JUnit 5 |
 | Integration test database | Testcontainers (real PostgreSQL 18) | — | 🔶 UC01 branch (`testsupport/SermsPostgres`) |
 | Layering checks | ArchUnit | — | ⬜ |
 | Coverage | JaCoCo (service + domain ≥ 70% as a merge gate) | 0.8.x | ✅ Reports generated; gate pending |

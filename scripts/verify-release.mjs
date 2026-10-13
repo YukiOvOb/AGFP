@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 export const requiredChecks = [
   'Secrets scan (gitleaks)', 'Vulnerability scan (Trivy)', 'Dependency review',
   'database-test', 'java-tests', 'frontend', 'notification-contract', 'checkout-return',
-  'collaboration-docs', 'release-config', 'release-images',
+  'collaboration-docs', 'maintenance-postgres', 'release-config', 'release-images',
 ];
 
 export function validateContext({ref, event, sha, ready}) {
