@@ -1,61 +1,61 @@
-# Automatic deployment: push to main (after PR merge) → SSH to the Hong Kong server → sync code → rebuild with Docker Compose → health check.
-#
-# Uses the same SSH deployment approach as Lumie-platform/deploy.yml, with these differences:
-#   - Lumie pushes images to Alibaba Cloud ACR before pulling them; AGFP builds on the server, avoiding extra registry credentials.
-#   - Lumie deploys from release; AGFP deploys after merges into main as required.
-#
-# Repository secrets (already configured):
-#   DEPLOY_HOST      156.226.176.180 (Hong Kong server)
-#   DEPLOY_PORT      22000
-#   DEPLOY_USER      root
-#   DEPLOY_SSH_KEY   Dedicated private key matching github-actions-deploy@agfp in the server's authorized_keys
-#
-# Server conventions (implemented by scripts/deploy.sh):
-#   Code lives in /opt/agfp, runs via Docker Compose, and binds only to 127.0.0.1:8789.
-#   nginx exposes it through a reverse proxy at https://<domain>. Deployment can proceed before the domain
-#   and certificate are ready, but there is no public endpoint until then.
-#
-# main is protected: changes must merge through PRs with passing CI; this workflow runs after merging.
 name: Deploy
-
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
+    paths-ignore: ['**.md', 'docs/**']
   workflow_dispatch: {}
-
 concurrency:
   group: deploy-production
   cancel-in-progress: false
-
 permissions:
   contents: read
-
+  checks: read
 jobs:
-  deploy:
-    name: deploy (main → HK)
+  release-gate:
     runs-on: ubuntu-latest
+    timeout-minutes: 18
     steps:
-      - name: Deploy over SSH
+      - name: Reject non-main execution before checkout or secrets
+        run: test "$GITHUB_REF" = refs/heads/main
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify handover and current main SHA checks
+        run: node scripts/verify-release.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SERMS_PRODUCTION_READY: ${{ vars.SERMS_PRODUCTION_READY }}
+  deploy:
+    needs: release-gate
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Require trusted host identity
+        env:
+          HOST_FINGERPRINT: ${{ secrets.DEPLOY_HOST_FINGERPRINT }}
+        run: test -n "$HOST_FINGERPRINT"
+      - name: Deploy verified main over SSH
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          RELEASE_SHA: ${{ github.sha }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           port: ${{ secrets.DEPLOY_PORT }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          command_timeout: 15m
+          fingerprint: ${{ secrets.DEPLOY_HOST_FINGERPRINT }}
+          envs: RELEASE_SHA
+          command_timeout: 20m
           script: |
             set -euo pipefail
             APP_DIR=/opt/agfp
-            REPO=https://github.com/${{ github.repository }}.git
-            # Clone on first deployment; subsequent deployments reset tracked code (.env and data/ are preserved).
-            if [ ! -d "$APP_DIR/.git" ]; then
-              git clone --branch main "$REPO" "$APP_DIR"
-            fi
+            test -d "$APP_DIR/.git"
+            test -f "$APP_DIR/.env"
             cd "$APP_DIR"
             git fetch origin main
-            git reset --hard "${{ github.sha }}"
-            echo "==> HEAD: $(git log --oneline -1)"
-            bash scripts/deploy.sh
+            test "$(git rev-parse origin/main)" = "$RELEASE_SHA"
+            RELEASE_SCRIPT=$(mktemp)
+            trap 'rm -f "$RELEASE_SCRIPT"' EXIT
+            git show "$RELEASE_SHA:scripts/deploy.sh" > "$RELEASE_SCRIPT"
+            APP_DIR="$APP_DIR" bash "$RELEASE_SCRIPT"

@@ -112,6 +112,8 @@ See [Section 5 of docs/tech-stack.md](docs/tech-stack.md#5-test-benches-each-mem
 
 ## Collaboration and Releases
 
+Release preparation for Issue #10 is documented in [the server handover and release runbook](docs/server-release.md). The candidate builds the real React/backend/PostgreSQL system and gates deployment on the current main SHA, successful checks and verified handover. Production readiness remains disabled until the actual server inventory and acceptance are complete.
+
 - Cross-module interface contracts live in [`docs/contracts/`](docs/contracts/); the repository version is authoritative. Changes require a PR and confirmation from the owners of affected modules. Available contracts: [Authentication and Approval (UC02)](docs/contracts/auth-and-approval.md), [Equipment Search and Reservation (UC01)](docs/contracts/equipment-and-reservation.md).
 - All changes go through PRs. `main` is protected, and CI checks (gitleaks, Trivy, and Dependency Review) must pass before merging.
 - Collaborators with Write permission may merge their own PRs without another reviewer's approval, provided all CI checks pass.
