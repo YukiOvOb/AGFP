@@ -1,0 +1,104 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {repo, runtime, baseURL, demoPassword} from './lib/local-demo-client.mjs';
+
+const require = createRequire(path.join(repo, 'frontend/package.json'));
+const {chromium, expect} = require('@playwright/test');
+const browser = await chromium.launch({headless:true});
+const checks = [], errors = [];
+const evidence = path.join(repo, 'docs/evidence/uc01-uc04');
+fs.mkdirSync(evidence, {recursive:true});
+const summary = {status:'running',baseURL,checks,startedAt:new Date().toISOString(),mocked:false};
+const pass = name => {checks.push(name); console.log(`PASS ${name}`);};
+const localTime = ms => new Date(ms + 8 * 3600000).toISOString().slice(0,16);
+async function signIn(page, email) {
+  page.setDefaultTimeout(60000);
+  await page.goto(baseURL + '/login', {waitUntil:'domcontentloaded',timeout:60000});
+  await page.getByLabel('Email address').fill(email);
+  await page.getByLabel('Password', {exact:true}).fill(demoPassword);
+  await page.getByRole('button', {name:'Sign in',exact:true}).click();
+  await page.waitForURL('**/notifications');
+}
+try {
+  for (const [name, viewport] of [['desktop',{width:1440,height:1000}], ['mobile',{width:390,height:844}]]) {
+    const context = await browser.newContext({viewport});
+    const borrower = await context.newPage();
+    borrower.on('pageerror', error => errors.push(error.message));
+    await signIn(borrower, 'borrower@example.test');
+    await borrower.getByRole('link',{name:'Find equipment',exact:true}).first().click();
+    await borrower.getByLabel('Name or asset tag').fill('DEMO-LIG-01');
+    await borrower.getByRole('button',{name:'Search',exact:true}).click();
+    await borrower.getByRole('link',{name:'Reserve Studio lighting kit',exact:true}).click();
+    const start = Date.now() + 86400000;
+    await borrower.getByLabel('Start (SGT)').fill(localTime(start));
+    await borrower.getByLabel('End (SGT)').fill(localTime(start + 3600000));
+    const purpose = `${name} real browser acceptance ${Date.now()}`;
+    await borrower.getByLabel('Purpose (optional)').fill(purpose);
+    await borrower.getByRole('button',{name:'Reserve',exact:true}).click();
+    await borrower.waitForURL('**/reservations');
+    const row = borrower.getByRole('row').filter({hasText:purpose});
+    await expect(row).toContainText('Confirmed');
+    await row.getByRole('button',{name:'Cancel reservation for Studio lighting kit'}).click();
+    await row.getByRole('button',{name:'Yes, cancel'}).click();
+    await expect(row).toContainText('Cancelled');
+    pass(`${name}: real borrower search reserve and cancel`);
+    await borrower.getByRole('link',{name:'Find equipment',exact:true}).first().click();
+    await borrower.getByLabel('Name or asset tag').fill('DEMO-LIG-01');
+    await borrower.getByRole('button',{name:'Search',exact:true}).click();
+    await borrower.getByRole('link',{name:'Report a fault for Studio lighting kit'}).click();
+    await expect(borrower.getByLabel('Equipment ID',{exact:true})).toHaveValue('20000000-0000-0000-0000-000000000008');
+    const fault = `${name} browser connector fault ${Date.now()}`;
+    await borrower.getByLabel('Fault description').fill(fault);
+    await borrower.getByRole('button',{name:'Submit fault report'}).click();
+    await expect(borrower.getByText(/Fault reported successfully/)).toBeVisible();
+    await borrower.screenshot({path:path.join(evidence,`${name}-fault.png`),fullPage:true});
+    pass(`${name}: catalogue-selected fault persisted through browser`);
+    const custodianContext = await browser.newContext({viewport});
+    const custodian = await custodianContext.newPage();
+    await signIn(custodian, 'custodian@example.test');
+    await custodian.getByRole('link',{name:'Maintenance',exact:true}).click();
+    const card = custodian.getByRole('article').filter({hasText:fault});
+    await card.getByLabel('Assign technician').selectOption({label:'Sam Maintainer · maintainer@example.test'});
+    await card.getByRole('button',{name:'Assign technician',exact:true}).click();
+    await expect(custodian.getByText('Technician assigned successfully.')).toBeVisible();
+    pass(`${name}: real custodian assigns repair`);
+    const technicianContext = await browser.newContext({viewport});
+    const technician = await technicianContext.newPage();
+    technician.on('pageerror', error => errors.push(error.message));
+    await signIn(technician, 'maintainer@example.test');
+    await technician.getByRole('link',{name:'Maintenance',exact:true}).click();
+    await technician.getByRole('link',{name:fault,exact:true}).click();
+    await technician.getByRole('button',{name:'Start Maintenance',exact:true}).click();
+    await technician.getByLabel('Record Diagnosis — details').fill('Connector loose');
+    await technician.getByRole('button',{name:'Record Diagnosis',exact:true}).click();
+    await expect(technician.getByText('Record Diagnosis completed successfully.')).toBeVisible();
+    await technician.getByLabel('Record Repair Action — details').fill('Connector secured');
+    await technician.getByRole('button',{name:'Record Repair Action',exact:true}).click();
+    await expect(technician.getByText('Record Repair Action completed successfully.')).toBeVisible();
+    await technician.screenshot({path:path.join(evidence,`${name}-repair.png`),fullPage:true});
+    const width = await technician.evaluate(() => ({viewport:innerWidth,document:document.documentElement.scrollWidth}));
+    assert.ok(width.document <= width.viewport + 2, JSON.stringify(width));
+    await technician.getByLabel('Resolve — resolution note').fill('Function tested successfully');
+    await technician.getByRole('button',{name:'Resolve',exact:true}).click();
+    await expect(technician.getByText('This case is complete and read-only.')).toBeVisible();
+    pass(`${name}: assigned technician diagnoses repairs and resolves`);
+    await borrower.getByRole('link',{name:'Find equipment',exact:true}).first().click();
+    await borrower.getByLabel('Name or asset tag').fill('DEMO-LIG-01');
+    await borrower.getByRole('button',{name:'Search',exact:true}).click();
+    await expect(borrower.getByText('Available',{exact:true})).toBeVisible();
+    await borrower.screenshot({path:path.join(evidence,`${name}-available.png`),fullPage:true});
+    pass(`${name}: resolved equipment available in real catalogue`);
+    await context.close();
+    await custodianContext.close();
+    await technicianContext.close();
+  }
+  assert.deepEqual(errors, []);
+  summary.status = 'passed';
+} catch (error) {summary.status='failed';summary.failure=error.message;throw error;}
+finally {
+  summary.finishedAt = new Date().toISOString();
+  fs.writeFileSync(path.join(runtime,'uc01-uc04-browser-summary.json'),JSON.stringify(summary,null,2));
+  await browser.close();
+}

@@ -52,3 +52,13 @@ New decisions record both original rules, explicit options, user choice, impact,
 Status: **Confirmed by the user in the current conversation on 2026-10-13 (Asia/Singapore)**. The user requested English throughout the repository, especially README, and then requested updating the GitHub repository.
 
 Scope: translate documentation, collaboration guidance, skills, templates, diagram labels, comments, deployment messages, and welcome-page text; update translated heading links. Preserve business/API semantics, ownership, historical evidence, pending decisions, checks, migration contents, and deployment configuration. The translation PR is based on main commit `25036b161847b906cf09ec556407aa4e5d3dc583`; original local maintenance changes remain outside its scope.
+
+## D-004 Local-First Integration and Wenqi Task Execution
+
+Status: **Confirmed by the user in the current conversation on 2026-10-13 (Asia/Singapore)**. The user explicitly requested immediate Issue allocation, took over execution/upload of Shi Wenqi's tasks, and prioritized a completely working local system before cloud publication.
+
+Shi Wenqi remains a team member and retains his original UC01/team responsibilities. Do not assign him new Issues while his account is unavailable. Liu Tongyao executes those tasks and coordinates integration; the other members retain their established modules. Preserve authentic authorship for existing or newly delivered Wenqi code; record Liu's newly authored takeover implementation as Liu's work, not Wenqi's contribution. Do not change the five-member team, business contracts, checks or merge permissions.
+
+Tasks are Issues #5-#10. Database validation names Zhou Fanhao (`zfh-usedname`); the user will request acceptance of his collaborator invitation. Before GitHub permits assignment, record the intended owner without claiming an applied assignee. Wang Yuanmeng (`ezmoneysniper0701`) and Zhang Hanming (`Hanming1008`) receive their relevant platform/notification and approval/browser tasks.
+
+Local startup and UC01-UC05 acceptance are P0. Server access is not yet handed over and must not block local progress; cloud handover/release is P1. Keep credential values outside Git/public Issues. Existing server configuration and production remain unchanged in the local-demo delivery. No new-account workaround or account-appeal result is assumed. PRs and evidence continue through the existing workflow; implementation/local verification does not imply CI, member review, cloud success or team Done.

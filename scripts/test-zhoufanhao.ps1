@@ -35,8 +35,15 @@ try {
       '-l', ('"{0}"' -f (Join-Path $testDir 'postgres.log')),
       '-o', ('"-h 127.0.0.1 -p {0}"' -f $testPort), '-w', 'start'
     ) -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $testDir 'pg-start.out') -RedirectStandardError (Join-Path $testDir 'pg-start.err')
-    if (-not $pgStartup.WaitForExit(30000) -or $pgStartup.ExitCode -ne 0) { throw 'PostgreSQL startup failed' }
+    # Windows PowerShell may expose a null ExitCode until the process is refreshed.
+    # Register cleanup before waiting so a timeout cannot leak a started cluster.
     $started = $true
+    if (-not $pgStartup.WaitForExit(30000)) { throw 'PostgreSQL startup timed out' }
+    $pgStartup.WaitForExit()
+    $pgStartup.Refresh()
+    if ($null -ne $pgStartup.ExitCode -and $pgStartup.ExitCode -ne 0) { throw 'PostgreSQL startup failed' }
+    & (Join-Path $PostgresBin 'pg_ctl.exe') -D (Join-Path $testDir 'pg') status *> (Join-Path $testDir 'pg-status.log')
+    if ($LASTEXITCODE -ne 0) { throw 'PostgreSQL is not running after startup' }
     $env:PGPASSWORD = ''
     foreach ($database in @('serms_test','serms_test_app','serms_test_uc03')) {
       & (Join-Path $PostgresBin 'createdb.exe') -h 127.0.0.1 -p $testPort -U serms_test $database
