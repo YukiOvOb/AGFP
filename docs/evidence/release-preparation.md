@@ -1,6 +1,6 @@
 # Release Preparation Evidence
 
-The final candidate includes the user-authorized Boot 4 migration and the PR #11/#14 integration dependency. See [security upgrade rationale and versions](../boot4-security-upgrade.md) and [D-005](../collaboration/decisions.md#d-005-spring-boot-4-security-migration). The original built-image failure on `795d68e` remains recorded; the final image scan and Compose smoke must pass on the updated delivery SHA before release.
+The final candidate includes the user-authorized Boot 4 migration and the PR #11/#14 integration dependency. See [security upgrade rationale and versions](../boot4-security-upgrade.md) and [D-006](../collaboration/decisions.md#d-006-spring-boot-4-security-migration). The original built-image failure on `795d68e` remains recorded; the final image scan and Compose smoke must pass on the updated delivery SHA before release.
 
 Issue #10, owner/executor Liu Tongyao; agent-assisted preparation on 2026-10-13 (Asia/Singapore). Base main `940bf42cd1b6b507d24179e8aa4065af14f72a0e`. One writer on `codex/serms-release-preparation`; original dirty maintenance checkout preserved.
 

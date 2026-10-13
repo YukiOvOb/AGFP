@@ -230,7 +230,7 @@ frontend/src
 | Consistent UI; desktop and tablet support | shadcn/ui + responsive Tailwind layouts; shared layout, form, table, and status badge components |
 | Shared coding standards | Backend Spotless and frontend ESLint + Prettier enforced in CI; violations block merging |
 | Presentation / business / data layers | Separate frontend and backend; backend layers from Section 2.2 enforced by ArchUnit |
-| Unit tests for business rules | JUnit 5 + Mockito for strategies, state machines, and domain services |
+| Unit tests for business rules | JUnit Jupiter 6 + Mockito for strategies, state machines, and domain services |
 | Integration tests for security, persistence, and workflows | Spring Boot Test + Testcontainers (PostgreSQL 18), focusing on concurrent reservations, checkout/return races, and authorization |
 | service / domain coverage ≥ 70% | JaCoCo `check` counts only `**.service.**` and `**.domain.**`; coverage below 70% fails the build |
 | Consistent time handling | Database `timestamptz`, Java `Instant`, ISO-8601 UTC API strings, frontend display in `Asia/Singapore` |
@@ -261,7 +261,7 @@ flowchart LR
 | --- | --- |
 | Source code checkout | `actions/checkout` |
 | Application compilation | Backend `./mvnw verify`; frontend `pnpm typecheck && pnpm build` |
-| Unit and integration testing | Backend JUnit 5, Mockito, Spring Boot Test, Testcontainers; frontend Vitest + React Testing Library + MSW |
+| Unit and integration testing | Backend JUnit Jupiter 6, Mockito, Spring Boot Test, Testcontainers; frontend Vitest + React Testing Library + MSW |
 | Test coverage generation | JaCoCo (backend) + Vitest coverage (frontend), uploaded as CI artifacts |
 | Static code analysis | SpotBugs + FindSecBugs, CodeQL (Java + TypeScript), Spotless, ESLint, ArchUnit |
 | Dependency vulnerability checking | Dependency Review (PR stage, Maven + npm) + Dependabot (weekly upgrade PRs) + Trivy fs |
@@ -318,7 +318,7 @@ Local development, CI, and the server must use the same PostgreSQL major version
 
 1. Put **backend tests** in `app/src/test/java/sg/edu/nus/serms/<module>/`; colocate **frontend tests** with components at `frontend/src/features/<module>/**/*.test.tsx`.
 2. **All three backend test layers are required**:
-   - **Unit tests**: domain rules, strategies, and state machines; no database, completing in milliseconds (JUnit 5 + Mockito).
+   - **Unit tests**: domain rules, strategies, and state machines; no database, completing in milliseconds (JUnit Jupiter 6 + Mockito).
    - **Integration tests**: service + repository + real PostgreSQL 18 (Spring Boot Test + Testcontainers), covering transactions, constraints, and concurrency.
    - **API / authorization tests**: normal controller requests, validation failures (400 with field errors), unauthorized access (401 / 403), and missing CSRF headers (MockMvc + spring-security-test).
 3. **At least two frontend test layers are required**:

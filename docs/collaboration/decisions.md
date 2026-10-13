@@ -63,7 +63,7 @@ Tasks are Issues #5-#10. Database validation names Zhou Fanhao (`zfh-usedname`);
 
 Local startup and UC01-UC05 acceptance are P0. Server access is not yet handed over and must not block local progress; cloud handover/release is P1. Keep credential values outside Git/public Issues. Existing server configuration and production remain unchanged in the local-demo delivery. No new-account workaround or account-appeal result is assumed. PRs and evidence continue through the existing workflow; implementation/local verification does not imply CI, member review, cloud success or team Done.
 
-## D-005 Spring Boot 4 Security Migration
+## D-006 Spring Boot 4 Security Migration
 
 Status: **Confirmed by the user in this session on 2026-10-13 (Asia/Singapore)**. The built backend image revealed dependency vulnerabilities not detected by source scanning. Spring's corresponding 6.2 fixes require enterprise support, while the OSS fixes are in Framework 7. The existing technology stack selected Boot 3.5; options were to retain it with a blocked release or authorize Boot 4 and full regression. The user explicitly authorized **upgrading to Boot 4, updating the technical agreement and running complete regression**.
 

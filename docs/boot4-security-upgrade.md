@@ -1,6 +1,6 @@
 # Spring Boot 4 Security Upgrade
 
-Issue #10 / PR #13. The user explicitly authorized Boot 4, updated technical conventions and full regression on 2026-10-13 (Asia/Singapore); see [D-005](collaboration/decisions.md#d-005-spring-boot-4-security-migration). This is Liu Tongyao's agent-assisted implementation, without changing team ownership.
+Issue #10 / PR #13. The user explicitly authorized Boot 4, updated technical conventions and full regression on 2026-10-13 (Asia/Singapore); see [D-006](collaboration/decisions.md#d-006-spring-boot-4-security-migration). This is Liu Tongyao's agent-assisted implementation, without changing team ownership.
 
 ## Trigger and Selected Versions
 
