@@ -15,6 +15,9 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
+      - name: Prepare PostgreSQL 18 image for Testcontainers
+        run: docker pull postgres:18-alpine
+        timeout-minutes: 10
       - name: Generate OpenAPI from backend tests
         run: ./mvnw -B verify
         working-directory: app
