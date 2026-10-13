@@ -1,16 +1,16 @@
 ---
 name: serms-pr
-description: 为 SERMS 改动准备明确范围的提交和 PR，说明依赖、合同影响、检查结果和剩余验收。
+description: Prepare scoped SERMS commits and PRs, explaining dependencies, contract impact, checks, and remaining acceptance.
 ---
 
-# 提交和 PR
+# Commits and PRs
 
-来源：[PR 和团队验收](../../../.github/CONTRIBUTING.md#pr-和团队验收)、[PR 模板](../../../.github/pull_request_template.md)、[证据记录](../../../docs/testing.md#证据记录)。
+Sources: [PRs and team acceptance](../../../.github/CONTRIBUTING.md#prs-and-team-acceptance), [PR template](../../../.github/pull_request_template.md), [Evidence records](../../../docs/testing.md#evidence-records).
 
-1. 检查自己的 diff、Git 状态和暂存差异，只按明确路径暂存本次文件；保留其他人的改动、备份和恢复目录。
-2. 标题描述可观察变化，沿用仓库已有 `type(scope): change` 风格。填写模板，关联真实任务/卡片；没有 Issue 时注明会话范围，不虚构编号。
-3. 写清 base/依赖 PR、合同影响及实际确认、完整/部分交付、验证 HEAD/base、环境和结果。仍缺部署或组员验收时保持剩余事项，有 Issue 用 `Refs #n`。
-4. 对照已有用户授权处理 push 和创建/更新 PR；草稿可以先准备供审阅。评论/外部消息不是 PR 交付自动授予的权限。
-5. 新提交后更新证据及受影响审查范围。状态不足时保持 draft；只把已实际发生的结果写为完成。
+1. Inspect your diff, Git status, and staged changes; stage explicit task paths only. Preserve others' changes, backups, and recovery directories.
+2. Titles describe observable changes using the repository's `type(scope): change` style. Fill the template and link real tasks/cards; without an Issue, state the conversation scope rather than invent a number.
+3. State base/dependency PRs, contract impact and actual confirmation, full/partial delivery, verification HEAD/base, environment, and results. Keep missing deployment/member acceptance visible; use `Refs #n` when an Issue exists.
+4. Follow existing user authorization for push and PR creation/update; drafts can be prepared for review. PR delivery does not automatically authorize comments or external messages.
+5. Update evidence and affected review scope after new commits. Remain draft when readiness is insufficient; mark only actual results complete.
 
-交付：提交/分支/HEAD/base、PR 链接或可审阅草稿、检查状态和待验收事项。本 skill 不替用户批准规则提案或自动合并。
+Deliver: commit/branch/HEAD/base, PR link or reviewable draft, checks, and pending acceptance. This skill does not approve rule proposals for the user or authorize automatic merging.

@@ -1,38 +1,38 @@
-name: SERMS 设计 / 规则决定
-description: 对已有规定的冲突给出具体方案，等待人类决定。
+name: SERMS Design / Rule Decision
+description: Present concrete options for conflicts with existing rules and await a human decision.
 title: "[design] "
 body:
   - type: textarea
     id: conflict
     attributes:
-      label: 问题与双方规定来源
-      description: 引用文件 / 合同位置、当前行为和冲突影响；哪些独立工作可继续。
+      label: Problem and both rule sources
+      description: File / contract locations, current behavior, conflict impact, and independent work that can continue.
     validations:
       required: true
   - type: textarea
     id: alternatives
     attributes:
-      label: 方案、取舍与明确修改范围
-      description: 每个选项的影响、需要修改的文件、排除项和兼容策略。
+      label: Options, tradeoffs, and explicit scope
+      description: Impact, files to change, exclusions, and compatibility strategy for each option.
     validations:
       required: true
   - type: input
     id: stakeholders
     attributes:
-      label: 人类主负责人和受影响负责人
+      label: Primary human owner and affected owners
     validations:
       required: true
   - type: textarea
     id: verification
     attributes:
-      label: 验收、风险与恢复
-      description: 决定实施后如何验证；前置依赖、数据或生产影响及恢复办法。
+      label: Acceptance, risks, and recovery
+      description: Verification after implementing the decision; dependencies, data or production impact, and recovery.
     validations:
       required: true
   - type: textarea
     id: decision
     attributes:
-      label: 决定状态与确认范围
-      description: 未确认写待确认；实际人类决定记录其范围与版本，agent 建议不算批准。
+      label: Decision status and confirmation scope
+      description: Mark unconfirmed decisions pending; record scope/version of actual human decisions. Agent suggestions are not approval.
     validations:
       required: true

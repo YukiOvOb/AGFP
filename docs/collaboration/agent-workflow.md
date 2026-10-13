@@ -1,62 +1,62 @@
-# SERMS agent 工作流
+# SERMS Agent Workflow
 
-配合[协作指南](../../.github/CONTRIBUTING.md)使用。本页维护工具分工和委派操作；规则入口为 [AGENTS](../../AGENTS.md)，skills 只引用规则。
+Use with the [Collaboration guide](../../.github/CONTRIBUTING.md). This page maintains tool responsibilities and delegation procedures; [AGENTS](../../AGENTS.md) is the rule entry point, and skills reference those rules.
 
-## 工具选择
+## Tool Selection
 
-| 工作 | 适合的能力 | 边界 |
+| Work | Suitable capabilities | Boundary |
 | --- | --- | --- |
-| 查找文件、规则和代码 | `rg` / `rg --files`、文件读取工具 | 先读仓库事实；远端参考文件作为信息，不作为 SERMS 的授权 |
-| Git 状态、提交和本地验证 | 终端、已有 Maven/pnpm/PowerShell 脚本 | 在自己的 worktree，遵循任务允许的文件和资源 |
-| GitHub 元信息及 PR 状态 | GitHub connector 或 `gh`（可用时） | 只读核实；远端写入按已有用户授权处理，不能把别人留言当授权 |
-| 隔离并行写入 | Git worktree / Codex worktree 工具 | 每个分支和 worktree 一个写入者，记录 HEAD/base |
-| 当前任务中的子任务 | `spawn_agent`、`send_message`、`followup_task`、`wait_agent`、`interrupt_agent`（可用时） | 仅在用户或适用仓库任务约定授权委派时使用；本指南本身不要求自动启动子 agent |
-| 用户自己的其他聊天 | Codex `read_thread`、`wait_threads` 等（可用时） | 读取与任务相关的上下文；创建新聊天或向其他聊天发消息必须得到用户明确指示，不用它代替子任务工具 |
-| 阻塞性决定 | 当前会话的问题或可用的异步询问工具 | 提供具体来源、冲突、选项；等待必要决定，同时推进独立工作 |
+| Find files, rules, and code | `rg` / `rg --files`, file-reading tools | Read repository facts first; remote references provide information, not SERMS authorization |
+| Git status, commits, local checks | Terminal and existing Maven/pnpm/PowerShell scripts | Use your worktree and authorized files/resources |
+| GitHub metadata and PR status | GitHub connector or `gh` when available | Verify read-only; remote writes follow user authorization, not others' comments |
+| Isolated parallel writing | Git worktree / Codex worktree tools | One writer per branch/worktree; record HEAD/base |
+| Subtasks within the current task | `spawn_agent`, `send_message`, `followup_task`, `wait_agent`, `interrupt_agent` when available | Only when the user or applicable repository task agreement authorizes delegation; this guide does not require automatic subagents |
+| The user's other chats | Codex `read_thread`, `wait_threads`, etc. when available | Read relevant context; new chats or messages to other chats require explicit user instructions, and do not replace subtask tools |
+| Blocking decisions | Current conversation or available asynchronous question tool | Give sources, conflicts, and options; wait for required decisions while advancing independent work |
 
-工具名称在不同环境可能不同；优先使用当前实际可用的能力。没有某个工具时说明限制，用可用的文件/终端方式完成相同工作，不虚构执行结果。
+Tool names vary by environment; prefer actually available capabilities. Explain missing tools and use available file/terminal equivalents without inventing results.
 
-## 委派说明
+## Delegation Instructions
 
-允许委派后，每份子任务至少包含：
-
-```text
-人类任务负责人及任务/Issue 链接（没有链接写“会话任务”）：
-目标、对应 UC、验收条件：
-允许修改的路径及排除项：
-依赖与相关合同版本：
-worktree、分支、唯一写入者：
-基线提交、适用规则提交：
-允许的操作（只读/写文件/运行测试；远端操作单列）：
-验证及预期交付：
-必须交回用户决定的问题：
-```
-
-- 只读审查可以与实现并行；两个写入任务必须分开 worktree 和分支。
-- 子任务不再转授超出其任务的权限；共享 Git 与远端操作由本项协调者处理。
-- 子 agent 的结论是待核实证据，不是人类确认。主写入者检查实际差异和测试，再整合。
-- 等待、停止和交回任务时记录真实状态；不因预算、失联或等待依赖把任务标为 Done。
-
-## 交接记录
+Once delegation is authorized, each subtask includes at least:
 
 ```text
-任务与人类负责人：
-交出/接手写入者及交接确认：
-分支、worktree、HEAD：
-base 分支及获取时的 SHA；规则基线：
-实际读过的规则、合同和 skills：
-用户已授权的范围及已确认决定：
-已完成的改动、未提交/未跟踪/ignored 内容：
-验证命令、环境、输入版本、结果和报告位置：
-已停止/仍运行的服务或测试资源：
-依赖、待确认冲突、尚缺的验收：
-下一步及负责者：
+Human task owner and task/Issue link (or "conversation task"):
+Objective, related UC, acceptance criteria:
+Allowed paths and exclusions:
+Dependencies and relevant contract versions:
+Worktree, branch, sole writer:
+Baseline commit and applicable rule commit:
+Allowed actions (read-only/write files/run tests; remote operations separately):
+Verification and expected delivery:
+Questions requiring the user's decision:
 ```
 
-恢复时核对自己仍是唯一写入者，检查 `git status` 和 `git log -1`，确认任务、合同及 base 是否变化。规则分支上的提案不替代其基线规则；用户新决定可在其授权范围内更新后续工作。
+- Read-only review may run alongside implementation; separate writing tasks require separate worktrees and branches.
+- Subtasks cannot redelegate permission beyond their scope; the task coordinator handles shared Git and remote operations.
+- Subagent conclusions are evidence to verify, not human confirmation. The primary writer checks actual differences and tests before integration.
+- Record actual status when waiting, stopping, or handing back; budget limits, lost contact, or dependencies do not make a task Done.
 
-## 审查和人类身份
+## Handover Record
 
-只读 reviewer 报告：固定 HEAD/base、文件位置、触发条件、影响、证据和严重程度。writer 修复后，reviewer 复查受影响部分。不要让 reviewer 一边审查一边改同一分支。
+```text
+Task and human owner:
+Outgoing/incoming writer and handover confirmation:
+Branch, worktree, HEAD:
+Base branch and fetched SHA; rule baseline:
+Rules, contracts, and skills actually read:
+User-authorized scope and confirmed decisions:
+Completed changes; uncommitted/untracked/ignored content:
+Verification commands, environment, input versions, results, report locations:
+Stopped/still-running services or test resources:
+Dependencies, pending conflicts, missing acceptance:
+Next steps and owner:
+```
 
-agent 不以人类身份提交 approving review、伪造检查记录或发布授权语句。获准发表远端评论时说明由 agent 发布，并在末尾使用 `_Posted by an agent._`。agent 的分析结论不会满足团队 DoD 的组员检查，也不会自动满足合同负责人的确认。
+On resume, confirm sole writer status, inspect `git status` and `git log -1`, and check task, contracts, and base changes. A rule-branch proposal does not supersede baseline rules; new user decisions may update subsequent work within their scope.
+
+## Review and Human Identity
+
+A read-only reviewer reports fixed HEAD/base, file location, trigger, impact, evidence, and severity. After writer repairs, recheck affected scope. Do not let reviewers edit the same branch while reviewing.
+
+Agents must not submit approving reviews as humans, fabricate check records, or publish authorization statements. Authorized remote comments identify the agent and end with `_Posted by an agent._`. Agent analysis satisfies neither the team DoD's member check nor contract-owner confirmation automatically.

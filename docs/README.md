@@ -1,40 +1,40 @@
-# SERMS 文档索引
+# SERMS Documentation Index
 
-这里提供导航，不取代已有规范；历史交付、快照和证据保持原位置。
+This index provides navigation without replacing existing standards; historical deliveries, snapshots, and evidence retain their locations.
 
-| 需要了解的内容 | 入口 |
+| Topic | Entry point |
 | --- | --- |
-| 如何参与项目、分支、PR、交接 | [协作指南](../.github/CONTRIBUTING.md) |
-| agent 的最小启动入口和 skills | [AGENTS](../AGENTS.md) |
-| 技术选型、业务分层、测试台、对齐目标 | [tech-stack](tech-stack.md) |
-| 成员用例分工、公共职责差异 | [ownership](collaboration/ownership.md) |
-| agent 工具、单写入者、委派和恢复 | [agent-workflow](collaboration/agent-workflow.md) |
-| 冲突、参考模式与用户决定 | [decisions](collaboration/decisions.md) |
-| 命令、实际 CI 和证据格式 | [testing](testing.md) |
-| 接口合同 | [contracts](contracts/README.md) |
-| Backlog、Sprint、任务状态和报告证据 | [agile](agile/README.md) |
-| 设计图源文件 | [diagrams](diagrams/) |
-| 实际截图及验收证据 | [evidence](evidence/) |
-| 已记录的架构决定 | [ADR](adr/) |
-| 平台与 React 整合 | [platform-rest-react](platform-rest-react.md) |
-| UC01 | [搜索和预约](uc01-search-and-reserve.md) |
-| UC02 | [审批实现](uc02-approval-implementation.md) |
-| 数据基础及历史交付 | [database](../database/README.md)、[对齐记录](serms-database-alignment.md) |
-| 通知适配与对接 | [integration/notifications](../integration/notifications/README.md)、[对齐记录](notification-interface-alignment.md) |
+| Participation, branches, PRs, handover | [Collaboration guide](../.github/CONTRIBUTING.md) |
+| Agent startup and skills | [AGENTS](../AGENTS.md) |
+| Technology, layering, test benches, alignment targets | [Technology stack](tech-stack.md) |
+| Member use cases and shared-responsibility differences | [Ownership](collaboration/ownership.md) |
+| Tools, sole writers, delegation, resume | [Agent workflow](collaboration/agent-workflow.md) |
+| Conflicts, reference patterns, user decisions | [Decisions](collaboration/decisions.md) |
+| Commands, actual CI, evidence formats | [Testing](testing.md) |
+| Interface contracts | [Contracts](contracts/README.md) |
+| Backlog, Sprints, task status, report evidence | [Agile](agile/README.md) |
+| Diagram source files | [Diagrams](diagrams/) |
+| Actual screenshots/acceptance evidence | [Evidence](evidence/) |
+| Recorded architectural decisions | [ADR](adr/) |
+| Platform/React integration | [Platform REST/React](platform-rest-react.md) |
+| UC01 | [Search and reservation](uc01-search-and-reserve.md) |
+| UC02 | [Approval implementation](uc02-approval-implementation.md) |
+| Data foundation/historical delivery | [Database](../database/README.md), [Alignment](serms-database-alignment.md) |
+| Notification adaptation/integration | [integration/notifications](../integration/notifications/README.md), [Alignment](notification-interface-alignment.md) |
 
-## 项目结构
+## Project Structure
 
-| 路径 | 职责和本次处理 |
+| Path | Responsibility and treatment in this work |
 | --- | --- |
-| `app/` | 单个 Spring Boot 应用；继续按 `sg.edu.nus.serms.<业务模块>.{api,service,domain,repository}` 组织 |
-| `frontend/` | 单个 React 应用；`src/features/` 对应业务模块，复用 `app/`、`api/`、`components/`、`lib/` |
-| `database/` | 已有数据基础与迁移测试；保留，整合另开任务 |
-| `integration/notifications/` | 已有 PostgreSQL 适配模块；保留，整合另开任务 |
-| `web/`、根目录 Docker/Compose | 已有部署入口；保留，具体运行现状与三容器目标区分记录 |
-| `scripts/` | 保留现有测试、部署脚本；新增协作文档检查入口 |
-| `docs/collaboration/` | 新增协作模式、分工来源、agent 流程与决策记录 |
-| `.agents/skills/` | 新增 SERMS 任务操作指南；按需读取，不重复定义规则 |
-| `.github/` | 保留全部已有 workflow；新增协作指南、Issue/PR 模板和文档检查 |
-| `.claude/CLAUDE.md` | Claude Code 的入口转发到根 AGENTS，避免维护第二套规则 |
+| `app/` | One Spring Boot application; retain `sg.edu.nus.serms.<business-module>.{api,service,domain,repository}` |
+| `frontend/` | One React application; `src/features/` corresponds to business modules, reusing `app/`, `api/`, `components/`, `lib/` |
+| `database/` | Existing data foundation/migration tests; retained, integration separately scoped |
+| `integration/notifications/` | Existing PostgreSQL adapter; retained, integration separately scoped |
+| `web/`, root Docker/Compose | Existing deployment entry; distinguish current runtime and three-container target |
+| `scripts/` | Existing test/deployment scripts retained; collaboration check entry added |
+| `docs/collaboration/` | Added practices, ownership sources, agent workflow, decisions |
+| `.agents/skills/` | Added SERMS operating guides; read as needed without duplicating rules |
+| `.github/` | Existing workflows retained; collaboration guide, Issue/PR templates, document checks added |
+| `.claude/CLAUDE.md` | Claude Code forwards to root AGENTS, avoiding duplicate rules |
 
-既有文档可能记录较早分支、数据库版本或未合并状态。阅读时先核对其日期与提交；不能仅凭旧快照宣布当前功能已验收，也不能为更新导航而删除历史证据。
+Documents may describe earlier branches, database versions, or unmerged states. Check dates/commits before reading them as current acceptance; never delete historical evidence just to update navigation.

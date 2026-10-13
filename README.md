@@ -1,134 +1,134 @@
 # Shared Equipment Reservation and Maintenance System (SERMS)
 
-共享设备预约与维护系统 · SWE5006 Team 07
+Shared Equipment Reservation and Maintenance System · SWE5006 Team 07
 
-项目报告首次提及时使用完整名称 **Shared Equipment Reservation and Maintenance System (SERMS)**，后续正文及日常沟通统一使用简称 **SERMS**。仓库名称统一为 `shared-equipment-reservation-and-maintenance-system`。
+Use the full name **Shared Equipment Reservation and Maintenance System (SERMS)** on first mention in the project report, then use **SERMS** throughout the remaining text and everyday communication. The repository name is `shared-equipment-reservation-and-maintenance-system`.
 
-## 协作与 agent 入口
+## Collaboration and Agent Entry Points
 
-- 团队参与方式、任务依赖、分支和交接：[协作指南](.github/CONTRIBUTING.md)。
-- Coding agent 启动与按任务读取的 skills：[AGENTS.md](AGENTS.md)。
-- 分工来源、工具边界及已确认/待确认决定：[责任边界](docs/collaboration/ownership.md)、[agent 工作流](docs/collaboration/agent-workflow.md)、[决策记录](docs/collaboration/decisions.md)。
-- 文档定位、接口合同及验证证据：[文档索引](docs/README.md)、[合同索引](docs/contracts/README.md)、[testing](docs/testing.md)。
+- Team participation, task dependencies, branches, and handover: [Collaboration guide](.github/CONTRIBUTING.md).
+- Coding agent startup and task-specific skills: [AGENTS.md](AGENTS.md).
+- Ownership sources, tool boundaries, and confirmed/pending decisions: [Ownership boundaries](docs/collaboration/ownership.md), [Agent workflow](docs/collaboration/agent-workflow.md), [Decision record](docs/collaboration/decisions.md).
+- Documentation, interface contracts, and verification evidence: [Documentation index](docs/README.md), [Contract index](docs/contracts/README.md), [Testing](docs/testing.md).
 
-这些入口补充协作方法；技术栈、五人用例分工、已有合同和 Write 协作者自行合并制度继续沿用。
+These entry points supplement collaboration practices; the technology stack, five-member use-case ownership, existing contracts, and Write collaborators' right to merge their own PRs remain in effect.
 
-## 技术栈
+## Technology Stack
 
-前后端分离：React 单页应用 + Spring Boot REST API（单体，内部按业务模块划分）+ PostgreSQL 18，用 Docker Compose 运行，GitHub Actions 负责从编译到部署后验证的整条流水线。每项技术对应哪条需求、目前是否已落地、与 Proposal 的差异，见 [docs/tech-stack.md](docs/tech-stack.md)。
+The frontend and backend are separate: a React single-page application, a Spring Boot REST API organized as a modular monolith, and PostgreSQL 18. Docker Compose runs the services, and GitHub Actions handles the pipeline from compilation through post-deployment verification. See [docs/tech-stack.md](docs/tech-stack.md) for requirement mappings, implementation status, and differences from the Project Proposal.
 
-### 前端（`frontend/`）
+### Frontend (`frontend/`)
 
-| 方面 | 技术 |
+| Area | Technology |
 | --- | --- |
-| 语言 | TypeScript 5（strict 模式） |
-| 框架 | React 19 |
-| 构建 / 开发服务器 | Vite 7 |
-| 路由 | React Router 7 |
-| 请求后端数据与缓存 | TanStack Query 5 |
-| 调用后端接口 | openapi-typescript + openapi-fetch（根据后端接口文档自动生成类型） |
-| 表单与校验 | React Hook Form + Zod |
-| UI 组件 / 样式 | shadcn/ui + Tailwind CSS 4 |
-| 表格 | TanStack Table 8 |
-| 图表 | Recharts 3 |
-| 日期时间 | date-fns + date-fns-tz（按新加坡时间显示） |
-| 包管理 / 运行时 | pnpm · Node.js 24 LTS |
-| 代码规范 | ESLint + Prettier |
-| 测试 | Vitest · React Testing Library · MSW（模拟接口）· Playwright（端到端） |
+| Language | TypeScript 5 (strict mode) |
+| Framework | React 19 |
+| Build / development server | Vite 7 |
+| Routing | React Router 7 |
+| Server data fetching and caching | TanStack Query 5 |
+| API client | openapi-typescript + openapi-fetch (types generated from the backend API specification) |
+| Forms and validation | React Hook Form + Zod |
+| UI components / styling | shadcn/ui + Tailwind CSS 4 |
+| Tables | TanStack Table 8 |
+| Charts | Recharts 3 |
+| Date and time | date-fns + date-fns-tz (displayed in Singapore time) |
+| Package manager / runtime | pnpm · Node.js 24 LTS |
+| Code style | ESLint + Prettier |
+| Testing | Vitest · React Testing Library · MSW (API mocks) · Playwright (end-to-end) |
 
-### 后端（`app/`）
+### Backend (`app/`)
 
-| 方面 | 技术 |
+| Area | Technology |
 | --- | --- |
-| 语言 | Java 17 |
-| 框架 | Spring Boot 3.5（按业务模块划分的单体应用） |
-| Web 接口 | Spring MVC，`/api/v1` 下的 JSON 接口 + Jakarta Bean Validation |
-| 接口文档 | springdoc-openapi（OpenAPI 3） |
-| 错误格式 | RFC 9457 Problem Details |
-| 安全 | Spring Security：Session Cookie 登录、BCrypt 密码哈希、`@PreAuthorize` 方法级权限、CSRF（Cookie + 请求头） |
-| 数据访问 | Spring Data JPA / Hibernate；需要加锁或复杂查询的地方用 JdbcTemplate 手写 SQL |
-| 定时任务 | Spring `@Scheduled` |
-| 运维端点 | Spring Boot Actuator（只开放 health、info） |
-| 构建 | Maven 3.9（`./mvnw`） |
-| 测试 | JUnit 5 · Mockito · AssertJ · Spring Boot Test · Testcontainers · ArchUnit（分层规则检查） |
-| 覆盖率 | JaCoCo（service + domain ≥ 70%） |
-| 代码规范 / 静态分析 | Spotless（google-java-format）· SpotBugs + FindSecBugs |
+| Language | Java 17 |
+| Framework | Spring Boot 3.5 (modular monolith) |
+| Web API | Spring MVC JSON endpoints under `/api/v1` + Jakarta Bean Validation |
+| API documentation | springdoc-openapi (OpenAPI 3) |
+| Error format | RFC 9457 Problem Details |
+| Security | Spring Security: session cookie authentication, BCrypt password hashing, `@PreAuthorize` method authorization, and CSRF protection (cookie + request header) |
+| Data access | Spring Data JPA / Hibernate; handwritten SQL through JdbcTemplate for locking or complex queries |
+| Scheduled tasks | Spring `@Scheduled` |
+| Operational endpoints | Spring Boot Actuator (only health and info exposed) |
+| Build | Maven 3.9 (`./mvnw`) |
+| Testing | JUnit 5 · Mockito · AssertJ · Spring Boot Test · Testcontainers · ArchUnit (layering checks) |
+| Coverage | JaCoCo (service + domain ≥ 70%) |
+| Code style / static analysis | Spotless (google-java-format) · SpotBugs + FindSecBugs |
 
-后端代码按业务模块组织在 `sg.edu.nus.serms` 下：`identity`、`equipment`、`reservation`、`approval`、`loan`、`maintenance`、`notification`、`report`、`audit`、`shared`；前端 `frontend/src/features/` 下的模块和后端一一对应。
+Backend code is organized into business modules under `sg.edu.nus.serms`: `identity`, `equipment`, `reservation`, `approval`, `loan`, `maintenance`, `notification`, `report`, `audit`, and `shared`. Modules under `frontend/src/features/` correspond to the backend modules.
 
-### 数据库
+### Database
 
-| 方面 | 技术 |
+| Area | Technology |
 | --- | --- |
-| 数据库 | PostgreSQL 18（本地、CI、服务器统一用 `postgres:18-alpine`） |
-| 表结构迁移 | Flyway |
-| 预约防重叠 | PostgreSQL 排他约束（`EXCLUDE USING gist` + `tstzrange`） |
-| 备份 | `pg_dump` 每日备份，保留 7 天 |
+| Database | PostgreSQL 18 (`postgres:18-alpine` across local development, CI, and the server) |
+| Schema migrations | Flyway |
+| Reservation overlap prevention | PostgreSQL exclusion constraints (`EXCLUDE USING gist` + `tstzrange`) |
+| Backups | Daily `pg_dump` backups retained for 7 days |
 
-### DevSecOps 与部署
+### DevSecOps and Deployment
 
-| 方面 | 技术 |
+| Area | Technology |
 | --- | --- |
 | CI/CD | GitHub Actions |
-| 密钥扫描 | gitleaks |
-| 漏洞扫描 | Trivy（文件系统 + Docker 镜像） |
-| 依赖检查 | Dependency Review（PR 阶段）+ Dependabot（每周自动升级） |
-| 代码安全扫描 | CodeQL（Java + TypeScript） |
-| 部署后安全扫描 | OWASP ZAP Baseline |
-| 压力测试 | k6（50 并发） |
-| 容器 | Docker（多阶段构建，非 root 运行）+ Docker Compose：`web` + `app` + `db` 三个容器 |
-| 镜像仓库 | GitHub Container Registry（GHCR） |
-| 服务器 | 香港服务器 + nginx + Let's Encrypt，https://serms.midas.cyou |
+| Secret scanning | gitleaks |
+| Vulnerability scanning | Trivy (filesystem + Docker images) |
+| Dependency checks | Dependency Review (PR stage) + Dependabot (weekly automated upgrades) |
+| Code security scanning | CodeQL (Java + TypeScript) |
+| Post-deployment security scanning | OWASP ZAP Baseline |
+| Load testing | k6 (50 concurrent users) |
+| Containers | Docker (multi-stage builds, non-root execution) + Docker Compose: three containers, `web` + `app` + `db` |
+| Image registry | GitHub Container Registry (GHCR) |
+| Server | Hong Kong server + nginx + Let's Encrypt, https://serms.midas.cyou |
 
-### 可选功能（时间允许再做）
+### Optional Features (If Time Permits)
 
-| 功能 | 技术 |
+| Feature | Technology |
 | --- | --- |
-| 邮件通知 | Spring Mail；开发时用 Mailpit 接收测试邮件 |
-| 二维码 | 前端用 `qrcode` 生成，`@zxing/browser` 扫码 |
+| Email notifications | Spring Mail; Mailpit receives test emails during development |
+| QR codes | Generated with `qrcode` and scanned with `@zxing/browser` in the frontend |
 
-### 协作
+### Collaboration
 
-| 方面 | 技术 |
+| Area | Technology |
 | --- | --- |
-| 代码托管 | Git + GitHub |
-| 项目管理 | GitHub Projects |
-| 设计图 | PlantUML / Mermaid（源文件放在 `docs/diagrams/`），draw.io 作为补充 |
+| Source control | Git + GitHub |
+| Project management | GitHub Projects |
+| Design diagrams | PlantUML / Mermaid (source files in `docs/diagrams/`), supplemented by draw.io |
 
-> 目前已写进 main 的有：Java 17、Spring Boot 3.5、Spring Data JPA、Flyway、Maven、JUnit / Mockito、JaCoCo、GitHub Actions、gitleaks、Trivy、Dependency Review、Docker Compose 和服务器部署。PostgreSQL 表结构在周凡浩的分支上；React 前端和其余流水线环节还没落地。逐项状态见 [docs/tech-stack.md 第 1 节](docs/tech-stack.md#1-全部技术栈)。
+> Currently implemented on main: Java 17, Spring Boot 3.5, Spring Data JPA, Flyway, Maven, JUnit / Mockito, JaCoCo, GitHub Actions, gitleaks, Trivy, Dependency Review, Docker Compose, and server deployment. The PostgreSQL schema is on Zhou Fanhao's branch; the React frontend and remaining pipeline stages are still pending. See [Section 1 of docs/tech-stack.md](docs/tech-stack.md#1-complete-technology-stack) for individual status entries.
 
-## 测试：每人写好自己的 Test Bench
+## Testing: Each Member Owns Their Test Bench
 
-CI 只能验证已经写好的测试。**每位成员必须为自己负责的用例写好完整的测试台，并和功能代码放在同一个 PR 里提交**，这样每个 PR 在 CI 上都能自己验证自己。
+CI can only run tests that have been written. **Each member must provide a complete test bench for their use cases and submit it in the same PR as the feature code**, so every PR can verify its behavior in CI.
 
-- 位置：后端 `app/src/test/java/sg/edu/nus/serms/<模块>/`；前端 `frontend/src/features/<模块>/**/*.test.tsx`
-- 后端：单元测试（领域规则）+ 集成测试（真实 PostgreSQL 18，Testcontainers）+ API / 权限测试（MockMvc）。
-- 前端：组件测试（Vitest + React Testing Library，接口用 MSW 模拟）+ 至少一条自己用例主流程的 Playwright 端到端测试。
-- 覆盖用例的正常流程和所有主要异常流程。
-- 要求：装好 Docker 和 Node 后，`./mvnw verify` 和 `pnpm test` 就能跑完；每个测试自己准备数据，不依赖执行顺序和其他测试。
-- CI：每个 PR 跑全部前后端测试，任何测试失败或后端 service/domain 覆盖率低于 70% 都不能合并；不允许靠跳过或删除测试让 CI 变绿。
+- Locations: backend `app/src/test/java/sg/edu/nus/serms/<module>/`; frontend `frontend/src/features/<module>/**/*.test.tsx`.
+- Backend: unit tests (domain rules) + integration tests (real PostgreSQL 18 with Testcontainers) + API / authorization tests (MockMvc).
+- Frontend: component tests (Vitest + React Testing Library with MSW API mocks) + at least one Playwright end-to-end test for the main flow of the member's use case.
+- Cover the normal flow and all major exception flows.
+- Requirements: after installing Docker and Node, `./mvnw verify` and `pnpm test` must run the tests; each test prepares its own data and is independent of execution order and other tests.
+- CI: every PR runs all frontend and backend tests. Any failing test or backend service/domain coverage below 70% blocks merging; skipping or deleting tests to make CI pass is prohibited.
 
-每位成员的测试范围清单见 [docs/tech-stack.md 第 5 节](docs/tech-stack.md#5-测试台test-bench每人负责自己的)。
+See [Section 5 of docs/tech-stack.md](docs/tech-stack.md#5-test-benches-each-member-owns-their-tests) for each member's test scope.
 
-## 协作与发布
+## Collaboration and Releases
 
-- 模块之间的接口合同放在 [`docs/contracts/`](docs/contracts/)，以仓库版本为准；修改合同需要提 PR，并由受影响模块的负责人确认。目前已有：[登录与审批（UC02）](docs/contracts/auth-and-approval.md)、[设备搜索与预约（UC01）](docs/contracts/equipment-and-reservation.md)。
-- 所有改动走 PR。`main` 受分支保护，必须通过 CI 检查（gitleaks、Trivy、依赖审查）才能合并。
-- 所有有 Write 权限的协作者都可以自行合并自己的 PR，不需要他人审批，只要求 CI 全绿。
-- 线上地址：https://serms.midas.cyou （香港服务器，Let's Encrypt 证书自动续期）
-- 合并进 `main` 后自动部署到香港服务器 `/opt/agfp`（见 `.github/workflows/deploy.yml`、`scripts/deploy.sh`）。
-- 部署走 Docker Compose：仓库根目录需有 `compose.yaml` + `Dockerfile`，容器监听的端口映射到宿主机 `127.0.0.1:8789`，由 nginx 反代对外。
-- 机密只放服务器 `/opt/agfp/.env`（模板见 `.env.example`），不进 git。
+- Cross-module interface contracts live in [`docs/contracts/`](docs/contracts/); the repository version is authoritative. Changes require a PR and confirmation from the owners of affected modules. Available contracts: [Authentication and Approval (UC02)](docs/contracts/auth-and-approval.md), [Equipment Search and Reservation (UC01)](docs/contracts/equipment-and-reservation.md).
+- All changes go through PRs. `main` is protected, and CI checks (gitleaks, Trivy, and Dependency Review) must pass before merging.
+- Collaborators with Write permission may merge their own PRs without another reviewer's approval, provided all CI checks pass.
+- Live site: https://serms.midas.cyou (Hong Kong server, automatically renewed Let's Encrypt certificate).
+- Merging into `main` automatically deploys to `/opt/agfp` on the Hong Kong server (see `.github/workflows/deploy.yml` and `scripts/deploy.sh`).
+- Deployment uses Docker Compose: `compose.yaml` and `Dockerfile` must exist at the repository root. The container port maps to the host's `127.0.0.1:8789`, with nginx providing the public reverse proxy.
+- Secrets are stored only in `/opt/agfp/.env` on the server (template: `.env.example`) and must never be committed to Git.
 
 ## SERMS Sprint 1 application
 
-后端位于 `app/`，React 页面位于 `frontend/`。默认启动即使用 PostgreSQL 18，并加载统一 Flyway 迁移、通知适配器与 Identity 数据映射；运行步骤见 [PostgreSQL 说明](docs/serms-postgres-runtime.md)。`local` 开发配置同样使用 PostgreSQL；H2 仅存在于测试依赖与测试资源中。真实演示账号与 web/app/db 部署仍需团队整合。
+The backend lives in `app/`, and React pages live in `frontend/`. The default configuration uses PostgreSQL 18 and loads the shared Flyway migrations, notification adapter, and Identity data mapping; see the [PostgreSQL guide](docs/serms-postgres-runtime.md) for startup instructions. The `local` development configuration also uses PostgreSQL; H2 exists only in test dependencies and resources. Real demo accounts and web/app/db deployment still require team integration.
 
-## UC01 搜索和预约设备（Member 1）
+## UC01 Search and Reserve Equipment (Member 1)
 
-后端 `app/` 的 `equipment`、`reservation` 模块和前端 `frontend/src/features/{equipment,reservation}`：按名称 / 类别 / 位置 / 时间段搜索、查看占用时段、提交和取消预约、我的预约；预约规则用策略模式；按 UC02 合同提供 `ReservationApprovalService`。测试台包括在 PostgreSQL 18（Testcontainers，需要 Docker）上运行的并发冲突测试。说明见 [UC01 文档](docs/uc01-search-and-reserve.md)、[接口合同](docs/contracts/equipment-and-reservation.md)。
+Backend `equipment` and `reservation` modules in `app/`, and frontend `frontend/src/features/{equipment,reservation}`: search by name / category / location / time interval, view occupied slots, submit and cancel reservations, and view personal reservations. Reservation rules use the Strategy pattern, and `ReservationApprovalService` implements the UC02 contract. The test bench includes concurrency conflict tests on PostgreSQL 18 (Testcontainers, requiring Docker). See the [UC01 documentation](docs/uc01-search-and-reserve.md) and [interface contract](docs/contracts/equipment-and-reservation.md).
 
-需求清单、Sprint 计划、进度与风险、演示脚本和敏捷证据在 [docs/agile/](docs/agile/README.md)。
+Requirements, Sprint plans, progress and risks, demo scripts, and agile evidence are in [docs/agile/](docs/agile/README.md).
 
 ## SERMS Sprint 1 data foundation
 
@@ -141,8 +141,8 @@ Local verification: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts
 The PostgreSQL adapter for Wang Yuanmeng's notification branch is in [integration/notifications](integration/notifications/README.md), including the V003 migration, a real LoanReminderGuard and a minimal integration patch.
 Local tests: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-notification-integration.ps1`; see the [interface alignment record](docs/notification-interface-alignment.md) for results.
 
-## Zhou Fanhao 领用归还与数据库整合
+## Zhou Fanhao: Checkout, Return, and Database Integration
 
-UC03 后端、React `/loans` 页面、完整 PostgreSQL profile、V004 数据对齐及审批持久化适配已提供。入口见 [交付说明](docs/zhoufanhao-delivery.md)、[接口合同](docs/contracts/checkout-and-return.md)、[其他成员对接清单](docs/zhoufanhao-handoffs.md) 和 [验证记录](docs/zhoufanhao-validation.md)。
+UC03 backend, the React `/loans` page, the complete PostgreSQL profile, V004 data alignment, and the approval persistence adapter are provided. See the [delivery notes](docs/zhoufanhao-delivery.md), [interface contract](docs/contracts/checkout-and-return.md), [member integration checklist](docs/zhoufanhao-handoffs.md), and [verification record](docs/zhoufanhao-validation.md).
 
-完整验证：`powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-zhoufanhao.ps1`；没有 Docker 时追加 `-PostgresBin 'C:/Program Files/PostgreSQL/18/bin'`。完整业务默认使用 PostgreSQL，无需指定数据库 profile；迁移与运行步骤见 [PostgreSQL 运行说明](docs/serms-postgres-runtime.md)。
+Full verification: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-zhoufanhao.ps1`; without Docker, add `-PostgresBin 'C:/Program Files/PostgreSQL/18/bin'`. The complete application uses PostgreSQL by default without selecting a database profile; see the [PostgreSQL runtime guide](docs/serms-postgres-runtime.md) for migration and startup instructions.

@@ -1,20 +1,21 @@
-# 自动部署：push 到 main（即 PR 合并后）→ SSH 进香港服务器 → 同步代码 → docker compose 重建 → 健康检查。
+# Automatic deployment: push to main (after PR merge) → SSH to the Hong Kong server → sync code → rebuild with Docker Compose → health check.
 #
-# 与 Lumie-platform/deploy.yml 同一套思路（SSH 上机部署），差别：
-#   - Lumie 先把镜像推到阿里云 ACR 再拉；AGFP 直接在服务器上 build，少一套镜像仓库凭据。
-#   - Lumie 用 release 分支触发；AGFP 按要求 main 合并即部署。
+# Uses the same SSH deployment approach as Lumie-platform/deploy.yml, with these differences:
+#   - Lumie pushes images to Alibaba Cloud ACR before pulling them; AGFP builds on the server, avoiding extra registry credentials.
+#   - Lumie deploys from release; AGFP deploys after merges into main as required.
 #
-# 仓库 Secrets（已配置）：
-#   DEPLOY_HOST      156.226.176.180（香港机）
+# Repository secrets (already configured):
+#   DEPLOY_HOST      156.226.176.180 (Hong Kong server)
 #   DEPLOY_PORT      22000
 #   DEPLOY_USER      root
-#   DEPLOY_SSH_KEY   专用私钥，对应服务器 authorized_keys 里 github-actions-deploy@agfp
+#   DEPLOY_SSH_KEY   Dedicated private key matching github-actions-deploy@agfp in the server's authorized_keys
 #
-# 服务器侧约定（scripts/deploy.sh 实现）：
-#   代码目录 /opt/agfp，Docker Compose 启动，容器只绑 127.0.0.1:8789，
-#   由 nginx 以 https://<域名> 反代对外。域名与证书就绪前，部署照样进行，只是没有对外入口。
+# Server conventions (implemented by scripts/deploy.sh):
+#   Code lives in /opt/agfp, runs via Docker Compose, and binds only to 127.0.0.1:8789.
+#   nginx exposes it through a reverse proxy at https://<domain>. Deployment can proceed before the domain
+#   and certificate are ready, but there is no public endpoint until then.
 #
-# 注意：main 已开分支保护，只能经 PR 合并进来，CI 全绿是合并前提，本工作流在合并后触发。
+# main is protected: changes must merge through PRs with passing CI; this workflow runs after merging.
 name: Deploy
 
 on:
@@ -49,7 +50,7 @@ jobs:
             set -euo pipefail
             APP_DIR=/opt/agfp
             REPO=https://github.com/${{ github.repository }}.git
-            # 首次部署：仓库还不在服务器上，先克隆；之后只做硬同步（.env、data/ 不受影响）
+            # Clone on first deployment; subsequent deployments reset tracked code (.env and data/ are preserved).
             if [ ! -d "$APP_DIR/.git" ]; then
               git clone --branch main "$REPO" "$APP_DIR"
             fi

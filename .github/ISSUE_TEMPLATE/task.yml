@@ -1,44 +1,44 @@
-name: SERMS 开发任务
-description: 明确一项用例或公共交付的范围、负责人、依赖和验收。
+name: SERMS Development Task
+description: Define the scope, owner, dependencies, and acceptance for a use case or shared delivery.
 title: "[task] "
 body:
   - type: input
     id: owner
     attributes:
-      label: 用例 / 需求与人类主负责人
-      description: 沿用既有分工；有 GitHub 账号时填写，协作成员另列。
+      label: Use case / requirement and primary human owner
+      description: Follow existing ownership; provide a GitHub account when known and list collaborators separately.
     validations:
       required: true
   - type: textarea
     id: outcome
     attributes:
-      label: 目标与验收条件
-      description: 用户可观察的结果、正常和主要异常流程；标明合并前与部署后的验收。
+      label: Objective and acceptance criteria
+      description: Observable outcomes, normal and major exception flows; distinguish pre-merge and post-deployment acceptance.
     validations:
       required: true
   - type: textarea
     id: scope
     attributes:
-      label: 修改范围与排除项
-      description: 模块 / 路径、公共文件影响；不在本任务实施的工作。
+      label: Scope and exclusions
+      description: Modules / paths, shared-file impact, and work excluded from this task.
     validations:
       required: true
   - type: textarea
     id: dependencies
     attributes:
-      label: 依赖、合同与协作顺序
-      description: 关联卡片 / PR、接口版本、提供方、消费方、允许 mock 的范围，或明确无依赖。
+      label: Dependencies, contracts, and collaboration order
+      description: Related cards / PRs, interface versions, providers, consumers, permitted mock scope, or explicitly no dependencies.
     validations:
       required: true
   - type: textarea
     id: verification
     attributes:
-      label: Test Bench、验证与证据
-      description: 后端 / 前端 / 真实 PostgreSQL / E2E 计划；需要的环境和验收负责者。
+      label: Test bench, verification, and evidence
+      description: Backend / frontend / real PostgreSQL / E2E plan, required environment, and acceptance owners.
     validations:
       required: true
   - type: textarea
     id: risk
     attributes:
-      label: 风险、恢复与待确认事项
-      description: 涉及已有规定的冲突引用双方来源；不能把建议记录成已确认决定。
+      label: Risks, recovery, and pending decisions
+      description: Cite both sources for rule conflicts; suggestions must not be recorded as confirmed decisions.

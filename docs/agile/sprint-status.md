@@ -1,70 +1,70 @@
-# Sprint 状态与风险
+# Sprint Status and Risks
 
-由 Member 1 在每周例会后更新。每次更新保留旧快照（新的写在最上面），作为 Sprint 证据。
+Member 1 updates after weekly meetings. Preserve snapshots, newest first, as Sprint evidence.
 
 ---
 
-## 本地交付更新 2026-10-07
+## Local Delivery Update 2026-10-07
 
-数据库默认配置已收尾：普通启动及 local 开发配置使用 PostgreSQL 18，生产迁移集中在 app 的 Flyway 目录，审批默认开启；生产包已移除 MySQL/H2。完整干净构建与默认启动集成验证通过，仍等待团队 Review 和 web/app/db 部署。
+Database default configuration finalized: normal/local startup uses PostgreSQL 18, production migrations are in app's Flyway directory, approval is enabled; MySQL/H2 removed from production. Clean builds/default-runtime integration passed, pending team review and web/app/db deployment.
 
-Zhou Fanhao 的 UC03 后端、React 页面、State 状态委托、公共 PostgreSQL profile、V004 审批和版本对齐、ApprovalDecisionPort 以及测试脚本已实现。详细测试结果以 [验证记录](../zhoufanhao-validation.md) 为准。公共迁移打包与真实 Identity schema 映射已接入，原快照风险 1–3 的本地实现缺口已处理。
+Zhou Fanhao implemented UC03 backend/React pages, State delegation, shared PostgreSQL profile, V004 decision/version alignment, ApprovalDecisionPort, and test scripts. See [Verification](../zhoufanhao-validation.md). Shared migrations and real Identity schema mapping address local gaps in snapshot risks 1–3.
 
-远程仓库被封禁，本次只修改当前备份并保存本地 Git。Review、托管 CI、安全扫描、测试环境 web/app/db 部署、Smoke Test 和 Sprint Review 仍需团队完成，因此 UC03 状态保持本地实现、待 Review/Testing，不标记完整 Done。其他成员对接见 [清单](../zhoufanhao-handoffs.md)。长期职责按提供的项目计划更新，历史快照保留原貌。
+The remote repository was suspended; this work changed only the backup and saved local Git. Review, hosted CI, security, web/app/db test deployment, Smoke Test, and Sprint Review remain team work. UC03 stays locally implemented, pending Review/Testing, not full Done. See [Member checklist](../zhoufanhao-handoffs.md). Long-term duties follow the provided plan; historical snapshots are retained.
 
-## 快照：2026-10-05（Sprint 2 进行中）
+## Snapshot: 2026-10-05 (Sprint 2 in Progress)
 
-### 1. 各用例进度
+### 1. Use-case Progress
 
-| 用例 | 负责 | 后端 | 前端 | 测试台 | 位置 |
+| Use case | Owner | Backend | Frontend | Test bench | Location |
 | --- | --- | --- | --- | --- | --- |
-| UC01 搜索和预约 | Member 1 | ✅ | ✅ | ✅ 后端 69 + 前端 15 + E2E | UC01 分支（本 PR） |
-| UC02 审批 | Member 2 | 🔶 领域 + 服务，无 REST | ⬜ | 🔶 单元测试 | [Draft PR #8](https://github.com/YukiOvOb/AGFP/pull/8) |
-| UC03 领用归还 | Member 3 | ⬜（表结构和约束已在 main） | ⬜ | 🔶 数据库测试（PR #10） | main `database/` |
-| UC04 维修 | Member 4 | 🔶 领域、服务、JDBC、报表读模型 | ⬜ | 🔶 含 PostgreSQL 集成测试 | [Draft PR #9](https://github.com/YukiOvOb/AGFP/pull/9) |
-| UC05 逾期和通知 | Member 5 | 🔶 通知已在 main；REST 在分支 | 🔶 收件箱在分支 | 🔶 | main + `feature/wang-yuanmeng-platform-rest-react` |
-| 平台：登录 / 模板 / React 脚手架 | Member 2 / 5 | 🔶 | 🔶 | 🔶 | `feature/wang-yuanmeng-platform-rest-react`（未开 PR） |
+| UC01 Search/reservation | Member 1 | ✅ | ✅ | ✅ Backend 69 + frontend 15 + E2E | UC01 branch (this PR) |
+| UC02 Approval | Member 2 | 🔶 Domain/service, no REST | ⬜ | 🔶 Unit tests | [Draft PR #8](https://github.com/YukiOvOb/AGFP/pull/8) |
+| UC03 Checkout/return | Member 3 | ⬜ (schema/constraints on main) | ⬜ | 🔶 Database tests (PR #10) | main `database/` |
+| UC04 Maintenance | Member 4 | 🔶 Domain/service/JDBC/report reads | ⬜ | 🔶 PostgreSQL integration | [Draft PR #9](https://github.com/YukiOvOb/AGFP/pull/9) |
+| UC05 Overdue/notifications | Member 5 | 🔶 Notifications main; REST branch | 🔶 Inbox branch | 🔶 | main + `feature/wang-yuanmeng-platform-rest-react` |
+| Platform: authentication/templates/React | Member 2 / 5 | 🔶 | 🔶 | 🔶 | `feature/wang-yuanmeng-platform-rest-react` (no PR) |
 
-### 2. 分支依赖
+### 2. Branch Dependencies
 
 ```mermaid
 flowchart LR
-  main[main<br/>V002 · 通知基础 · CI]
-  pr8["PR #8 UC02 审批基础"]
-  plat[platform-rest-react<br/>登录 · REST · React]
-  uc01[UC01 本分支]
-  pr9["PR #9 UC04 维修"]
+  main[main<br/>V002 · Notification foundation · CI]
+  pr8["PR #8 UC02 foundation"]
+  plat[platform-rest-react<br/>Authentication · REST · React]
+  uc01[UC01 this branch]
+  pr9["PR #9 UC04 maintenance"]
   main --> pr8 --> plat --> uc01
   main --> uc01
   main --> pr9
 ```
 
-建议合并顺序：**PR #8 → platform-rest-react → UC01**。platform 分支基于较早的 main，合并最新 main 时 `README.md` 和 `.gitignore` 有两处小冲突，UC01 分支里已经解决，可直接参照；UC01 分支在最新 main 上通过全部测试。PR #9 与它们改动的业务文件不重叠，但 `app/pom.xml` 双方都改了（都加了同版本的 PostgreSQL 驱动），合并时手工保留一份。
+Suggested merge order: **PR #8 → platform-rest-react → UC01**. The platform branch's older main causes two small conflicts in `README.md` / `.gitignore`, already resolved in UC01 as a reference; UC01 passes all tests against latest main. PR #9 business files do not overlap, but both change `app/pom.xml` (same PostgreSQL driver version); retain one declaration manually.
 
-### 3. 整合风险（需要全组决定）
+### 3. Integration Risks (Team Decisions Required)
 
-| # | 问题 | 影响 | 建议 | 负责 |
+| # | Problem | Impact | Suggestion | Owner |
 | --- | --- | --- | --- | --- |
-| 1 | `app/` 的数据源仍是 H2 / MySQL，PostgreSQL 迁移在独立的 `database/` 模块 | UC01–UC04 的接口只能在测试里连真实数据库，部署后无法真正使用 | 按 tech-stack §7 把 V001、V002 移入 `app` 的 Flyway 序列，`app` 改用 PostgreSQL 18，删除 `db/mysql` | Member 3 |
-| 2 | 登录查询 `public.app_user` 和 `notification_principal` 列；V002 的表在 `serms` schema，没有该列 | 真实账号无法登录 | 统一用 `serms` schema；通知收件人直接用 `user_id` | Member 3 + Member 5 |
-| 3 | V002 审批结果是 `APPROVE` / `REJECT`，合同要求 `APPROVED` / `REJECTED`；`version` 为 `integer`，合同要求 `bigint` | UC02 写审批记录会被 `CHECK` 约束拒绝 | 新增 V003 迁移修改（V002 已合并，不能再改） | Member 3 + Member 2 |
-| 4 | `Dockerfile` / `compose.yaml` 仍只部署 welcome 静态页 | 线上看不到系统 | 改为 `web` + `app` + `db` 三个服务（tech-stack §7） | Member 5 |
-| 5 | 公共 Testcontainers 基类尚未提交 | 各模块各写一套测试基础设施（UC01 `testsupport/SermsPostgres`，UC04 `Uc04PostgresTestSupport`） | 以 `SermsPostgres` 为起点合并成一个公共基类，迁移进 `app` 后改用 Flyway | Member 4 |
-| 6 | 预约规则数值（30 分钟 / 7 天 / 90 天 / 3 个）是暂定值 | 演示和报告需要一致的数字 | Sprint 2 评审确认，只改配置 | 全组 |
-| 7 | 设备状态四种 vs 五种、维修状态五种 vs 六种（UC02 合同 §9） | 报告与实现不一致 | 按 V002 为准，并在报告中说明 | Member 3 + Member 4 |
+| 1 | `app/` uses H2/MySQL; PostgreSQL migrations in separate `database/` | UC01–UC04 connect to real DB only in tests; deployed APIs unusable | Move V001/V002 into app Flyway, use PostgreSQL 18, remove `db/mysql` (technology stack §7) | Member 3 |
+| 2 | Login queries `public.app_user` / `notification_principal`; V002 uses `serms` without column | Real login fails | Unify `serms`; recipients use `user_id` | Member 3 + Member 5 |
+| 3 | V002 APPROVE/REJECT and integer versions differ from APPROVED/REJECTED and bigint contract | UC02 decision inserts fail CHECK | Add V003 (merged V002 cannot be edited) | Member 3 + Member 2 |
+| 4 | Root Docker/Compose only deploy welcome page | Site lacks system | `web` + `app` + `db` (technology stack §7) | Member 5 |
+| 5 | Shared Testcontainers base missing | UC01 `testsupport/SermsPostgres` and UC04 `Uc04PostgresTestSupport` duplicate facilities | Consolidate from `SermsPostgres`; use Flyway after migrations into app | Member 4 |
+| 6 | 30 minutes / 7 days / 90 days / 3 reservations are provisional | Demo/report need consistent values | Sprint 2 review, configuration only | Team |
+| 7 | Equipment four/five, maintenance five/six states (UC02 §9) | Report/implementation mismatch | Use V002 and explain in report | Member 3 + Member 4 |
 
-### 4. 下一步（Sprint 2 剩余）
+### 4. Next Steps (Remaining Sprint 2)
 
-1. Member 2：PR #8 补上 REST 与审批页，使用本分支的 `ReservationApprovalService`（已按合同实现并测试）。
-2. Member 3：迁移整合（风险 1–3），开始 UC03。
-3. Member 5：platform 分支开 PR；部署改为三容器（风险 4）。
-4. Member 4：PR #9 转为正式 PR；整合公共测试基类（风险 5）。
-5. Member 1：UC01 开 PR 并请一名组员评审；风险 1 完成后在真实数据库上跑一遍演示脚本。
+1. Member 2: add REST/approval pages to PR #8 using this branch's tested `ReservationApprovalService`.
+2. Member 3: integrate migrations (risks 1–3), start UC03.
+3. Member 5: open platform PR; deploy three containers (risk 4).
+4. Member 4: mark PR #9 ready; consolidate test base (risk 5).
+5. Member 1: open UC01 PR and request member review; run real-DB demo after risk 1 is resolved.
 
-### 5. 回顾
+### 5. Retrospective
 
-会议记录在例会后补充，格式：
+Add meeting notes afterward:
 
-| 做得好的 | 需要改进的 | 行动项（负责人、截止日期） |
+| What worked | Improvements | Actions (owner, deadline) |
 | --- | --- | --- |
 | | | |
