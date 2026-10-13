@@ -2,6 +2,10 @@
 
 Shared Equipment Reservation and Maintenance System · SWE5006 Team 07
 
+## Run the Complete Local Demo
+
+The integrated React, Spring Boot and PostgreSQL 18 system can run locally before server handover. See the [local demo guide](docs/local-demo.md) for isolated startup/shutdown, six role accounts and real API smoke checks. Local acceptance and cloud publication are tracked separately in Issues #5-#10.
+
 Use the full name **Shared Equipment Reservation and Maintenance System (SERMS)** on first mention in the project report, then use **SERMS** throughout the remaining text and everyday communication. The repository name is `shared-equipment-reservation-and-maintenance-system`.
 
 ## Collaboration and Agent Entry Points
