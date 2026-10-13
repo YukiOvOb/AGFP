@@ -1,19 +1,27 @@
 name: Release preparation
 on:
   pull_request:
+    types: [opened, synchronize, reopened]
   push:
     branches: [main]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
   release-config:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # actions/setup-node v4
         with:
           node-version: '24'
-      - run: node --test scripts/verify-release.test.mjs
+      - run: node --test scripts/verify-release.test.mjs scripts/ci-scope.test.mjs
       - run: bash -n scripts/deploy.sh
       - run: bash scripts/test-deploy.sh
       - name: Validate production Compose configuration
@@ -25,26 +33,39 @@ jobs:
           SERMS_DB_VOLUME: ci-only-external-volume
   release-images:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Determine application scope
+        id: scope
+        run: node scripts/ci-scope.mjs
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # actions/setup-node v4
+        if: steps.scope.outputs.run == 'true'
         with:
           node-version: '24'
       - run: docker build --target app -t serms-app:ci .
-      - uses: aquasecurity/trivy-action@v0.36.0
+        if: steps.scope.outputs.run == 'true'
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # aquasecurity/trivy-action v0.36.0
+        if: steps.scope.outputs.run == 'true'
         with:
           image-ref: serms-app:ci
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: '1'
       - run: docker build --target web -t serms-web:ci .
-      - uses: aquasecurity/trivy-action@v0.36.0
+        if: steps.scope.outputs.run == 'true'
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # aquasecurity/trivy-action v0.36.0
+        if: steps.scope.outputs.run == 'true'
         with:
           image-ref: serms-web:ci
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: '1'
       - name: Run real production-profile Compose smoke in isolated CI storage
+        if: steps.scope.outputs.run == 'true'
         env:
           SERMS_DB_NAME: serms_ci
           SERMS_DB_USER: serms_ci

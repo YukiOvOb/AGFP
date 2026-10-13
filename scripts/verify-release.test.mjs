@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {validateContext, evaluateChecks, requiredChecks} from './verify-release.mjs';
+import {validateContext, evaluateChecks, requiredChecks, verifyRelease} from './verify-release.mjs';
 
 const sha = 'a'.repeat(40);
 const context = {ref:'refs/heads/main', event:'push', sha, ready:'true'};
@@ -35,4 +35,44 @@ test('missing and running checks block release; failure and skipped are not succ
 test('latest rerun supersedes an earlier successful check', () => {
   const checks = successful(); checks.push({...checks[0],id:1000,conclusion:'failure'});
   assert.equal(evaluateChecks(sha,sha,checks)[0].state,'failed');
+});
+
+const env = {GITHUB_REF:context.ref,GITHUB_EVENT_NAME:context.event,GITHUB_SHA:sha,
+  SERMS_PRODUCTION_READY:'true',GITHUB_REPOSITORY:'example/serms',GITHUB_TOKEN:'fixture-only'};
+const response = data => ({ok:true,status:200,json:async()=>data});
+test('release verification uses two read requests when current-main checks pass', async () => {
+  const routes = [];
+  await verifyRelease(env,{request:async(url,options)=>{
+    assert.equal(options.method,undefined); // Fetch default GET; never dispatch or mutate.
+    routes.push(url);
+    return response(url.endsWith('git/ref/heads/main')?{object:{sha}}:{check_runs:successful()});
+  },wait:async()=>assert.fail('completed checks must not poll'),log:()=>{}});
+  assert.equal(routes.length,2);
+});
+test('missing checks exhaust a finite budget and wait one minute between polls', async () => {
+  let calls=0, waits=0;
+  await assert.rejects(verifyRelease(env,{request:async url=>{
+    calls++; return response(url.endsWith('git/ref/heads/main')?{object:{sha}}:{check_runs:[]});
+  },wait:async ms=>{assert.equal(ms,60000);waits++;},log:()=>{}}),/deadline/);
+  assert.equal(calls,30); assert.equal(waits,14);
+});
+test('403 and 429 stop immediately without retry', async () => {
+  for(const status of [403,429]){
+    let calls=0;
+    await assert.rejects(verifyRelease(env,{request:async()=>{calls++;return {ok:false,status};},
+      wait:async()=>assert.fail('rate limits must not be retried'),log:()=>{}}),new RegExp(String(status)));
+    assert.equal(calls,1);
+  }
+});
+test('unbounded check pagination fails closed within four requests', async () => {
+  let calls=0;
+  await assert.rejects(verifyRelease(env,{request:async url=>{
+    calls++;return response(url.endsWith('git/ref/heads/main')?{object:{sha}}:
+      {check_runs:Array.from({length:100},()=>successful()[0])});
+  },wait:async()=>assert.fail('overflow must stop immediately'),log:()=>{}}),/pagination/);
+  assert.equal(calls,4);
+});
+test('disabled readiness never makes an API request', async () => {
+  await assert.rejects(verifyRelease({...env,SERMS_PRODUCTION_READY:'false'},
+    {request:async()=>assert.fail('disabled releases must not request GitHub')}),/SERMS_PRODUCTION_READY/);
 });

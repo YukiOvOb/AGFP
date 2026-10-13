@@ -24,33 +24,39 @@ export function evaluateChecks(sha, mainSha, checks) {
   });
 }
 
-export async function verifyRelease(env = process.env) {
+export async function verifyRelease(env = process.env, {request = fetch, wait = ms => new Promise(resolve => setTimeout(resolve, ms)), log = console.log} = {}) {
   validateContext({ref: env.GITHUB_REF, event: env.GITHUB_EVENT_NAME, sha: env.GITHUB_SHA, ready: env.SERMS_PRODUCTION_READY});
   assert.match(env.GITHUB_REPOSITORY ?? '', /^[\w.-]+\/[\w.-]+$/);
   assert.ok(env.GITHUB_TOKEN, 'A read-only GitHub token is required');
   const api = env.GITHUB_API_URL || 'https://api.github.com';
   const get = async route => {
-    const response = await fetch(`${api}/repos/${env.GITHUB_REPOSITORY}/${route}`, {
+    const response = await request(`${api}/repos/${env.GITHUB_REPOSITORY}/${route}`, {
       headers: {Authorization: `Bearer ${env.GITHUB_TOKEN}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'},
       signal: AbortSignal.timeout(15000),
     });
-    assert.ok(response.ok, `GitHub verification request failed (${response.status})`);
+    assert.ok(response.ok, `GitHub verification request failed (${response.status}); stop without retry or deployment, including on 403/429`);
     return response.json();
   };
   const deadline = Date.now() + 15 * 60 * 1000;
-  while (Date.now() < deadline) {
+  // At most 15 polls x (one ref + three check pages) = 60 read requests.
+  for (let attempt = 0; attempt < 15 && Date.now() < deadline; attempt++) {
     const main = await get('git/ref/heads/main');
     const checks = [];
-    for (let page = 1; ; page++) {
+    for (let page = 1; page <= 3; page++) {
       const data = await get(`commits/${env.GITHUB_SHA}/check-runs?per_page=100&page=${page}`);
+      assert.ok(Array.isArray(data.check_runs), 'Invalid check-runs response');
       checks.push(...data.check_runs);
       if (data.check_runs.length < 100) break;
+      assert.ok(page < 3, 'Check pagination exceeded the release request budget; no deployment permitted');
     }
     const states = evaluateChecks(env.GITHUB_SHA, main.object.sha, checks);
     assert.ok(!states.some(c => c.state === 'failed'), `Release check failed: ${states.filter(c => c.state === 'failed').map(c => c.name).join(', ')}`);
-    if (states.every(c => c.state === 'success')) { console.log(`Verified current main ${env.GITHUB_SHA}: ${states.length} successful GitHub Actions checks`); return; }
-    console.log(`Waiting for: ${states.filter(c => c.state === 'pending').map(c => c.name).join(', ')}`);
-    await new Promise(resolve => setTimeout(resolve, 30000));
+    if (states.every(c => c.state === 'success')) { log(`Verified current main ${env.GITHUB_SHA}: ${states.length} successful GitHub Actions checks`); return; }
+    log(`Waiting for: ${states.filter(c => c.state === 'pending').map(c => c.name).join(', ')}`);
+    if (attempt < 14) {
+      if (Date.now() + 60000 >= deadline) break;
+      await wait(60000);
+    }
   }
   throw new Error('Release checks did not all succeed before the deadline; no SSH deployment permitted');
 }

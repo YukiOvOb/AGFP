@@ -1,23 +1,12 @@
-# CI gate: every PR must pass all checks before merging (main branch protection requires the three jobs below).
-#
-# Based on Lumie-platform/ci.yml, which only has typecheck + test.
-# These three security checks are independent of the technology stack and can run now:
-#   secrets-scan       gitleaks: scans the full Git history for committed API keys / private keys
-#   vuln-scan          Trivy: scans dependency manifests and configuration for known vulnerabilities / misconfigurations
-#   dependency-review  GitHub Dependency Review: rejects new PR dependencies with high-severity vulnerabilities or disallowed licenses
-#
-# Add build-test when the AGFP stack is selected (Node → pnpm typecheck/test; Python → ruff + pytest, etc.),
-# and make it a required check. Enable CodeQL then as well; it cannot run on an empty repository.
+# Keep security gates on every PR and main revision; no automated repository writes.
 name: CI
 
 on:
   # No paths-ignore for PRs: branch protection requires all three checks, including for documentation-only PRs.
   pull_request:
+    types: [opened, synchronize, reopened]
   push:
     branches: [main]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -30,20 +19,28 @@ jobs:
   secrets-scan:
     name: Secrets scan (gitleaks)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout v4
         with:
-          fetch-depth: 0 # Full history; otherwise only the latest commit is scanned.
-      - uses: gitleaks/gitleaks-action@v2
+          fetch-depth: 0 # Full history for secret scanning.
+          persist-credentials: false
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # gitleaks/gitleaks-action v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: 'false'
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: 'false'
 
   vuln-scan:
     name: Vulnerability scan (Trivy)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: aquasecurity/trivy-action@v0.36.0
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # aquasecurity/trivy-action v0.36.0
         with:
           scan-type: fs
           scan-ref: .
@@ -55,27 +52,16 @@ jobs:
   dependency-review:
     name: Dependency review
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write # Post the review summary in the PR.
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      # Only PR events have comparable base/head revisions; pushes to main pass without review so the required check remains present.
-      - uses: actions/dependency-review-action@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      # Dependency Review needs a PR comparison. Main retains the named gate without a scan or comment.
+      - uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # actions/dependency-review-action v4.9.0
         if: github.event_name == 'pull_request'
         with:
           fail-on-severity: high
-          comment-summary-in-pr: always
-
-  # ── Build / test ─────────────────────────────────────────────
-  # Add jobs here after selecting the stack. Example (Node/pnpm, matching Lumie):
-  #   build-test:
-  #     runs-on: ubuntu-latest
-  #     steps:
-  #       - uses: actions/checkout@v4
-  #       - uses: pnpm/action-setup@v4
-  #       - uses: actions/setup-node@v4
-  #         with: { node-version: 22, cache: pnpm }
-  #       - run: pnpm install --frozen-lockfile
-  #       - run: pnpm -r typecheck
-  #       - run: pnpm -r test
+          comment-summary-in-pr: never
+          retry-on-snapshot-warnings: false

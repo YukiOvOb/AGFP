@@ -2,23 +2,39 @@ name: Deploy
 on:
   push:
     branches: [main]
-    paths-ignore: ['**.md', 'docs/**']
+    paths:
+      - 'app/**'
+      - 'frontend/**'
+      - 'integration/notifications/src/main/java/**'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'compose.yaml'
+      - 'web/**'
+      - 'scripts/deploy.sh'
+      - 'scripts/verify-release.mjs'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch: {}
 concurrency:
   group: deploy-production
   cancel-in-progress: false
 permissions:
   contents: read
-  checks: read
 jobs:
   release-gate:
+    if: github.ref == 'refs/heads/main' && vars.SERMS_PRODUCTION_READY == 'true'
+    permissions:
+      contents: read
+      checks: read
     runs-on: ubuntu-latest
     timeout-minutes: 18
     steps:
       - name: Reject non-main execution before checkout or secrets
         run: test "$GITHUB_REF" = refs/heads/main
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # actions/setup-node v4
         with:
           node-version: '24'
       - name: Verify handover and current main SHA checks
@@ -29,6 +45,7 @@ jobs:
   deploy:
     needs: release-gate
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     environment: production
     steps:
       - name: Require trusted host identity
@@ -36,7 +53,7 @@ jobs:
           HOST_FINGERPRINT: ${{ secrets.DEPLOY_HOST_FINGERPRINT }}
         run: test -n "$HOST_FINGERPRINT"
       - name: Deploy verified main over SSH
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # appleboy/ssh-action v1.2.0
         env:
           RELEASE_SHA: ${{ github.sha }}
         with:

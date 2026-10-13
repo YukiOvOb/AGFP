@@ -153,3 +153,9 @@ Cloud deployment stays the last engineering step, as in [D-005](#d-005-local-clo
 Status: **Requested by the user on 2026-10-14 (Asia/Singapore)**: record the development process and the problems met in detail, as documents, to support the later project report.
 
 Decision: every completion task adds or updates its entry under [docs/devlog](../devlog/README.md) in the same PR; cross-cutting events (reviews, re-planning, integration, incidents, deployment) get dated entries. The template, naming and rules are in that README. The log records facts and does not replace this decision record, the contracts or the evidence folder.
+
+## D-012 Actions Automation Minimization
+
+Status: **Requested and authorized by the user on 2026-10-14 (Asia/Singapore)** in the current audit conversation. The user requested latest-code/history review and direct removal or disabling of unnecessary/risky automation on an independent branch, preserving necessary builds/tests/security/deployment and human/Codex commits. Direct main changes and merging are prohibited.
+
+Implementation and evidence: [Actions security/resource audit](../devlog/2026-10-14-actions-security-and-resources.md). Deduplicate UC03 execution while retaining its protected check, avoid unrelated application work for proved documentation/evidence/root-ignore-only changes, remove routine comments/write permissions, pin Actions, bound execution/storage/API usage, and skip unready production jobs before runner allocation. No business tests, coverage requirements, contracts, merge protections or production readiness are removed. The final PR remains unmerged; this authorization does not assert teammate acceptance or team Done.
