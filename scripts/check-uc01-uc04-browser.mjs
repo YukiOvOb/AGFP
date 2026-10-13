@@ -8,7 +8,7 @@ const require = createRequire(path.join(repo, 'frontend/package.json'));
 const {chromium, expect} = require('@playwright/test');
 const browser = await chromium.launch({headless:true});
 const checks = [], errors = [];
-const evidence = path.join(repo, 'docs/evidence/uc01-uc04');
+const evidence = path.join(repo, 'docs/evidence', process.argv.includes('--boot4') ? 'boot4' : 'uc01-uc04');
 fs.mkdirSync(evidence, {recursive:true});
 const summary = {status:'running',baseURL,checks,startedAt:new Date().toISOString(),mocked:false};
 const pass = name => {checks.push(name); console.log(`PASS ${name}`);};

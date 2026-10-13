@@ -1,11 +1,54 @@
-# scripts/deploy.sh runs this on the server: docker compose up -d --build
-# Compose automatically loads variables from .env in this directory. HOST_PORT defaults to 8789,
-# bound only to 127.0.0.1, with nginx reverse-proxying https://serms.midas.cyou.
+name: agfp
 services:
-  app:
-    build: .
-    image: agfp:latest
-    container_name: agfp
-    ports:
-      - "127.0.0.1:${HOST_PORT:-8789}:8080"
+  db:
+    image: postgres:18-alpine
     restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${SERMS_DB_NAME:?Set the inventoried database name}
+      POSTGRES_USER: ${SERMS_DB_USER:?Set the inventoried database user}
+      POSTGRES_PASSWORD: ${SERMS_DB_PASSWORD:?Set the server-only database password}
+    volumes:
+      - database:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+  app:
+    build:
+      context: .
+      target: app
+      args:
+        RELEASE_SHA: ${RELEASE_SHA:-local}
+    image: serms-app:${RELEASE_SHA:-local}
+    restart: unless-stopped
+    environment:
+      SERVER_ADDRESS: 0.0.0.0
+      SERVER_PORT: 8081
+      SPRING_PROFILES_ACTIVE: serms-postgres
+      SERMS_DB_URL: jdbc:postgresql://db:5432/${SERMS_DB_NAME:?Set the database name}?currentSchema=serms,public
+      SERMS_DB_USER: ${SERMS_DB_USER:?Set the database user}
+      SERMS_DB_PASSWORD: ${SERMS_DB_PASSWORD:?Set the database password}
+      SERMS_APPROVAL_ENABLED: 'true'
+      SERMS_SECURITY_SECURE_COOKIES: 'true'
+      SERVER_SERVLET_SESSION_COOKIE_SECURE: 'true'
+    depends_on:
+      db:
+        condition: service_healthy
+  web:
+    build:
+      context: .
+      target: web
+      args:
+        RELEASE_SHA: ${RELEASE_SHA:-local}
+    image: serms-web:${RELEASE_SHA:-local}
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:${HOST_PORT:-8789}:8080'
+    depends_on:
+      app:
+        condition: service_healthy
+volumes:
+  database:
+    external: true
+    name: ${SERMS_DB_VOLUME:?Set the confirmed existing PostgreSQL 18 volume}

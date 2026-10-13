@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import javax.sql.DataSource;
 import org.postgresql.ds.PGSimpleDataSource;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /**
  * One throw-away PostgreSQL 18 per test JVM, migrated with the repository's own V001 and V002
@@ -23,7 +23,7 @@ public final class SermsPostgres {
   static final Path MIGRATIONS = Path.of("src", "main", "resources", "db", "migration");
   static final String[] SCRIPTS = {"V001__sprint1.sql", "V002__align_serms_model.sql"};
 
-  private static PostgreSQLContainer<?> container;
+  private static PostgreSQLContainer container;
   private static DataSource dataSource;
 
   private SermsPostgres() {}
@@ -46,7 +46,7 @@ public final class SermsPostgres {
         dataSource = ds;
         return dataSource;
       }
-      container = new PostgreSQLContainer<>("postgres:18-alpine").withDatabaseName("serms_test");
+      container = new PostgreSQLContainer("postgres:18-alpine").withDatabaseName("serms_test");
       container.start();
       var ds = new PGSimpleDataSource();
       ds.setUrl(container.getJdbcUrl());
