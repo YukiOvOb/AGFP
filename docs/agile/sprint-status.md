@@ -4,6 +4,14 @@ Member 1 updates after weekly meetings. Preserve snapshots, newest first, as Spr
 
 ---
 
+## Integration Update 2026-10-14
+
+`main` is `b3def12`. The integration line is merged: [#11](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/11) local demo (merge `f077ce7`); [#13](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/13) Spring Boot 4, `web` + `app` + `db` packaging and gated deployment, merged into the branch of #14 (`db376ab`); and [#14](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/14) UC01/UC04 acceptance fixes, which carried both into `main` (merge `b3def12`). The content of `main` equals the release-preparation head `15ec983`; all twelve hosted checks passed on `db376ab` before the merge. The `Deploy` run after each merge failed without reaching the server: the repository has no deployment secrets, and since #13 the release gate stops while `SERMS_PRODUCTION_READY` is unset.
+
+A read-only review against the Project Proposal on the same day found the five use-case flows implemented, and user/role administration, equipment and category management, most reports and the audit viewer missing; see the [review entry](../devlog/2026-10-14-project-review-and-completion-plan.md). The owner confirmed task ownership, the state models, a scope freeze, the schedule to the 2026-10-26 presentation and a development log ([D-007](../collaboration/decisions.md#d-007-completion-task-ownership) to [D-011](../collaboration/decisions.md#d-011-development-log)). Tasks, owners and dates are tracked on [Issue #27](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/issues/27) (#15-#26, with #6-#10 retained).
+
+Not yet established: member acceptance of #6-#9; the overdue scanner on `main` (draft #12 predates this baseline); a local demo smoke run on `b3def12`; any cloud deployment. The 2026-10-13 snapshot below is kept as written.
+
 ## Current Local Progress 2026-10-13
 
 Verified baseline: GitHub main `940bf42`, local-demo delivery `d42e0a6` in [Draft PR #11](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/11). This snapshot supersedes earlier progress claims; historical snapshots below remain unchanged.

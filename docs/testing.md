@@ -31,9 +31,9 @@ macOS/Linux equivalent:
 OPENAPI_FILE=../app/target/openapi.json pnpm check:api
 ```
 
-This table reflects main `940bf42` plus local-demo delivery `d42e0a6`. Default/local app configuration and current database CI/scripts use PostgreSQL 18; production Flyway V001-V004 is unified in `app/`. MySQL is absent from the production dependencies and H2 is test-only. The historical [Decision record](collaboration/decisions.md#retained-technical-and-business-differences) explains earlier differences, not today's runtime. JaCoCo generates reports; its ≥ 70% automatic gate is still pending. Test and coverage requirements remain unchanged.
+This table reflects main `b3def12`. Default/local app configuration and current database CI/scripts use PostgreSQL 18; production Flyway V001-V004 is unified in `app/`. MySQL is absent from the production dependencies and H2 is test-only. The historical [Decision record](collaboration/decisions.md#retained-technical-and-business-differences) explains earlier differences, not today's runtime. JaCoCo generates reports; its ≥ 70% automatic gate is still pending. Test and coverage requirements remain unchanged.
 
-The [PR #11 verification record](evidence/local-demo/verification.md) preserves local results. GitHub subsequently passed all nine checks on `d42e0a6`; those results do not cover new closeout commits or replace member acceptance. Current status and remaining scenarios are in [Sprint progress](agile/sprint-status.md#current-local-progress-2026-10-13).
+The [PR #11 verification record](evidence/local-demo/verification.md) preserves local results. GitHub subsequently passed all nine checks on `d42e0a6`; those results do not cover new closeout commits or replace member acceptance. The merged integration line passed all twelve checks on `db376ab`, whose content equals `main` `b3def12`. Current status and remaining scenarios are in [Sprint progress](agile/sprint-status.md#integration-update-2026-10-14).
 
 ## Verification Scope
 

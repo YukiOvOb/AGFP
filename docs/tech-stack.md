@@ -1,6 +1,6 @@
 # SERMS Technology Stack
 
-Current implementation snapshot: 2026-10-13, main `940bf42` plus local-demo delivery `d42e0a6` in Draft PR #11. Default/local startup uses PostgreSQL 18, approval is enabled by default, and production Flyway V001-V004 is unified under `app/src/main/resources/db/migration`. MySQL production dependencies are removed; H2 is test-only. Liu Tongyao executes local integration and later release work under [D-004](collaboration/decisions.md#d-004-local-first-integration-and-wenqi-task-execution), preserving Shi Wenqi's team membership and original contribution. [D-005](collaboration/decisions.md#d-005-local-closeout-and-cloud-last) defers cloud deployment until basic local functionality and subsequent user-defined changes are accepted.
+Current implementation snapshot: 2026-10-14, main `b3def12`, which includes the local demo (#11), the UC01/UC04 acceptance fixes (#14) and the Spring Boot 4 release preparation (#13). Default/local startup uses PostgreSQL 18, approval is enabled by default, and production Flyway V001-V004 is unified under `app/src/main/resources/db/migration`. MySQL production dependencies are removed; H2 is test-only. Liu Tongyao executes local integration and later release work under [D-004](collaboration/decisions.md#d-004-local-first-integration-and-wenqi-task-execution), preserving Shi Wenqi's team membership and original contribution. [D-005](collaboration/decisions.md#d-005-local-closeout-and-cloud-last) defers cloud deployment until basic local functionality and subsequent user-defined changes are accepted.
 
 Team 07 · Shared Equipment Reservation and Maintenance System (SERMS)
 
@@ -12,7 +12,7 @@ This document defines the team's shared technology baseline. It is based on the 
 
 The system uses **separate frontend and backend applications**: a React single-page frontend, a Spring Boot backend exposing REST APIs only, and PostgreSQL 18 for storage.
 
-The Status column describes verified implementation at main `940bf42`: ✅ implemented; 🔶 partial delivery or pending integration/acceptance, described in the row; ⬜ selected, not implemented. PR #11 adds the local runtime on top of that main. Sections 2-6 include target design and required practices; naming a technology there does not mean it is installed or its gate is enforced. See [current progress](agile/sprint-status.md#current-local-progress-2026-10-13) for version-bound evidence and remaining acceptance.
+The Status column describes verified implementation at main `b3def12`: ✅ implemented; 🔶 partial delivery or pending integration/acceptance, described in the row; ⬜ selected, not implemented. Items dropped by [D-009](collaboration/decisions.md#d-009-scope-freeze) say so in their row. Sections 2-6 include target design and required practices; naming a technology there does not mean it is installed or its gate is enforced. See [current progress](agile/sprint-status.md#integration-update-2026-10-14) for version-bound evidence and remaining acceptance.
 
 ### 1.1 Frontend (`frontend/`)
 
@@ -50,9 +50,9 @@ The Status column describes verified implementation at main `940bf42`: ✅ imple
 | Build | Maven (Maven Wrapper `./mvnw`) | 3.9 | ✅ |
 | Testing | JUnit Jupiter 6 · Mockito · AssertJ · Spring Boot Test | Bundled with Boot 4 | ✅ Transitional data/adapter benches retain JUnit 5 |
 | Integration test database | Testcontainers (real PostgreSQL 18) | — | ✅ UC01/UC03; UC04 PostgreSQL acceptance runs in its own workflow (`maintenance-tests.yml`) |
-| Layering checks | ArchUnit | — | ⬜ |
-| Coverage | JaCoCo (service + domain ≥ 70% as a merge gate) | 0.8.x | ✅ Reports generated; gate pending |
-| Code style / static analysis | Spotless (google-java-format) · SpotBugs + FindSecBugs | — | ⬜ |
+| Layering checks | ArchUnit | — | ⬜ Dropped by D-009 |
+| Coverage | JaCoCo (service + domain ≥ 70% as a merge gate) | 0.8.x | ✅ Reports generated; gate pending (Issue #24) |
+| Code style / static analysis | Spotless (google-java-format) · SpotBugs + FindSecBugs | — | ⬜ Dropped by D-009; CodeQL covers static analysis (Issue #25) |
 
 ### 1.3 Database
 
@@ -69,16 +69,18 @@ The Status column describes verified implementation at main `940bf42`: ✅ imple
 | --- | --- | --- |
 | CI/CD | GitHub Actions | 🔶 Application/security checks pass; complete-system deployment pending |
 | Secret scanning | gitleaks | ✅ |
-| Vulnerability scanning | Trivy (filesystem + Docker images) | ✅ Filesystem scanning; image scanning pending |
+| Vulnerability scanning | Trivy (filesystem + Docker images) | ✅ Filesystem scan on every PR; `app` and `web` image scans in the `release-images` check |
 | Dependency checks | Dependency Review (PR stage) + Dependabot (weekly automated upgrades) | ✅ Dependency Review; Dependabot pending |
-| Code security scanning | CodeQL (Java + TypeScript) | ⬜ |
-| Post-deployment security scanning | OWASP ZAP Baseline | ⬜ |
-| Load testing | k6 (50 concurrent users) | ⬜ |
-| Containers | Docker (multi-stage builds, non-root execution) + Docker Compose: three containers, `web` + `app` + `db` | 🔶 Currently one container for the static welcome page |
+| Code security scanning | CodeQL (Java + TypeScript) | ⬜ Issue #25 |
+| Post-deployment security scanning | OWASP ZAP Baseline | ⬜ Best effort in Issue #25 |
+| Load testing | k6 (50 concurrent users) | ⬜ Best effort in Issue #25 |
+| Containers | Docker (multi-stage builds, non-root execution) + Docker Compose: three containers, `web` + `app` + `db` | ✅ Packaging on `main`: non-root `app` and `web` images, PostgreSQL 18, production-profile Compose smoke in CI; not yet run on the server |
 | Image registry | GitHub Container Registry (GHCR) | ⬜ |
-| Server | Hong Kong server + nginx + Let's Encrypt, https://serms.midas.cyou | 🔶 Existing endpoint; last deployment failed, complete-system publication deferred |
+| Server | Hong Kong server + nginx + Let's Encrypt, https://serms.midas.cyou | 🔶 Existing endpoint; server handover pending; deployment is gated and deferred to Issue #10 |
 
 ### 1.5 Optional Features (If Time Permits)
+
+Both features below were dropped for this delivery by [D-009](collaboration/decisions.md#d-009-scope-freeze); the table records the original selection.
 
 | Feature | Technology |
 | --- | --- |
@@ -366,8 +368,8 @@ Local development, CI, and the server must use the same PostgreSQL major version
 
 ## 7. Aligning Existing Code
 
-- **Completed on main `940bf42`**: React pages and JSON identity/notification APIs replace the earlier page-only platform. Default/local app configuration uses PostgreSQL 18; MySQL production dependencies are removed and H2 is test-only. Flyway V001-V004, real approval persistence, UUID Identity mapping and the notification bridge are integrated. UC01-UC04 and their current test benches are present.
-- **Local runtime on PR #11 `d42e0a6`**: isolated native PostgreSQL 18, explicit demo accounts, startup/shutdown, real API/data/browser checks and restart preservation. Its hosted CI passed; member acceptance remains separate.
+- **On main `b3def12`**: React pages and JSON identity/notification APIs replace the earlier page-only platform. Default/local app configuration uses PostgreSQL 18; MySQL production dependencies are removed and H2 is test-only. Flyway V001-V004, real approval persistence, UUID Identity mapping and the notification bridge are integrated. UC01-UC04 and their current test benches are present.
+- **Local runtime (merged from #11)**: isolated native PostgreSQL 18, explicit demo accounts, startup/shutdown, real API/data/browser checks and restart preservation. Its hosted CI passed; member acceptance remains separate.
 - **Retained transitional modules**: `database/` supplies data regression/history checks, and `integration/notifications/` supplies app-included PostgreSQL adapters plus pinned historical contract verification. Removing or renaming these modules requires its own integration task; this closeout does not remove them or rewrite merged migrations.
-- **Remaining local work**: full Issues #6-#9 acceptance, overdue scanner/producer, complete role/browser flows, shared test consolidation and automatic coverage enforcement. Existing requirements in §5 continue to apply; local reports are not an enabled CI gate.
-- **Final release work**: after basic functionality and the user's later modifications, Issue #10 must prepare web/app/db packaging, database storage/backups, release-SHA gates and actual deployed acceptance. Root `Dockerfile`, `compose.yaml`, `.env.example`, workflows and `scripts/deploy.sh` are unchanged by this local closeout. Cloud execution is last under D-005.
+- **Remaining local work**: full Issues #6-#9 acceptance, overdue scanner/producer, complete role/browser flows, shared test consolidation, automatic coverage enforcement, and the Proposal scope listed on Issue #27 (user/role administration, equipment and category management, reports, audit viewer). Existing requirements in §5 continue to apply; local reports are not an enabled CI gate.
+- **Final release work**: web/app/db packaging, the release-SHA gate and the deployment script are on `main` (from #13). Issue #10 still needs the server handover, the first-admin bootstrap (Issue #18), database storage/backups and actual deployed acceptance. Cloud execution is last under D-005.

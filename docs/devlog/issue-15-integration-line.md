@@ -68,3 +68,38 @@ Preparation, conflict resolution and this entry were produced by an AI agent (Cl
 ### Follow-ups
 
 - Owner merges #14; then #13 is retargeted, updated, re-checked and merged the same way.
+
+## 2026-10-14 Integration line on main
+
+### What was done
+
+- The owner merged #13 at 2026-10-13T17:45:38Z (UTC). Its base was still the branch of #14, so the merge (`db376ab`) landed #13 inside #14 rather than #14 in `main`. #14 then carried the whole remaining chain.
+- `db376ab` already contained `main` (`f077ce7`), so no further update was needed. The comparison `15ec983...db376ab` shows zero changed files. All twelve checks passed on `db376ab`, including `release-config` and `release-images`.
+- The owner added an allow rule for `gh pr merge` to their own Claude Code settings and restarted the app. The agent then merged #14 at 2026-10-13T17:48:54Z (UTC): `main` is `b3def12`.
+- `main` `b3def12` and `15ec983` have identical content (zero changed files in the comparison).
+- Runs on `b3def12`: CI, Collaboration documentation, Notification PostgreSQL contract, Sprint 1 database, Maintenance PostgreSQL acceptance, Notification and default PostgreSQL tests, and Zhou Fanhao UC03 integration succeeded; Release preparation and Frontend and API contract were still running when read. `Deploy` failed at the `release-gate` job (`SERMS_PRODUCTION_READY` was empty, `true` expected) and the `deploy` job was skipped.
+- Merged the new `main` into the documentation branch without conflicts and updated the progress statements in README, tech-stack, testing, backlog, the documentation index and sprint-status (new "Integration Update 2026-10-14" section; the 2026-10-13 snapshot is kept).
+
+### Design notes
+
+The planned order was #11, #14, #13. The actual order was #11, #13 into #14, then #14. The result is the same content on `main` with one update-merge fewer; all three pull requests are recorded as merged. Because #13 was merged into a branch and not into `main`, its page shows `codex/serms-issue-acceptance` as the base; the commits reached `main` through #14.
+
+### Problems and fixes
+
+| Symptom | Root cause | Fix | How it was verified |
+| --- | --- | --- | --- |
+| #14 was reported as merged but was still open, and `main` had not moved | #13 was merged instead; it targeted the branch of #14 because stacked pull requests keep their original base until retargeted | Checked the real state of both pull requests and the branch heads before acting; waited for the new head of #14 to pass, then merged #14 | `gh pr view` for #13 and #14, branch heads, and the file comparison against `15ec983` |
+| A shell heredoc containing an unpaired apostrophe failed to parse in the agent tool | The tool parses the command text before the shell does | Wrote the script to a file and ran the file | Script ran and reported each updated document |
+
+### Verification
+
+- `gh api compare 15ec983...b3def12`: zero changed files.
+- Hosted checks: twelve passed on `db376ab` before the merge.
+- `node scripts/check-collaboration.mjs` on the documentation branch after the updates: passed, 19 documents and 7 skills.
+- Not run: local demo start and `scripts/smoke-local.mjs` on `b3def12`. The content is the one that passed the production-profile Compose smoke in `release-images`; a local run is still owed and is listed on #15.
+
+### Follow-ups
+
+- Documentation pull request for this branch; close #3 once it is merged.
+- Announce `b3def12` as the baseline on #27 and tell the author of #12.
+- Local demo smoke on the new `main`.

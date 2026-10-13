@@ -6,7 +6,7 @@ Shared Equipment Reservation and Maintenance System · SWE5006 Team 07
 
 The integrated React, Spring Boot and PostgreSQL 18 system can run locally before server handover. See the [local demo guide](docs/local-demo.md) for isolated startup/shutdown, six role accounts and real API smoke checks. Local acceptance and cloud publication are tracked separately in Issues #5-#10.
 
-Current baseline: main `940bf42`; local-demo delivery `d42e0a6` in Draft PR #11. UC01-UC04, shared login and the notification inbox are integrated. Local normal-flow checks and all nine PR #11 CI checks passed; overdue production and full member acceptance remain open. Complete the basic local functionality first, then the user's forthcoming changes, and deploy to the cloud last. See [current progress](docs/agile/sprint-status.md#current-local-progress-2026-10-13) and [local repository handover](docs/local-repository-closeout.md).
+Current baseline: main `b3def12` (2026-10-14) includes the local demo (#11), the UC01/UC04 acceptance fixes (#14) and the Spring Boot 4 upgrade with `web` + `app` + `db` packaging and gated deployment (#13). UC01-UC04, shared login and the notification inbox are integrated; overdue production, the remaining Proposal scope (administration, equipment management, reports, audit viewer) and member acceptance are open and tracked with owners and dates on [Issue #27](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/issues/27). Cloud deployment is the last step. See [current progress](docs/agile/sprint-status.md#integration-update-2026-10-14), the [development log](docs/devlog/README.md) and the [local repository handover](docs/local-repository-closeout.md).
 
 Use the full name **Shared Equipment Reservation and Maintenance System (SERMS)** on first mention in the project report, then use **SERMS** throughout the remaining text and everyday communication. The repository name is `shared-equipment-reservation-and-maintenance-system`.
 
@@ -101,7 +101,7 @@ Implemented backend packages under `sg.edu.nus.serms` are `identity`, `equipment
 | Project management | GitHub Projects |
 | Design diagrams | PlantUML / Mermaid (source files in `docs/diagrams/`), supplemented by draw.io |
 
-> Main `940bf42` includes React, JSON login/RBAC, UC01-UC04, notification APIs/inbox, PostgreSQL 18 and unified Flyway V001-V004. Draft PR #11 adds reproducible local startup and real API/browser checks. These results do not establish complete UC05 overdue behavior, member acceptance or cloud deployment.
+> Main `b3def12` includes React, JSON login/RBAC, UC01-UC04, notification APIs/inbox, PostgreSQL 18, unified Flyway V001-V004, the reproducible local demo and the Spring Boot 4 release packaging. These results do not establish complete UC05 overdue behavior, the administration/equipment-management/report scope still to be built, member acceptance or cloud deployment.
 
 ## Testing: Each Member Owns Their Test Bench
 
@@ -124,7 +124,7 @@ Release preparation for Issue #10 is documented in [the server handover and rele
 - All changes go through PRs. `main` is protected by eight required security/application checks; local commits await their own PR/CI before integration.
 - Collaborators with Write permission may merge their own PRs without another reviewer's approval, provided all CI checks pass.
 - Existing server endpoint: https://serms.midas.cyou. A complete-system cloud release is deferred until local basic functionality and the user's later changes are accepted.
-- The unchanged deployment workflow triggers on qualifying `main` pushes and manual dispatch. Its last main run failed with `missing server host`. Coordinate release readiness before merging deployment-triggering changes; this local closeout does not push, merge or deploy.
+- The deployment workflow runs on code pushes to `main` and on manual dispatch, and stops at its release gate until `SERMS_PRODUCTION_READY` is set and the release checks pass on the current `main` SHA. No deployment secrets are configured in this repository yet, so a red `Deploy` run after a merge is expected and does not reach the server.
 - Deployment uses Docker Compose: `compose.yaml` and `Dockerfile` must exist at the repository root. The container port maps to the host's `127.0.0.1:8789`, with nginx providing the public reverse proxy.
 - Secrets are stored only in `/opt/agfp/.env` on the server (template: `.env.example`) and must never be committed to Git.
 

@@ -11,7 +11,7 @@ This index provides navigation without replacing existing standards; historical 
 | Tools, sole writers, delegation, resume | [Agent workflow](collaboration/agent-workflow.md) |
 | Conflicts, reference patterns, user decisions | [Decisions](collaboration/decisions.md) |
 | Commands, actual CI, evidence formats | [Testing](testing.md) |
-| Current progress and remaining acceptance | [Current local progress](agile/sprint-status.md#current-local-progress-2026-10-13) |
+| Current progress and remaining acceptance | [Integration update 2026-10-14](agile/sprint-status.md#integration-update-2026-10-14), [2026-10-13 snapshot](agile/sprint-status.md#current-local-progress-2026-10-13) |
 | Development process, problems met, report material | [Development log](devlog/README.md), [2026-10-14 review and completion plan](devlog/2026-10-14-project-review-and-completion-plan.md) |
 | Local startup and real-flow checks | [Local demo](local-demo.md), [Verification](evidence/local-demo/verification.md) |
 | Local cleanup, retained history and next work | [Repository closeout](local-repository-closeout.md), [Repository preparation](repository-preparation.md) |
