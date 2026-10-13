@@ -1,6 +1,6 @@
 # SERMS Technology Stack
 
-2026-10-07 database finalization: default startup and local development use PostgreSQL 18, with approval enabled by default; production migrations are unified under `app/src/main/resources/db/migration`. The MySQL driver and legacy production migrations have been removed; H2 is test-only. Shi Wenqi owns subsequent server web/app/db deployment integration.
+Current implementation snapshot: 2026-10-13, main `940bf42` plus local-demo delivery `d42e0a6` in Draft PR #11. Default/local startup uses PostgreSQL 18, approval is enabled by default, and production Flyway V001-V004 is unified under `app/src/main/resources/db/migration`. MySQL production dependencies are removed; H2 is test-only. Liu Tongyao executes local integration and later release work under [D-004](collaboration/decisions.md#d-004-local-first-integration-and-wenqi-task-execution), preserving Shi Wenqi's team membership and original contribution. [D-005](collaboration/decisions.md#d-005-local-closeout-and-cloud-last) defers cloud deployment until basic local functionality and subsequent user-defined changes are accepted.
 
 Team 07 · Shared Equipment Reservation and Maintenance System (SERMS)
 
@@ -12,27 +12,27 @@ This document defines the team's shared technology baseline. It is based on the 
 
 The system uses **separate frontend and backend applications**: a React single-page frontend, a Spring Boot backend exposing REST APIs only, and PostgreSQL 18 for storage.
 
-The Status column indicates implementation progress: ✅ implemented on main; 🔶 on an individual branch, not yet merged; ⬜ selected, not yet implemented.
+The Status column describes verified implementation at main `940bf42`: ✅ implemented; 🔶 partial delivery or pending integration/acceptance, described in the row; ⬜ selected, not implemented. PR #11 adds the local runtime on top of that main. Sections 2-6 include target design and required practices; naming a technology there does not mean it is installed or its gate is enforced. See [current progress](agile/sprint-status.md#current-local-progress-2026-10-13) for version-bound evidence and remaining acceptance.
 
 ### 1.1 Frontend (`frontend/`)
 
 | Area | Technology | Version | Status |
 | --- | --- | --- | --- |
-| Language | TypeScript (`strict` mode) | 5.x | ⬜ |
-| Framework | React | 19 | ⬜ |
-| Build / development server | Vite | 7 | ⬜ |
-| Routing | React Router | 7 | ⬜ |
-| Server data fetching and caching | TanStack Query | 5 | ⬜ |
-| API client | openapi-typescript + openapi-fetch (types generated from the backend API specification) | — | ⬜ |
-| Forms and validation | React Hook Form + Zod | — | ⬜ |
-| UI components / styling | shadcn/ui (Radix-based, with built-in accessibility) + Tailwind CSS | Tailwind 4 | ⬜ |
-| Tables | TanStack Table | 8 | ⬜ |
+| Language | TypeScript (`strict` mode) | 5.x | ✅ |
+| Framework | React | 19 | ✅ |
+| Build / development server | Vite | 7 | ✅ |
+| Routing | React Router | 7 | ✅ |
+| Server data fetching and caching | TanStack Query | 5 | ✅ |
+| API client | openapi-typescript + openapi-fetch (types generated from the backend API specification) | — | ✅ Generated types and drift checks |
+| Forms and validation | React Hook Form + Zod | — | ✅ |
+| UI components / styling | shadcn/ui (Radix-based, with built-in accessibility) + Tailwind CSS | Tailwind 4 | ✅ Shared primitives/style |
+| Tables | TanStack Table | 8 | ✅ |
 | Charts | Recharts | 3 | ⬜ |
-| Date and time | date-fns + date-fns-tz (displayed in Singapore time) | — | ⬜ |
-| Package manager / runtime | pnpm · Node.js LTS | Node 24 | ⬜ |
-| Code style | ESLint + Prettier | — | ⬜ |
-| Unit / component tests | Vitest + React Testing Library + MSW (API mocks) | — | ⬜ |
-| End-to-end tests | Playwright | — | ⬜ |
+| Date and time | date-fns + date-fns-tz (displayed in Singapore time) | — | ✅ |
+| Package manager / runtime | pnpm · Node.js LTS | Node 24 | ✅ |
+| Code style | ESLint + Prettier | — | ✅ |
+| Unit / component tests | Vitest + React Testing Library + MSW (API mocks) | — | ✅ |
+| End-to-end tests | Playwright | — | 🔶 Existing mock browser suites; PR #11 adds limited real-browser checks; all-role acceptance open |
 
 ### 1.2 Backend (`app/`)
 
@@ -40,16 +40,16 @@ The Status column indicates implementation progress: ✅ implemented on main; �
 | --- | --- | --- | --- |
 | Language | Java | 17 | ✅ |
 | Framework | Spring Boot (modular monolith) | 3.5.x | ✅ |
-| Web API | Spring MVC JSON endpoints under `/api/v1` + Jakarta Bean Validation | Bundled with Boot | 🔶 main currently uses Thymeleaf pages; REST conversion pending |
-| API documentation | springdoc-openapi (OpenAPI 3) | 2.x | ⬜ |
-| Error format | RFC 9457 Problem Details (Spring's built-in `ProblemDetail`) | Bundled with Boot | ⬜ |
-| Security | Spring Security: session cookie authentication, BCrypt password hashing, `@PreAuthorize` method authorization, and CSRF protection (cookie + request header) | Bundled with Boot | 🔶 Spring Security is on main; JSON login + RBAC conversion pending |
+| Web API | Spring MVC JSON endpoints under `/api/v1` + Jakarta Bean Validation | Bundled with Boot | ✅ |
+| API documentation | springdoc-openapi (OpenAPI 3) | 2.x | ✅ Test export/type generation; public production docs disabled |
+| Error format | RFC 9457 Problem Details (Spring's built-in `ProblemDetail`) | Bundled with Boot | ✅ |
+| Security | Spring Security: session cookie authentication, BCrypt password hashing, `@PreAuthorize` method authorization, and CSRF protection (cookie + request header) | Bundled with Boot | ✅ JSON identity, roles and CSRF |
 | Data access | Spring Data JPA / Hibernate; handwritten SQL through JdbcTemplate for locking or complex queries | Bundled with Boot | ✅ |
-| Scheduled tasks | Spring `@Scheduled` | Bundled with Boot | ✅ |
-| Operational endpoints | Spring Boot Actuator (only `health` and `info` exposed) | Bundled with Boot | ⬜ |
+| Scheduled tasks | Spring `@Scheduled` | Bundled with Boot | 🔶 Notification delivery worker; overdue scanner/producer still open |
+| Operational endpoints | Spring Boot Actuator (only `health` and `info` exposed) | Bundled with Boot | ✅ |
 | Build | Maven (Maven Wrapper `./mvnw`) | 3.9 | ✅ |
 | Testing | JUnit 5 · Mockito · AssertJ · Spring Boot Test | Bundled with Boot | ✅ |
-| Integration test database | Testcontainers (real PostgreSQL 18) | — | 🔶 UC01 branch (`testsupport/SermsPostgres`) |
+| Integration test database | Testcontainers (real PostgreSQL 18) | — | ✅ UC01/UC03; dedicated UC04 profile requires explicit TEST database |
 | Layering checks | ArchUnit | — | ⬜ |
 | Coverage | JaCoCo (service + domain ≥ 70% as a merge gate) | 0.8.x | ✅ Reports generated; gate pending |
 | Code style / static analysis | Spotless (google-java-format) · SpotBugs + FindSecBugs | — | ⬜ |
@@ -58,16 +58,16 @@ The Status column indicates implementation progress: ✅ implemented on main; �
 
 | Area | Technology | Version | Status |
 | --- | --- | --- | --- |
-| Database | PostgreSQL (`postgres:18-alpine` across local development, CI, and the server) | 18 | 🔶 Zhou Fanhao's branch still configures 17; upgrade to 18 pending |
+| Database | PostgreSQL (`postgres:18-alpine` in container-based checks; native local demo) | 18 | ✅ Default/local and CI; server acceptance deferred |
 | Schema migrations | Flyway (the only schema creation mechanism) | Bundled with Boot | ✅ |
-| Reservation overlap prevention | PostgreSQL exclusion constraints (`EXCLUDE USING gist` + `tstzrange`) | — | 🔶 Zhou Fanhao's branch |
+| Reservation overlap prevention | PostgreSQL exclusion constraints (`EXCLUDE USING gist` + `tstzrange`) | — | ✅ Shared migrations and concurrent reservation tests |
 | Backups | Daily `pg_dump` backups retained for 7 days | — | ⬜ |
 
 ### 1.4 DevSecOps and Deployment
 
 | Area | Technology | Status |
 | --- | --- | --- |
-| CI/CD | GitHub Actions | ✅ |
+| CI/CD | GitHub Actions | 🔶 Application/security checks pass; complete-system deployment pending |
 | Secret scanning | gitleaks | ✅ |
 | Vulnerability scanning | Trivy (filesystem + Docker images) | ✅ Filesystem scanning; image scanning pending |
 | Dependency checks | Dependency Review (PR stage) + Dependabot (weekly automated upgrades) | ✅ Dependency Review; Dependabot pending |
@@ -76,7 +76,7 @@ The Status column indicates implementation progress: ✅ implemented on main; �
 | Load testing | k6 (50 concurrent users) | ⬜ |
 | Containers | Docker (multi-stage builds, non-root execution) + Docker Compose: three containers, `web` + `app` + `db` | 🔶 Currently one container for the static welcome page |
 | Image registry | GitHub Container Registry (GHCR) | ⬜ |
-| Server | Hong Kong server + nginx + Let's Encrypt, https://serms.midas.cyou | ✅ |
+| Server | Hong Kong server + nginx + Let's Encrypt, https://serms.midas.cyou | 🔶 Existing endpoint; last deployment failed, complete-system publication deferred |
 
 ### 1.5 Optional Features (If Time Permits)
 
@@ -98,6 +98,8 @@ The Status column indicates implementation progress: ✅ implemented on main; �
 ## 2. Architecture
 
 ### 2.1 System Context and Deployment
+
+The diagram below is the final deployment target. The current complete local demo uses loopback native React/Spring/PostgreSQL processes; root Docker/Compose still packages a static welcome page.
 
 ```mermaid
 flowchart LR
@@ -364,11 +366,8 @@ Local development, CI, and the server must use the same PostgreSQL major version
 
 ## 7. Aligning Existing Code
 
-- **`app/` on main** (Wang Yuanmeng, merged): existing notification domain, service, and scheduled delivery logic can be reused. Required changes:
-  - Replace Thymeleaf pages (`templates/`) and page controllers with REST endpoints under `/api/v1/notifications`; move the inbox to `frontend/src/features/notification/`.
-  - Replace MySQL / H2 with PostgreSQL 18 / Testcontainers and remove `db/mysql` migrations.
-  - Replace Spring Security form login with JSON login endpoints + `CookieCsrfTokenRepository`.
-- **`feat/zhoufanhao-sprint1-data-foundation`** (Zhou Fanhao, not merged): PostgreSQL schema and constraints align with this document. Required changes:
-  - Change `postgres:18-alpine` to `postgres:18-alpine` in `database/compose.yaml`, `database.yml`, and test scripts, matching his local version 18.
-  - Move SQL migrations into `app`'s Flyway sequence; rename `edu.nus.serms` to `sg.edu.nus.serms`; inject Spring's `DataSource` / `JdbcTemplate` into `ReservationRepository`; remove the `integration/notifications` adapter and patch files after integration.
-- **Root deployment files**: replace the static welcome deployment in `Dockerfile` and `compose.yaml` with three services: `web` (React + nginx), `app` (Spring Boot), and `db` (PostgreSQL 18). Update `.env.example` with database credentials and `HEALTH_PATH=/api/v1/health`.
+- **Completed on main `940bf42`**: React pages and JSON identity/notification APIs replace the earlier page-only platform. Default/local app configuration uses PostgreSQL 18; MySQL production dependencies are removed and H2 is test-only. Flyway V001-V004, real approval persistence, UUID Identity mapping and the notification bridge are integrated. UC01-UC04 and their current test benches are present.
+- **Local runtime on PR #11 `d42e0a6`**: isolated native PostgreSQL 18, explicit demo accounts, startup/shutdown, real API/data/browser checks and restart preservation. Its hosted CI passed; member acceptance remains separate.
+- **Retained transitional modules**: `database/` supplies data regression/history checks, and `integration/notifications/` supplies app-included PostgreSQL adapters plus pinned historical contract verification. Removing or renaming these modules requires its own integration task; this closeout does not remove them or rewrite merged migrations.
+- **Remaining local work**: full Issues #6-#9 acceptance, overdue scanner/producer, complete role/browser flows, shared test consolidation and automatic coverage enforcement. Existing requirements in §5 continue to apply; local reports are not an enabled CI gate.
+- **Final release work**: after basic functionality and the user's later modifications, Issue #10 must prepare web/app/db packaging, database storage/backups, release-SHA gates and actual deployed acceptance. Root `Dockerfile`, `compose.yaml`, `.env.example`, workflows and `scripts/deploy.sh` are unchanged by this local closeout. Cloud execution is last under D-005.

@@ -2,6 +2,8 @@
 
 Sources: Project Proposal Chapter 5 (functional), Chapter 6 (business rules), Chapter 7 (non-functional), Section 8.3 (DevSecOps), team ownership, and [Technology stack](../tech-stack.md). Requirement IDs are stable and referenced by tasks, PRs, and tests.
 
+Current tracking (2026-10-13): use [current local progress](sprint-status.md#current-local-progress-2026-10-13) and GitHub Issues #5-#10. Main `940bf42` includes UC01-UC04 and the notification platform; Draft PR #11 (`d42e0a6`) adds the complete local demo. Liu Tongyao executes UC01 takeover and local/release integration under [D-004](../collaboration/decisions.md#d-004-local-first-integration-and-wenqi-task-execution). Basic local acceptance comes first, then later user-defined changes, with cloud deployment last under [D-005](../collaboration/decisions.md#d-005-local-closeout-and-cloud-last). Historical Sprint task tables remain below and are not today's Done claims.
+
 ## 1. Ownership
 
 Each member owns one full-stack feature (queries, backend, frontend, test bench) and a shared responsibility.
@@ -55,10 +57,10 @@ Priority: **M** = Must (course acceptance), **S** = Should, **C** = Could (time 
 
 | ID | Use case | Key requirements | Owner | Progress |
 | --- | --- | --- | --- | --- |
-| R2 | UC02 Review/approve | Direct confirmation if unnecessary; approve; rejection reason/slot release; no self-approval; immutable decisions | Member 2 | Domain/service in Draft PR #8; reservation interface on this branch |
-| R3 | UC03 Checkout/return | Validate checkout, record custodian, return condition, damage to maintenance | Zhou Fanhao | Local backend/pages/V004/tests; team review/deployment pending |
-| R4 | UC04 Faults/maintenance | Fault blocks booking, assign technician, transitions, repaired availability/unrepairable retirement, history | Member 4 | Draft PR #9 (domain, service, JDBC, integration) |
-| R5 | UC05 Overdue/notifications | Due-soon/overdue, retries/limit, deduplication, cancel after return, own inbox | Member 5 | Notification foundation on main; REST/React on platform branch |
+| R2 | UC02 Review/approve | Direct confirmation if unnecessary; approve; rejection reason/slot release; no self-approval; immutable decisions | Member 2 | API/pages/real adapter on main; Issue #8 member/browser acceptance open |
+| R3 | UC03 Checkout/return | Validate checkout, record custodian, return condition, damage to maintenance | Zhou Fanhao | Backend/pages/V004 on main; Issue #6 validation and member acceptance open |
+| R4 | UC04 Faults/maintenance | Fault blocks booking, assign technician, transitions, repaired availability/unrepairable retirement, history | Member 4 | Backend/API/pages on main; Issue #9 full integrated acceptance open |
+| R5 | UC05 Overdue/notifications | Due-soon/overdue, retries/limit, deduplication, cancel after return, own inbox | Member 5 | APIs/inbox/worker/guard on main; Issue #7 overdue producer and full acceptance open |
 
 ### 2.4 UC03 Stories and Acceptance
 

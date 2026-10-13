@@ -11,6 +11,9 @@ This index provides navigation without replacing existing standards; historical 
 | Tools, sole writers, delegation, resume | [Agent workflow](collaboration/agent-workflow.md) |
 | Conflicts, reference patterns, user decisions | [Decisions](collaboration/decisions.md) |
 | Commands, actual CI, evidence formats | [Testing](testing.md) |
+| Current progress and remaining acceptance | [Current local progress](agile/sprint-status.md#current-local-progress-2026-10-13) |
+| Local startup and real-flow checks | [Local demo](local-demo.md), [Verification](evidence/local-demo/verification.md) |
+| Local cleanup, retained history and next work | [Repository closeout](local-repository-closeout.md), [Repository preparation](repository-preparation.md) |
 | Interface contracts | [Contracts](contracts/README.md) |
 | Backlog, Sprints, task status, report evidence | [Agile](agile/README.md) |
 | Diagram source files | [Diagrams](diagrams/) |
@@ -28,8 +31,8 @@ This index provides navigation without replacing existing standards; historical 
 | --- | --- |
 | `app/` | One Spring Boot application; retain `sg.edu.nus.serms.<business-module>.{api,service,domain,repository}` |
 | `frontend/` | One React application; `src/features/` corresponds to business modules, reusing `app/`, `api/`, `components/`, `lib/` |
-| `database/` | Existing data foundation/migration tests; retained, integration separately scoped |
-| `integration/notifications/` | Existing PostgreSQL adapter; retained, integration separately scoped |
+| `database/` | Retained data-foundation/regression module; production migrations now live in `app/` |
+| `integration/notifications/` | PostgreSQL adapters are included by app's build; pinned historical contract testing remains separate |
 | `web/`, root Docker/Compose | Existing deployment entry; distinguish current runtime and three-container target |
 | `scripts/` | Existing test/deployment scripts retained; collaboration check entry added |
 | `docs/collaboration/` | Added practices, ownership sources, agent workflow, decisions |

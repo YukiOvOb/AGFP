@@ -62,3 +62,11 @@ Shi Wenqi remains a team member and retains his original UC01/team responsibilit
 Tasks are Issues #5-#10. Database validation names Zhou Fanhao (`zfh-usedname`); the user will request acceptance of his collaborator invitation. Before GitHub permits assignment, record the intended owner without claiming an applied assignee. Wang Yuanmeng (`ezmoneysniper0701`) and Zhang Hanming (`Hanming1008`) receive their relevant platform/notification and approval/browser tasks.
 
 Local startup and UC01-UC05 acceptance are P0. Server access is not yet handed over and must not block local progress; cloud handover/release is P1. Keep credential values outside Git/public Issues. Existing server configuration and production remain unchanged in the local-demo delivery. No new-account workaround or account-appeal result is assumed. PRs and evidence continue through the existing workflow; implementation/local verification does not imply CI, member review, cloud success or team Done.
+
+## D-005 Local Closeout and Cloud Last
+
+Status: **Confirmed by the user in this closeout conversation on 2026-10-13 (Asia/Singapore)**. The user requested completing local repository housekeeping, with cloud deployment last. Basic functionality must be completed first; the user will specify additional changes later.
+
+Scope: preserve the original maintenance checkout's changes/history, prepare a clean local branch from `d42e0a6`, update current progress/testing/navigation, reconcile local backup exclusions and earlier preparation notes. Existing use-case contracts, team membership, CI rules and production remain unchanged. Other sessions' active worktrees and local databases/services are retained. This conversation does not publish remote changes, merge PRs, invite accounts, or execute cloud work.
+
+Execution order: local repository closeout → complete local UC01-UC05 and member acceptance → implement the user's later, separately defined changes → final release/cloud deployment and post-deployment acceptance. No later feature scope, deadline, hours or approval is inferred. Original DoD remains applicable to team Done even while cloud publication is deferred.

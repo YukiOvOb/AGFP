@@ -6,14 +6,17 @@ Test bench requirements remain defined in [Technology stack §5](tech-stack.md#5
 
 | Check | Working directory and command | Prerequisites / current workflow |
 | --- | --- | --- |
-| Backend | `app/`: Windows `mvnw.cmd -B verify`; macOS/Linux `./mvnw -B verify` | Java 17; PostgreSQL/Testcontainers cases require Docker. `Frontend and API contract` and `Notification foundation tests` run backend checks |
+| Backend | `app/`: Windows `mvnw.cmd -B verify`; macOS/Linux `./mvnw -B verify` | Java 17; PostgreSQL/Testcontainers cases require Docker. `Frontend and API contract` and `Notification and default PostgreSQL tests` run backend checks |
+| Complete PostgreSQL/UC03 regression | Root: `scripts/test-zhoufanhao.ps1`; without Docker supply `-PostgresBin '<PostgreSQL 18 bin>'` | Isolated PostgreSQL 18; database, app regression and UC03. CI also uses `-Puc03-postgres-it` |
+| UC04 PostgreSQL integration | `app/`: `mvnw.cmd -B -Duc04.postgres=true verify` (Linux: `./mvnw`) | Explicitly configured, already migrated TEST database; see `Uc04PostgresTestSupport`. Not automatically enabled by ordinary `verify` or the current CI jobs |
 | Frontend API types | `frontend/`: generate `app/target/openapi.json`, set `OPENAPI_FILE=../app/target/openapi.json`, then `pnpm check:api` | Actual backend verify output; `Frontend and API contract` |
 | Frontend quality/tests | `frontend/`: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` separately | Node 24 and package.json's pnpm; first `pnpm install --frozen-lockfile` |
 | Frontend E2E | `frontend/`: `pnpm exec playwright install chromium`, then `pnpm test:e2e` | Chromium/platform dependencies; Linux CI uses `--with-deps` |
-| Data foundation | Root: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-sprint1.ps1` | Existing script and `Sprint 1 database`; actually uses PostgreSQL 17, not completed 18 acceptance |
+| Data foundation | Root: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-sprint1.ps1` | Docker, Java/Maven; script and `Sprint 1 database` use PostgreSQL 18 |
 | Notification adapter | Root: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-notification-integration.ps1` | Docker, Maven, pinned upstream commit; `Notification PostgreSQL contract` |
 | Security | GitHub `CI` workflow | Existing gitleaks, Trivy, Dependency Review; local document checks do not replace them |
 | Collaboration navigation/skills | Root: `node scripts/check-collaboration.mjs` | Added `Collaboration documentation` workflow; required branch-protection checks unchanged |
+| Real local demo | Root: startup, `node scripts/smoke-local.mjs`, data/browser checks and shutdown in [local demo](local-demo.md) | Dedicated local PostgreSQL cluster/accounts; creates actual demonstration transactions; not a full exception/overdue suite |
 
 Windows environment example, working directory `frontend/`:
 
@@ -28,7 +31,9 @@ macOS/Linux equivalent:
 OPENAPI_FILE=../app/target/openapi.json pnpm check:api
 ```
 
-This table lists configured entry points, not passed checks. The real-database stage of `Notification foundation tests` still uses MySQL; some scripts still use PostgreSQL 17. PostgreSQL 18/unified migrations remain the target; actual differences are in the [Decision record](collaboration/decisions.md#retained-technical-and-business-differences). Do not incidentally change database or scanner configuration in this documentation PR.
+This table reflects main `940bf42` plus local-demo delivery `d42e0a6`. Default/local app configuration and current database CI/scripts use PostgreSQL 18; production Flyway V001-V004 is unified in `app/`. MySQL is absent from the production dependencies and H2 is test-only. The historical [Decision record](collaboration/decisions.md#retained-technical-and-business-differences) explains earlier differences, not today's runtime. JaCoCo generates reports; its ≥ 70% automatic gate is still pending. Test and coverage requirements remain unchanged.
+
+The [PR #11 verification record](evidence/local-demo/verification.md) preserves local results. GitHub subsequently passed all nine checks on `d42e0a6`; those results do not cover new closeout commits or replace member acceptance. Current status and remaining scenarios are in [Sprint progress](agile/sprint-status.md#current-local-progress-2026-10-13).
 
 ## Verification Scope
 

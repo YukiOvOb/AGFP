@@ -17,3 +17,11 @@ __pycache__/
 **/*.tsbuildinfo
 frontend/playwright-report/
 frontend/test-results/
+
+# Local handover archives and isolated review/development copies
+/*.zip
+/*.bundle
+/AGFP-recovery-*/
+/SERMS-*-review-*/
+/SERMS-policy-audit-*/
+/SERMS-ci-hardening-*/
