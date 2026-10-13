@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
@@ -8,15 +8,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ErrorState } from '@/components/Feedback';
 import { message } from '@/api/client';
-import { faultSchema, hasAnyRole } from './format';
+import { faultSchema, hasAnyRole, uuid } from './format';
 import { useReportFault } from './queries';
 export function ReportFaultForm() {
   const { user } = useAuth();
+  const [params] = useSearchParams();
+  const selected = uuid.safeParse(params.get('equipmentId'));
   const mutation = useReportFault();
   const [created, setCreated] = useState('');
   const form = useForm<z.infer<typeof faultSchema>>({
     resolver: zodResolver(faultSchema),
-    defaultValues: { equipmentId: '', loanId: '', faultDescription: '' },
+    defaultValues: {
+      equipmentId: selected.success ? selected.data : '',
+      loanId: '',
+      faultDescription: '',
+    },
   });
   return (
     <section className="maintenance-panel">
@@ -33,7 +39,7 @@ export function ReportFaultForm() {
               faultDescription: values.faultDescription,
             });
             setCreated(item.maintenanceCaseId);
-            form.reset();
+            form.reset({ equipmentId: '', loanId: '', faultDescription: '' });
           } catch {
             /* ProblemDetail is rendered below. */
           }
@@ -48,7 +54,7 @@ export function ReportFaultForm() {
           placeholder="Equipment UUID"
         />
         <p id="equipment-help" className="muted">
-          Equipment lookup will be connected when the shared equipment catalogue API is available.
+          <Link to="/equipment">Find equipment</Link> and choose Report fault to select it here.
         </p>
         <p id="fault-equipment-error" className="field-error">
           {form.formState.errors.equipmentId?.message}

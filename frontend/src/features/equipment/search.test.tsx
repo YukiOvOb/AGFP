@@ -69,6 +69,31 @@ function withSearch(handler: (url: URL) => object) {
   return seen;
 }
 describe('equipment search (UC01)', () => {
+  it.each(['BORROWER', 'CUSTODIAN'])(
+    'links %s to a fault report with the selected equipment',
+    async (role) => {
+      server.use(
+        http.get('/api/v1/auth/me', () => HttpResponse.json({ ...currentUser, roles: [role] })),
+      );
+      withSearch(() => page([{ ...camera, status: 'UNDER_MAINTENANCE' }]));
+      mount('/equipment');
+      expect(
+        await screen.findByRole('link', { name: 'Report a fault for Canon EOS R6' }),
+      ).toHaveAttribute('href', `/maintenance?equipmentId=${ITEM}`);
+    },
+  );
+  it.each(['ADMIN', 'MAINTAINER', 'APPROVER'])(
+    'does not offer fault reporting to %s',
+    async (role) => {
+      server.use(
+        http.get('/api/v1/auth/me', () => HttpResponse.json({ ...currentUser, roles: [role] })),
+      );
+      withSearch(() => page([camera]));
+      mount('/equipment');
+      await screen.findByText('Canon EOS R6');
+      expect(screen.queryByRole('link', { name: /Report a fault/ })).not.toBeInTheDocument();
+    },
+  );
   it('lists equipment and links borrowers to the reserve page', async () => {
     withSearch(() => page([camera]));
     mount('/equipment');
