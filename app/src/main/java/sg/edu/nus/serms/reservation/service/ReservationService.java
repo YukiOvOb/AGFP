@@ -82,7 +82,8 @@ public class ReservationService {
                 now,
                 repository.countOpen(requesterId, now),
                 equipment.requiresApproval(),
-                repository.hasOverdueLoan(requesterId, now)));
+                repository.hasOverdueLoan(requesterId, now),
+                equipment.maxBorrowDuration()));
     if (!violations.isEmpty()) throw new ReservationException.RulesBroken(violations);
 
     if (repository.overlapsHeldSlot(request.equipmentId(), request.startAt(), request.endAt())) {
