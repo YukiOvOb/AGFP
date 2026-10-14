@@ -438,6 +438,68 @@ describe('UC04 maintenance workspace', () => {
     expect(screen.getByRole('heading', { name: 'Field Camera (CAM-001)' })).toBeVisible();
     expect(await screen.findByText('No maintenance history yet.')).toBeVisible();
   });
+  it('operator opens equipment history from a case and the lookup covers that item', async () => {
+    lists();
+    detail(item('IN_PROGRESS'));
+    server.use(
+      http.get(ROOT + '/equipment/' + EQUIPMENT + '/cases', () =>
+        HttpResponse.json([item('IN_PROGRESS')]),
+      ),
+      http.get(ROOT + '/equipment/' + EQUIPMENT + '/history', () => HttpResponse.json([])),
+    );
+    mount(['CUSTODIAN'], '/maintenance/cases/' + CASE);
+    await userEvent
+      .setup()
+      .click(
+        await screen.findByRole('link', { name: 'Maintenance history for Field Camera (CAM-001)' }),
+      );
+    const lookup = await screen.findByRole('region', { name: 'Equipment maintenance lookup' });
+    expect(within(lookup).getByLabelText('Equipment ID for history')).toHaveValue(EQUIPMENT);
+    expect(
+      await within(lookup).findByRole('heading', { name: 'Field Camera (CAM-001)' }),
+    ).toBeVisible();
+    expect(within(lookup).getByRole('link', { name: 'Camera lens jammed' })).toBeVisible();
+    // Cards in the lookup already show this item, so their equipment is not linked again.
+    expect(
+      within(lookup).queryByRole('link', { name: /^Maintenance history for/ }),
+    ).not.toBeInTheDocument();
+  });
+  it('links equipment history from the operator queue but not from maintainer views', async () => {
+    lists([item('OPEN', null)]);
+    mount(['CUSTODIAN']);
+    expect(
+      await screen.findByRole('link', { name: 'Maintenance history for Field Camera (CAM-001)' }),
+    ).toHaveAttribute('href', '/maintenance?history=' + EQUIPMENT);
+  });
+  it('maintainer sees equipment names without history links', async () => {
+    lists([], [item()]);
+    detail(item());
+    mount(['MAINTAINER']);
+    expect(await screen.findByText('Field Camera (CAM-001)')).toBeVisible();
+    expect(
+      screen.queryByRole('link', { name: /^Maintenance history for/ }),
+    ).not.toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole('link', { name: 'Camera lens jammed' }));
+    expect(await screen.findByRole('heading', { name: 'Case details' })).toBeVisible();
+    expect(screen.getByText('Field Camera (CAM-001)')).toBeVisible();
+    expect(
+      screen.queryByRole('link', { name: /^Maintenance history for/ }),
+    ).not.toBeInTheDocument();
+  });
+  it('ignores an invalid history parameter without looking anything up', async () => {
+    let lookups = 0;
+    lists();
+    server.use(
+      http.get(ROOT + '/equipment/:id/cases', () => {
+        lookups++;
+        return HttpResponse.json([]);
+      }),
+    );
+    mount(['CUSTODIAN'], '/maintenance?history=not-a-uuid');
+    expect(await screen.findByLabelText('Equipment ID for history')).toHaveValue('');
+    expect(await screen.findByText('No open maintenance cases.')).toBeVisible();
+    expect(lookups).toBe(0);
+  });
   it('admin report has no default period, converts SGT bounds and renders five status counts', async () => {
     let requestUrl = '';
     server.use(
