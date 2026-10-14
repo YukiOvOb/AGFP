@@ -12,9 +12,9 @@ A cron example for the confirmed operator is `15 2 * * * APP_DIR=/opt/agfp /opt/
 
 Do this without touching the live database or its volume:
 
-1. Select a recent `.dump`; verify `pg_restore --list FILE` exits successfully.
+1. Select a recent `.dump`; verify it with PostgreSQL 18 `pg_restore --list` (for example, stream it to `docker exec -i SCRATCH_CONTAINER pg_restore --list`). Do not use an older host `pg_restore` against a PostgreSQL 18 archive.
 2. Create an isolated PostgreSQL 18 container or scratch database with no application connection. Use a new database name and local-only credentials.
-3. Run `pg_restore --no-owner --no-acl -U SCRATCH_USER -d SCRATCH_DB FILE` in that scratch environment. A custom archive can be streamed via stdin to `pg_restore` inside a container.
+3. Run PostgreSQL 18 `pg_restore --no-owner --no-acl -U SCRATCH_USER -d SCRATCH_DB` in that scratch environment, streaming the custom archive to the container through stdin.
 4. Query schema objects and representative row counts; compare with the source snapshot. Record date, archive identifier, PostgreSQL versions, restore command exit code and counts, excluding credentials and user data.
 5. Remove only the scratch container/database after evidence is recorded. Never restore into the production database or delete its volume as a rehearsal.
 
