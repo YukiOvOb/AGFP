@@ -1,14 +1,17 @@
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { useAuth } from '@/app/AuthProvider';
 import { ErrorState } from '@/components/Feedback';
 import { Button } from '@/components/ui/button';
-import { hasAnyRole, workspaceRoles } from './format';
+import { hasAnyRole, uuid, workspaceRoles } from './format';
 import { ReportFaultForm } from './ReportFaultForm';
 import { OpenCaseQueue } from './OpenCaseQueue';
 import { AssignedCaseList } from './AssignedCaseList';
 import { EquipmentHistoryLookup } from './EquipmentHistoryLookup';
 export function MaintenanceHomePage() {
   const { user } = useAuth();
+  const [params] = useSearchParams();
+  const requested = uuid.safeParse(params.get('history'));
+  const history = requested.success ? requested.data : '';
   if (!hasAnyRole(user?.roles, ...workspaceRoles))
     return <ErrorState message="Your account does not have access to the maintenance workspace." />;
   return (
@@ -28,7 +31,10 @@ export function MaintenanceHomePage() {
       {hasAnyRole(user?.roles, 'BORROWER', 'CUSTODIAN') && <ReportFaultForm />}
       {hasAnyRole(user?.roles, 'CUSTODIAN', 'ADMIN') && <OpenCaseQueue />}
       {hasAnyRole(user?.roles, 'MAINTAINER') && <AssignedCaseList />}
-      {hasAnyRole(user?.roles, 'CUSTODIAN', 'ADMIN') && <EquipmentHistoryLookup />}
+      {/* A new ?history= value remounts the lookup so it starts from that equipment. */}
+      {hasAnyRole(user?.roles, 'CUSTODIAN', 'ADMIN') && (
+        <EquipmentHistoryLookup key={history} initialEquipmentId={history} />
+      )}
     </div>
   );
 }

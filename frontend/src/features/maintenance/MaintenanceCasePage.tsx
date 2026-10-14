@@ -2,17 +2,11 @@ import { Link, useParams } from 'react-router';
 import { useAuth } from '@/app/AuthProvider';
 import { ErrorState, LoadingState } from '@/components/Feedback';
 import { message } from '@/api/client';
-import {
-  equipmentLabel,
-  hasAnyRole,
-  personLabel,
-  singaporeDate,
-  statusLabel,
-  uuid,
-} from './format';
+import { hasAnyRole, personLabel, singaporeDate, statusLabel, uuid } from './format';
 import { useCase, useHistory } from './queries';
 import { MaintenanceHistory } from './MaintenanceHistory';
 import { MaintenanceActions } from './MaintenanceActions';
+import { EquipmentName } from './EquipmentName';
 function CaseDetail({ id }: { id: string }) {
   const { user } = useAuth();
   const query = useCase(id);
@@ -39,7 +33,9 @@ function CaseDetail({ id }: { id: string }) {
           <dt>Case ID</dt>
           <dd>{item.maintenanceCaseId}</dd>
           <dt>Equipment</dt>
-          <dd>{equipmentLabel(item)}</dd>
+          <dd>
+            <EquipmentName item={item} linked={hasAnyRole(user?.roles, 'CUSTODIAN', 'ADMIN')} />
+          </dd>
           <dt>Reporter</dt>
           <dd>{personLabel(item.reportedByName, item.reportedBy)}</dd>
           <dt>Assigned technician</dt>

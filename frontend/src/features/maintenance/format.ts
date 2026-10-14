@@ -15,6 +15,9 @@ export function equipmentLabel(item: {
     : item.equipmentName;
 }
 export const personLabel = (name: string | null, id: string) => name ?? id;
+// Opens the operator lookup for one item; it also covers retired equipment, which the catalogue hides.
+export const equipmentHistoryPath = (equipmentId: string) =>
+  '/maintenance?history=' + encodeURIComponent(equipmentId);
 export { hasAnyRole } from '@/lib/roles';
 export const workspaceRoles = ['BORROWER', 'CUSTODIAN', 'MAINTAINER', 'ADMIN'];
 export function singaporeDate(value: string | null) {
