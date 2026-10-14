@@ -16,8 +16,12 @@ test('maintainer signs in, starts own case, diagnoses and resolves it', async ({
   let item: components['schemas']['MaintenanceCaseResponse'] = {
     maintenanceCaseId: caseId,
     equipmentId: '12345678-1234-4234-8234-123456789003',
+    equipmentName: 'Field Camera',
+    equipmentAssetTag: 'CAM-001',
     reportedBy: '12345678-1234-4234-8234-123456789004',
+    reportedByName: 'Omar Reporter',
     assignedTo: user.userId,
+    assignedToName: user.displayName,
     loanId: null,
     status: 'ASSIGNED',
     faultDescription: 'Camera lens jammed',
@@ -72,6 +76,7 @@ test('maintainer signs in, starts own case, diagnoses and resolves it', async ({
         maintenanceCaseId: caseId,
         equipmentId: item.equipmentId,
         actorId: user.userId,
+        actorName: user.displayName,
         action:
           action === 'start' ? 'START' : action === 'diagnosis' ? 'RECORD_DIAGNOSIS' : 'RESOLVE',
         fromStatus: before,
@@ -90,12 +95,15 @@ test('maintainer signs in, starts own case, diagnoses and resolves it', async ({
   await expect(page.getByRole('heading', { name: 'My assigned cases' })).toBeVisible();
   await page.getByRole('link', { name: 'Camera lens jammed' }).click();
   await expect(page.getByText('06 Oct 2026, 08:00 SGT')).toBeVisible();
+  await expect(page.getByText('Field Camera (CAM-001)')).toBeVisible();
+  await expect(page.getByText('Omar Reporter')).toBeVisible();
   await page.getByRole('button', { name: 'Start Maintenance', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Record Diagnosis', exact: true })).toBeVisible();
   await page.getByLabel('Record Diagnosis — details').fill('Lens motor failure');
   await page.getByRole('button', { name: 'Record Diagnosis', exact: true }).click();
   await expect(page.getByText('Record Diagnosis completed successfully.')).toBeVisible();
   await expect(page.getByText('Lens motor failure', { exact: true })).toBeVisible();
+  await expect(page.getByText(/· By Liu Tongyao$/).first()).toBeVisible();
   // Capture desktop/mobile action layout and assert the page has no horizontal overflow.
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,

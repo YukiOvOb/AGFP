@@ -661,10 +661,18 @@ export interface components {
             maintenanceCaseId: string;
             /** Format: uuid */
             equipmentId: string;
+            /** @description Null only when the equipment record cannot be read */
+            equipmentName: string | null;
+            /** @description Null only when the equipment record cannot be read */
+            equipmentAssetTag: string | null;
             /** Format: uuid */
             reportedBy: string;
+            /** @description Reporter display name; null only when the user cannot be read */
+            reportedByName: string | null;
             /** Format: uuid */
             assignedTo: string | null;
+            /** @description Technician display name; null when unassigned */
+            assignedToName: string | null;
             /** Format: uuid */
             loanId: string | null;
             /** @enum {string} */
@@ -980,6 +988,8 @@ export interface components {
             toStatus: "OPEN" | "ASSIGNED" | "IN_PROGRESS" | "RESOLVED" | "UNREPAIRABLE";
             /** Format: uuid */
             actorId: string;
+            /** @description Actor display name; null only when the user cannot be read */
+            actorName: string | null;
             /** Format: date-time */
             occurredAt: string;
             detail: string | null;

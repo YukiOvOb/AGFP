@@ -1,5 +1,5 @@
 import type { MaintenanceHistoryEntry } from './queries';
-import { singaporeDate, statusLabel } from './format';
+import { personLabel, singaporeDate, statusLabel } from './format';
 export function MaintenanceHistory({ entries }: { entries: MaintenanceHistoryEntry[] }) {
   return (
     <section aria-label="Maintenance history">
@@ -16,7 +16,7 @@ export function MaintenanceHistory({ entries }: { entries: MaintenanceHistoryEnt
                 {statusLabel(entry.toStatus)}
               </p>
               <p className="muted">
-                {singaporeDate(entry.occurredAt)} · Actor: {entry.actorId}
+                {singaporeDate(entry.occurredAt)} · By {personLabel(entry.actorName, entry.actorId)}
               </p>
               {entry.detail && <p className="maintenance-text">{entry.detail}</p>}
             </li>

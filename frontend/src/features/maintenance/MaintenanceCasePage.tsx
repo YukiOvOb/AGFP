@@ -2,7 +2,14 @@ import { Link, useParams } from 'react-router';
 import { useAuth } from '@/app/AuthProvider';
 import { ErrorState, LoadingState } from '@/components/Feedback';
 import { message } from '@/api/client';
-import { hasAnyRole, singaporeDate, statusLabel, uuid } from './format';
+import {
+  equipmentLabel,
+  hasAnyRole,
+  personLabel,
+  singaporeDate,
+  statusLabel,
+  uuid,
+} from './format';
 import { useCase, useHistory } from './queries';
 import { MaintenanceHistory } from './MaintenanceHistory';
 import { MaintenanceActions } from './MaintenanceActions';
@@ -31,12 +38,14 @@ function CaseDetail({ id }: { id: string }) {
         <dl className="maintenance-meta">
           <dt>Case ID</dt>
           <dd>{item.maintenanceCaseId}</dd>
-          <dt>Equipment ID</dt>
-          <dd>{item.equipmentId}</dd>
+          <dt>Equipment</dt>
+          <dd>{equipmentLabel(item)}</dd>
           <dt>Reporter</dt>
-          <dd>{item.reportedBy}</dd>
+          <dd>{personLabel(item.reportedByName, item.reportedBy)}</dd>
           <dt>Assigned technician</dt>
-          <dd>{item.assignedTo ?? 'Not assigned'}</dd>
+          <dd>
+            {item.assignedTo ? personLabel(item.assignedToName, item.assignedTo) : 'Not assigned'}
+          </dd>
           <dt>Reported time</dt>
           <dd>{singaporeDate(item.reportedAt)}</dd>
           {item.loanId && (
