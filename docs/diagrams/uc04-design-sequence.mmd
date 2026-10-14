@@ -1,0 +1,125 @@
+sequenceDiagram
+  actor Operator as CUSTODIAN or ADMIN
+  actor Technician as Assigned MAINTAINER
+  participant Page as Maintenance React pages
+  participant API as MaintenanceController
+  participant Service as MaintenanceService Spring proxy
+  participant Directory as JdbcTechnicianDirectoryAdapter
+  participant Equipment as JdbcEquipmentMaintenanceAdapter
+  participant Case as MaintenanceCase
+  participant State as MaintenanceStateMachine
+  participant Repo as JdbcMaintenanceCaseRepository
+  participant History as JdbcMaintenanceHistoryRepository
+  participant Events as SpringMaintenanceEventPublisher
+  participant Spring as ApplicationEventPublisher
+  participant DB as PostgreSQL
+  Note over API,Service: Principal supplies actor ID, service policy checks role and self.<br/>Writes need Session and CSRF, no client expectedVersion or If-Match.
+  Operator->>Page: Assign OPEN case to selected technician
+  Page->>API: POST cases/id/assignment with technicianId
+  API->>Service: assignTechnician(caseId, technicianId, actorId)
+  Note over Service,DB: Spring begins assignment transaction
+  Service->>Repo: findById(caseId)
+  Repo->>DB: SELECT case snapshot without row lock
+  DB-->>Repo: OPEN case and persisted version
+  Repo-->>Service: Restored MaintenanceCase
+  Service->>Directory: ensureTechnician(technicianId)
+  Directory->>DB: Check ACTIVE account and MAINTAINER role
+  Service->>Equipment: lockForMaintenance(equipmentId)
+  Equipment->>DB: SELECT Equipment status FOR UPDATE
+  Service->>Case: assign(technicianId)
+  Case->>State: transition(OPEN, ASSIGN)
+  State-->>Case: ASSIGNED
+  Service->>Repo: update(item using initial snapshot version)
+  Repo->>DB: UPDATE case WHERE id and version RETURNING fields
+  Note over Repo,DB: V002 check_maintenance guards transition,<br/>maintenance_version increments version, V004 makes it bigint.
+  alt Row updated and all synchronous processing succeeds
+    DB-->>Repo: Saved ASSIGNED snapshot and new version
+    Repo-->>Service: Restored saved case
+    Service->>History: append(ASSIGN history)
+    History->>DB: INSERT SUCCESS MAINTENANCE_ASSIGN audit
+    Service->>Events: publish(MaintenanceAssigned)
+    Events->>Spring: publishEvent(event)
+    Note over Spring: Main has no production UC04 notification subscriber.
+    Service->>DB: Spring transaction commits
+    Service-->>API: Case copy
+    API-->>Page: 200 ASSIGNED case
+  else No row updated or write/consumer failure
+    Note over Service: Version conflict or propagated write/consumer failure
+    Service->>DB: Spring transaction rolls back
+    API-->>Page: Safe ProblemDetail, refresh case
+  end
+  Technician->>Page: Start own assigned case
+  Page->>API: POST cases/id/start
+  API->>Service: startMaintenance(caseId, actorId)
+  Note over Service,DB: Separate start transaction
+  Service->>Repo: findById(caseId) for equipment reference
+  Repo->>DB: SELECT snapshot
+  Service->>Equipment: lockForMaintenance(equipmentId)
+  Equipment->>DB: SELECT Equipment FOR UPDATE
+  Service->>Repo: findById(caseId) after lock
+  Repo->>DB: Reload current case and version
+  Repo-->>Service: Current ASSIGNED case
+  Note over Service,Case: requireAssignedTechnician(item, actorId)
+  Service->>Case: start()
+  Case->>State: transition(ASSIGNED, START)
+  State-->>Case: IN_PROGRESS
+  Service->>Repo: update(item)
+  Repo->>DB: Conditional UPDATE RETURNING trigger version
+  Service->>History: append(START history)
+  History->>DB: INSERT SUCCESS MAINTENANCE_START audit
+  Service->>DB: Spring transaction commits
+  API-->>Page: 200 IN_PROGRESS case
+  Note over Service,Events: No UC04 start event is published.
+  opt Diagnosis, repair action or note before completion
+    Page->>API: POST cases/id/diagnosis, repair-actions or notes with detail
+    API->>Service: recordDiagnosis, recordRepairAction or addMaintenanceNote
+    Service->>Repo: findById(caseId) for equipment reference
+    Repo->>DB: SELECT snapshot
+    Service->>Equipment: Lock Equipment in a separate work transaction
+    Equipment->>DB: SELECT Equipment FOR UPDATE
+    Service->>Repo: Reload case, require assigned actor and IN_PROGRESS
+    Repo->>DB: SELECT current snapshot
+    Service->>History: append(work detail)
+    History->>DB: INSERT maintenance audit, no case UPDATE
+    Service->>DB: Spring transaction commits
+    API-->>Page: 200 unchanged case state and version
+  end
+  Technician->>Page: Resolve with completion note
+  Page->>API: POST cases/id/resolve with resolutionNote
+  API->>Service: resolve(caseId, note, actorId)
+  Note over Service,DB: Separate completion transaction, failures roll back all writes.
+  Service->>Repo: findById(caseId) for equipment reference
+  Repo->>DB: SELECT snapshot
+  Service->>Equipment: lockForMaintenance(equipmentId)
+  Equipment->>DB: SELECT Equipment FOR UPDATE
+  Service->>Repo: findById(caseId) after lock
+  Repo->>DB: Reload current case and version
+  Repo-->>Service: IN_PROGRESS case
+  Note over Service,Case: Require assigned actor, non-blank note and valid completion time.
+  Service->>Case: resolve(note, clock.instant())
+  Case->>State: transition(IN_PROGRESS, RESOLVE)
+  State-->>Case: RESOLVED
+  Service->>Repo: update(terminal item)
+  Repo->>DB: Conditional UPDATE note, status and resolved_at RETURNING version
+  DB-->>Repo: Saved RESOLVED snapshot
+  Repo-->>Service: Restored saved case
+  Service->>Equipment: recomputeAfterResolvedMaintenance(equipmentId)
+  Equipment->>DB: Read locked Equipment, query other active cases and ACTIVE loans
+  Note over Equipment,DB: RETIRED > other active case > ACTIVE loan > AVAILABLE.<br/>Avoid same-state Equipment UPDATE.
+  Equipment->>DB: UPDATE Equipment status when different
+  Service->>History: append(RESOLVE history)
+  History->>DB: INSERT SUCCESS MAINTENANCE_RESOLVE audit
+  Service->>Events: publish(MaintenanceCompleted)
+  Events->>Spring: publishEvent(event)
+  opt Draft PR 12 consumer only, absent from main
+    Note over Spring,DB: MaintenanceNotificationListener requests a deduplicated notice<br/>for the original reporter in the same transaction.<br/>Assignment requests target the assigned technician.
+  end
+  alt All writes and synchronous consumers succeed
+    Service->>DB: Spring transaction commits
+    API-->>Page: 200 terminal case
+    Page->>Page: Refresh case, history, queues and reports
+  else Any failure
+    Service->>DB: Spring transaction rolls back case, Equipment and audit
+    API-->>Page: Safe ProblemDetail
+  end
+  Note over Case,Equipment: Unrepairable uses markUnrepairable and MARK_UNREPAIRABLE.<br/>After terminal persistence, markRetired replaces recomputation.<br/>Invalid roles, assignment or transitions abort before success writes/events.

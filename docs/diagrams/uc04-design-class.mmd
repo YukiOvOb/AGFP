@@ -1,0 +1,228 @@
+classDiagram
+  class MaintenanceHomePage {
+    <<boundary>>
+    ReportFaultForm
+    OpenCaseQueue
+    AssignedCaseList
+  }
+  class MaintenanceCasePage {
+    <<boundary>>
+    MaintenanceActions
+    MaintenanceHistory
+  }
+  class MaintenanceReportPage {
+    <<boundary>>
+    SGT period inputs
+    status and period statistics
+  }
+  class MaintenanceController {
+    reportFault(ReportFaultRequest, principal)
+    assign(caseId, AssignTechnicianRequest, principal)
+    start(caseId, principal)
+    recordDiagnosis(caseId, detail, principal)
+    resolve(caseId, note, principal)
+    markUnrepairable(caseId, note, principal)
+    history(caseId)
+    report(from, to)
+  }
+  class MaintenanceAccessPolicy {
+    isSelf(authentication, userId)
+    isAssigned(authentication, caseId)
+  }
+  class MaintenanceService {
+    reportFault(equipmentId, reportedBy, description, loanId)
+    assignTechnician(caseId, technicianId, actorId)
+    startMaintenance(caseId, actorId)
+    recordDiagnosis(caseId, detail, actorId)
+    recordRepairAction(caseId, detail, actorId)
+    addMaintenanceNote(caseId, detail, actorId)
+    resolve(caseId, note, actorId)
+    markUnrepairable(caseId, note, actorId)
+    getCase(caseId)
+    getCaseHistory(caseId)
+  }
+  class MaintenanceCase {
+    UUID maintenanceCaseId
+    UUID equipmentId
+    UUID reportedBy
+    UUID assignedTo
+    UUID loanId
+    MaintenanceStatus status
+    long version
+    restore(snapshot)
+    snapshot()
+    copy()
+    assign(technicianId)
+    start()
+    resolve(note, at)
+    markUnrepairable(note, at)
+  }
+  class MaintenanceCaseSnapshot {
+    <<record>>
+    String faultDescription
+    String resolutionNote
+    Instant reportedAt
+    Instant resolvedAt
+    long version
+  }
+  class MaintenanceStatus {
+    <<enumeration>>
+    OPEN
+    ASSIGNED
+    IN_PROGRESS
+    RESOLVED
+    UNREPAIRABLE
+  }
+  class MaintenanceStateMachine {
+    transition(current, action) MaintenanceStatus
+  }
+  class MaintenanceAction {
+    <<enumeration>>
+    ASSIGN
+    START
+    RESOLVE
+    MARK_UNREPAIRABLE
+  }
+  class EquipmentMaintenancePort {
+    <<interface>>
+    ensureEquipmentExists(equipmentId)
+    lockForMaintenance(equipmentId)
+    markUnderMaintenance(equipmentId)
+    recomputeAfterResolvedMaintenance(equipmentId)
+    markRetired(equipmentId)
+  }
+  class TechnicianDirectoryPort {
+    <<interface>>
+    ensureTechnician(userId)
+    findActiveTechnicians()
+  }
+  class MaintenanceLoanPort {
+    <<interface>>
+    ensureLoanMatchesEquipment(loanId, equipmentId)
+  }
+  class MaintenanceCaseRepository {
+    <<interface>>
+    insert(item)
+    update(item)
+    findById(caseId)
+    findOpenCases()
+    findByAssignedTo(technicianId)
+    findByEquipmentId(equipmentId)
+  }
+  class MaintenanceHistoryRepository {
+    <<interface>>
+    append(entry)
+    findByCaseId(caseId)
+    findByEquipmentId(equipmentId)
+  }
+  class MaintenanceHistoryEntry {
+    <<record>>
+    MaintenanceHistoryAction action
+    MaintenanceStatus fromStatus
+    MaintenanceStatus toStatus
+    UUID actorId
+    Instant occurredAt
+    String detail
+  }
+  class JdbcEquipmentMaintenanceAdapter
+  class JdbcTechnicianDirectoryAdapter
+  class JdbcMaintenanceLoanAdapter
+  class JdbcMaintenanceCaseRepository
+  class JdbcMaintenanceHistoryRepository
+  class MaintenanceEventPublisher {
+    <<interface>>
+    publish(MaintenanceAssigned)
+    publish(MaintenanceCompleted)
+  }
+  class SpringMaintenanceEventPublisher
+  class ApplicationEventPublisher {
+    <<interface>>
+    publishEvent(event)
+  }
+  class MaintenanceAssigned {
+    <<record>>
+    UUID maintenanceCaseId
+    UUID equipmentId
+    UUID technicianId
+    UUID actorId
+    Instant occurredAt
+  }
+  class MaintenanceCompleted {
+    <<record>>
+    UUID maintenanceCaseId
+    UUID equipmentId
+    UUID technicianId
+    UUID actorId
+    MaintenanceStatus outcome
+    Instant occurredAt
+  }
+  class MaintenanceReportService {
+    getMaintenanceReport(fromInclusive, toExclusive)
+  }
+  class MaintenanceReportRepository {
+    <<interface>>
+    countCasesByStatus()
+    countReportedBetween(from, to)
+    countCompletedBetween(from, to)
+    averageCompletionDurationBetween(from, to)
+  }
+  class JdbcMaintenanceReportRepository
+  class MaintenanceReportSnapshot {
+    <<record>>
+    casesByStatus
+    long reportedCaseCount
+    long completedCaseCount
+    Optional~Duration~ averageCompletionDuration
+  }
+  class ReportService {
+    report(from, to)
+  }
+  class PostgreSQL {
+    <<database>>
+    equipment
+    app_user and user_role
+    reservation and loan
+    maintenance_case
+    audit_log
+  }
+  MaintenanceHomePage --> MaintenanceController : Session and CSRF
+  MaintenanceCasePage --> MaintenanceController : Session and CSRF
+  MaintenanceReportPage --> MaintenanceController
+  MaintenanceController --> MaintenanceService
+  MaintenanceController --> MaintenanceReportService
+  MaintenanceService --> MaintenanceAccessPolicy : method security
+  MaintenanceAccessPolicy --> MaintenanceCaseRepository
+  MaintenanceService --> MaintenanceCase
+  MaintenanceCase --> MaintenanceCaseSnapshot : validate durable state
+  MaintenanceCase --> MaintenanceStatus
+  MaintenanceCase --> MaintenanceStateMachine : State delegation
+  MaintenanceStateMachine --> MaintenanceAction
+  MaintenanceStateMachine --> MaintenanceStatus
+  MaintenanceService --> EquipmentMaintenancePort
+  MaintenanceService --> TechnicianDirectoryPort
+  MaintenanceService --> MaintenanceLoanPort
+  MaintenanceService --> MaintenanceCaseRepository
+  MaintenanceService --> MaintenanceHistoryRepository
+  MaintenanceService --> MaintenanceEventPublisher
+  MaintenanceHistoryRepository --> MaintenanceHistoryEntry
+  JdbcEquipmentMaintenanceAdapter ..|> EquipmentMaintenancePort
+  JdbcTechnicianDirectoryAdapter ..|> TechnicianDirectoryPort
+  JdbcMaintenanceLoanAdapter ..|> MaintenanceLoanPort
+  JdbcMaintenanceCaseRepository ..|> MaintenanceCaseRepository
+  JdbcMaintenanceHistoryRepository ..|> MaintenanceHistoryRepository
+  JdbcEquipmentMaintenanceAdapter --> PostgreSQL : equipment locks and status
+  JdbcTechnicianDirectoryAdapter --> PostgreSQL : ACTIVE MAINTAINER projection
+  JdbcMaintenanceLoanAdapter --> PostgreSQL : linked Loan share lock
+  JdbcMaintenanceCaseRepository --> PostgreSQL : optimistic update and triggers
+  JdbcMaintenanceHistoryRepository --> PostgreSQL : append-only audit history
+  SpringMaintenanceEventPublisher ..|> MaintenanceEventPublisher
+  SpringMaintenanceEventPublisher --> ApplicationEventPublisher : Observer publication
+  MaintenanceEventPublisher --> MaintenanceAssigned
+  MaintenanceEventPublisher --> MaintenanceCompleted
+  MaintenanceReportService --> MaintenanceAccessPolicy : ADMIN method security
+  MaintenanceReportService --> MaintenanceReportRepository
+  MaintenanceReportService --> MaintenanceReportSnapshot
+  JdbcMaintenanceReportRepository ..|> MaintenanceReportRepository
+  JdbcMaintenanceReportRepository --> PostgreSQL : repeatable-read statistics
+  ReportService --> MaintenanceReportService : public UC04 read model
+  %% MaintenanceNotificationListener is only in draft PR 12, not this main class model.
