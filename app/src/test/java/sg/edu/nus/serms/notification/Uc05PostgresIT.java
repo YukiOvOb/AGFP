@@ -41,6 +41,8 @@ import sg.edu.nus.serms.notification.service.CollectionReminderScanner;
 import sg.edu.nus.serms.reservation.service.event.ReservationSubmitted;
 import sg.edu.nus.serms.reservation.service.event.ReservationCancelled;
 import sg.edu.nus.serms.reservation.domain.ReservationStatus;
+import sg.edu.nus.serms.reservation.domain.ReservationRequest;
+import sg.edu.nus.serms.reservation.service.ReservationService;
 import sg.edu.nus.serms.notification.service.NotificationWorker;
 import sg.edu.nus.serms.shared.security.SermsUserPrincipal;
 import sg.edu.nus.serms.testsupport.SermsFixtures;
@@ -56,17 +58,31 @@ import sg.edu.nus.serms.testsupport.SermsFixtures;
 class Uc05PostgresIT {
   @DynamicPropertySource
   static void database(DynamicPropertyRegistry properties) {
-    var pg = new PostgreSQLContainer("postgres:18-alpine").withDatabaseName("serms_test_uc05");
-    pg.start();
-    properties.add("spring.datasource.url", pg::getJdbcUrl);
-    properties.add("spring.datasource.username", pg::getUsername);
-    properties.add("spring.datasource.password", pg::getPassword);
+    String url = System.getenv("SERMS_UC05_TEST_JDBC_URL");
+    String user = System.getenv("SERMS_UC05_TEST_DB_USER");
+    String pass = System.getenv("SERMS_UC05_TEST_DB_PASSWORD");
+    if (url == null || url.isBlank()) {
+      url = System.getenv("SERMS_UC03_TEST_JDBC_URL");
+      user = System.getenv("SERMS_UC03_TEST_DB_USER");
+      pass = System.getenv("SERMS_UC03_TEST_DB_PASSWORD");
+    }
+    if (url == null || url.isBlank()) {
+      var pg = new PostgreSQLContainer("postgres:18-alpine").withDatabaseName("serms_test_uc05");
+      pg.start(); url = pg.getJdbcUrl(); user = pg.getUsername(); pass = pg.getPassword();
+    } else if (!url.matches("jdbc:postgresql://[^/]+/serms_test_uc0[35][a-z0-9_]*(\\?.*)?")) {
+      throw new IllegalStateException("UC05 requires an isolated serms_test_uc05 or serms_test_uc03 database");
+    }
+    String finalUrl = url, finalUser = user, finalPass = pass;
+    properties.add("spring.datasource.url", () -> finalUrl);
+    properties.add("spring.datasource.username", () -> finalUser);
+    properties.add("spring.datasource.password", () -> finalPass);
   }
 
   @Autowired JdbcTemplate jdbc;
   @Autowired MockMvc mvc;
   @Autowired PasswordEncoder passwords;
   @Autowired LoanService loans;
+  @Autowired ReservationService reservations;
   @Autowired MaintenanceService maintenance;
   @Autowired LoanReminderScanner scanner;
   @Autowired CollectionReminderScanner collectionScanner;
@@ -362,8 +378,75 @@ class Uc05PostgresIT {
     mvc.perform(get("/api/v1/overdue").session(login(borrower))).andExpect(status().isForbidden());
     mvc.perform(get("/api/v1/overdue")).andExpect(status().isUnauthorized());
     asCustodian(custodian); loans.receive(loan.loanId(),0,"GOOD",null);
-    mvc.perform(get("/api/v1/overdue").session(login(custodian)))
-        .andExpect(status().isOk()).andExpect(jsonPath("$.content.length()").value(0));
+    assertThat(mvc.perform(get("/api/v1/overdue").session(login(custodian)))
+        .andExpect(status().isOk()).andReturn().getResponse().getContentAsString())
+        .doesNotContain(loan.loanId().toString());
+  }
+
+
+  @Test
+  void overdueSessionMustStillHaveActiveDatabaseRole() throws Exception {
+    UUID custodian=user("CUSTODIAN"), admin=user("ADMIN");
+    MockHttpSession custodianSession=login(custodian), adminSession=login(admin);
+    mvc.perform(get("/api/v1/overdue").session(custodianSession)).andExpect(status().isOk());
+    mvc.perform(get("/api/v1/overdue").session(adminSession)).andExpect(status().isOk());
+    jdbc.update("UPDATE serms.app_user SET account_status='DISABLED' WHERE user_id=?",custodian);
+    mvc.perform(get("/api/v1/overdue").session(custodianSession)).andExpect(status().isForbidden());
+    jdbc.update("DELETE FROM serms.user_role WHERE user_id=?",admin);
+    mvc.perform(get("/api/v1/overdue").session(adminSession)).andExpect(status().isForbidden());
+  }
+
+  @Test
+  void checkoutCancelsCommittedButUnsentCollectionNotice() {
+    UUID borrower=user("BORROWER"), custodian=user("CUSTODIAN");
+    UUID equipment=fixtures.equipment("Collected camera", "Camera", "Desk", false);
+    Instant start=now.plusSeconds(3600);
+    UUID reservation=fixtures.reservation(borrower,equipment,start,start.plusSeconds(3600),"CONFIRMED");
+    collectionScanner.scan();
+    assertThat(jdbc.queryForObject("""
+        SELECT status FROM serms.notification_request WHERE recipient=? AND content LIKE 'Collect %'
+        """,String.class,borrower.toString())).isEqualTo("PENDING");
+    when(clock.instant()).thenReturn(start.plusSeconds(1));
+    asCustodian(custodian);
+    loans.checkout(reservation,borrower,0,true);
+    worker.deliverPending();
+    assertThat(jdbc.queryForObject("""
+        SELECT status FROM serms.notification_request WHERE recipient=? AND content LIKE 'Collect %'
+        """,String.class,borrower.toString())).isEqualTo("CANCELLED");
+    assertThat(jdbc.queryForObject("""
+        SELECT reason FROM serms.notification_request WHERE recipient=? AND content LIKE 'Collect %'
+        """,String.class,borrower.toString())).isEqualTo("RESERVATION_COLLECTED");
+  }
+
+  @Test
+  void realReservationSubmitCancelAndFailureKeepAuditAndNoticesAtomic() {
+    UUID borrower=user("BORROWER");
+    UUID equipment=fixtures.equipment("Atomic reservation camera", "Camera", "Desk", false);
+    asRole(borrower,"BORROWER");
+    var request=new ReservationRequest(equipment,now.plusSeconds(3600),now.plusSeconds(7200),"UC05 test");
+    var submitted=reservations.submit(borrower,request);
+    UUID reservationId=submitted.reservationId();
+    assertThat(jdbc.queryForObject("""
+        SELECT count(*) FROM serms.audit_log WHERE entity_type='Reservation' AND entity_id=? AND action='RESERVATION_SUBMIT'
+        """,Integer.class,reservationId)).isEqualTo(1);
+    assertThat(count(borrower,"BUSINESS_EVENT")).isEqualTo(1);
+    reservations.cancel(borrower,reservationId);
+    assertThat(jdbc.queryForObject("""
+        SELECT count(*) FROM serms.audit_log WHERE entity_type='Reservation' AND entity_id=? AND action='RESERVATION_CANCEL'
+        """,Integer.class,reservationId)).isEqualTo(1);
+    assertThat(count(borrower,"BUSINESS_EVENT")).isEqualTo(2);
+    UUID rollbackEquipment=fixtures.equipment("Rolled back camera", "Camera", "Desk", false);
+    var rollbackRequest=new ReservationRequest(rollbackEquipment,now.plusSeconds(10800),now.plusSeconds(14400),"rollback");
+    int beforeAudit=jdbc.queryForObject("SELECT count(*) FROM serms.audit_log WHERE actor_id=? AND action='RESERVATION_SUBMIT'",Integer.class,borrower);
+    int beforeNotice=count(borrower,"BUSINESS_EVENT");
+    org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+        new TransactionTemplate(manager).executeWithoutResult(status -> {
+          reservations.submit(borrower,rollbackRequest);
+          throw new IllegalStateException("simulated downstream failure after event publication");
+        })).isInstanceOf(IllegalStateException.class);
+    assertThat(jdbc.queryForObject("SELECT count(*) FROM serms.reservation WHERE equipment_id=?",Integer.class,rollbackEquipment)).isZero();
+    assertThat(jdbc.queryForObject("SELECT count(*) FROM serms.audit_log WHERE actor_id=? AND action='RESERVATION_SUBMIT'",Integer.class,borrower)).isEqualTo(beforeAudit);
+    assertThat(count(borrower,"BUSINESS_EVENT")).isEqualTo(beforeNotice);
   }
 
   private int reminderCount(long reminderId) {

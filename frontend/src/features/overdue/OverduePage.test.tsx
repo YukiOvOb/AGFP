@@ -32,6 +32,26 @@ describe('overdue view', () => {
     await screen.findByText('1d 1h 0m');
     expect(orders).toContain('asc');
   });
+  it('requests the next server page and resets paging when the order changes', async () => {
+    const queries: string[] = [];
+    server.use(http.get('/api/v1/overdue', ({ request }) => {
+      const url = new URL(request.url);
+      queries.push(`${url.searchParams.get('page')}:${url.searchParams.get('order')}`);
+      const page = Number(url.searchParams.get('page'));
+      return HttpResponse.json({ content: [{ loanId: `loan-${page}`, reservationId: `reservation-${page}`,
+        borrowerName: `Borrower ${page}`, equipmentName: `Camera ${page}`,
+        dueAt: '2026-10-14T01:00:00Z', overdueSeconds: 90000 }],
+        totalElements: 21, page, size: 20 });
+    }));
+    mount(['CUSTODIAN']);
+    expect(await screen.findByText('Camera 0')).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: /next page/i }));
+    expect(await screen.findByText('Camera 1')).toBeVisible();
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Sort by overdue duration' }), 'asc');
+    expect(await screen.findByText('Camera 0')).toBeVisible();
+    expect(queries).toContain('1:desc');
+    expect(queries).toContain('0:asc');
+  });
   it('keeps borrowers out of the overdue workspace', async () => {
     mount(['BORROWER']);
     expect(await screen.findByText('Your account does not have access to this page.')).toBeVisible();
