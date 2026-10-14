@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/test/server';
 import ReportsPage from './ReportsPage';
-import { customPeriod, formatHours, lastDays, presetOf } from './period';
+import { customPeriod, formatHours, formatPercent, lastDays, presetOf } from './period';
 import type { Report } from './queries';
 // Recharts measures its container; jsdom has no layout, so the chart tab renders no bars here.
 // The numbers are checked through the summary and the table tab, which carry the same data.
@@ -257,5 +257,10 @@ describe('report periods', () => {
     expect(formatHours(3)).toBe('3 h');
     expect(formatHours(47.5)).toBe('47.5 h');
     expect(formatHours(72)).toBe('3 d');
+    expect(formatHours(0.01)).toBe('< 0.1 h');
+    expect(formatHours(0)).toBe('0 h');
+    expect(formatPercent(0.001)).toBe('<1%');
+    expect(formatPercent(0)).toBe('0%');
+    expect(formatPercent(0.425)).toBe('43%');
   });
 });

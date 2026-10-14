@@ -42,9 +42,12 @@ export function presetOf(period: Period, now = new Date()) {
 const percent = new Intl.NumberFormat('en-SG', { style: 'percent', maximumFractionDigits: 0 });
 const decimal = new Intl.NumberFormat('en-SG', { maximumFractionDigits: 1 });
 const whole = new Intl.NumberFormat('en-SG');
-export const formatPercent = (ratio: number) => percent.format(ratio);
+/** A share that rounds to 0% but is not zero reads "<1%", so short use is not shown as none. */
+export const formatPercent = (ratio: number) =>
+  ratio > 0 && ratio < 0.005 ? '<1%' : percent.format(ratio);
 export const formatCount = (value: number) => whole.format(value);
 /** Hours under two days, otherwise days. */
 export function formatHours(hours: number) {
+  if (hours > 0 && hours < 0.05) return '< 0.1 h';
   return hours < 48 ? `${decimal.format(hours)} h` : `${decimal.format(hours / 24)} d`;
 }

@@ -253,6 +253,7 @@ export default function ReportsPage() {
                 valueLabel="Reservations"
                 empty={
                   <EmptyState
+                    className="min-h-0 py-8"
                     icon={<ChartColumn size={26} />}
                     title="No reservations"
                     description="Nothing was booked to start in this period."
@@ -272,6 +273,7 @@ export default function ReportsPage() {
                 max={1}
                 empty={
                   <EmptyState
+                    className="min-h-0 py-8"
                     icon={<ChartColumn size={26} />}
                     title="No equipment"
                     description="There is no equipment to measure yet."
@@ -289,6 +291,7 @@ export default function ReportsPage() {
                 caption="Loans that are overdue now"
                 empty={
                   <EmptyState
+                    className="min-h-0 py-8"
                     icon={<ClockAlert size={26} />}
                     title="Nothing is overdue"
                     description="Every loan is within its return time."
@@ -306,6 +309,7 @@ export default function ReportsPage() {
                 caption="Late returns by category"
                 empty={
                   <EmptyState
+                    className="min-h-0 py-8"
                     icon={<ClockAlert size={26} />}
                     title="No loans fell due"
                     description="No loan reached its return time in this period."
@@ -324,6 +328,7 @@ export default function ReportsPage() {
                 initialSorting={[{ id: 'utilisation', desc: true }]}
                 empty={
                   <EmptyState
+                    className="min-h-0 py-8"
                     icon={<ChartColumn size={26} />}
                     title="No equipment"
                     description="There is no equipment to measure yet."
@@ -354,6 +359,7 @@ export default function ReportsPage() {
                   caption="Equipment with the most maintenance cases"
                   empty={
                     <EmptyState
+                      className="min-h-0 py-8"
                       icon={<Wrench size={26} />}
                       title="No faults reported"
                       description="No maintenance case was opened in this period."
