@@ -291,6 +291,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reservations, utilisation, overdue and maintenance figures for one period */
+        get: operations["getOperationsReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/notifications": {
         parameters: {
             query?: never;
@@ -789,6 +806,117 @@ export interface components {
             totalElements: number;
             /** Format: int32 */
             totalPages: number;
+        };
+        CategoryOverdueView: {
+            category: string;
+            /** Format: int64 */
+            loansDue: number;
+            /** Format: int64 */
+            returnedLate: number;
+            /** Format: int64 */
+            stillOverdue: number;
+        };
+        CategoryReservationsView: {
+            category: string;
+            /** Format: int64 */
+            total: number;
+            /** Format: int64 */
+            pendingApproval: number;
+            /** Format: int64 */
+            confirmed: number;
+            /** Format: int64 */
+            fulfilled: number;
+            /** Format: int64 */
+            rejected: number;
+            /** Format: int64 */
+            cancelled: number;
+        };
+        CategoryUtilisationView: {
+            category: string;
+            /** Format: int32 */
+            equipment: number;
+            /** Format: double */
+            loanedHours: number;
+            /**
+             * Format: double
+             * @description 0 to 1
+             */
+            utilisation: number;
+        };
+        EquipmentMaintenanceView: {
+            /** Format: uuid */
+            equipmentId: string;
+            assetTag: string;
+            name: string;
+            category: string;
+            /** Format: int64 */
+            cases: number;
+        };
+        EquipmentUtilisationView: {
+            /** Format: uuid */
+            equipmentId: string;
+            assetTag: string;
+            name: string;
+            category: string;
+            status: string;
+            /** Format: int64 */
+            loans: number;
+            /** Format: double */
+            loanedHours: number;
+            /**
+             * Format: double
+             * @description 0 to 1
+             */
+            utilisation: number;
+        };
+        MaintenanceView: {
+            /** @description Current cases by stored status */
+            casesByStatus: {
+                [key: string]: number;
+            };
+            /** Format: int64 */
+            reportedInPeriod: number;
+            /** Format: int64 */
+            completedInPeriod: number;
+            /**
+             * Format: double
+             * @description Absent when no case was completed in the period
+             */
+            averageCompletionHours?: number;
+        };
+        OverdueLoanView: {
+            /** Format: uuid */
+            loanId: string;
+            /** Format: uuid */
+            equipmentId: string;
+            assetTag: string;
+            equipmentName: string;
+            category: string;
+            borrowerName: string;
+            /** Format: date-time */
+            dueAt: string;
+            /** Format: double */
+            overdueHours: number;
+        };
+        ReportView: {
+            /** Format: date-time */
+            from: string;
+            /** Format: date-time */
+            to: string;
+            /**
+             * Format: date-time
+             * @description Utilisation and overdue frequency are measured up to this time
+             */
+            measuredUntil: string;
+            /** Format: date-time */
+            generatedAt: string;
+            reservationsByCategory: components["schemas"]["CategoryReservationsView"][];
+            equipmentUtilisation: components["schemas"]["EquipmentUtilisationView"][];
+            utilisationByCategory: components["schemas"]["CategoryUtilisationView"][];
+            overdueNow: components["schemas"]["OverdueLoanView"][];
+            overdueByCategory: components["schemas"]["CategoryOverdueView"][];
+            maintenance: components["schemas"]["MaintenanceView"];
+            maintenanceByEquipment: components["schemas"]["EquipmentMaintenanceView"][];
         };
         NotificationPage: {
             content: components["schemas"]["NotificationView"][];
@@ -1410,6 +1538,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReservationPage"];
+                };
+            };
+        };
+    };
+    getOperationsReport: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportView"];
                 };
             };
         };

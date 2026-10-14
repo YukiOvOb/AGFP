@@ -27,7 +27,7 @@ The Status column describes verified implementation at main `b3def12`: ✅ imple
 | Forms and validation | React Hook Form + Zod | — | ✅ |
 | UI components / styling | shadcn/ui (Radix-based, with built-in accessibility) + Tailwind CSS | Tailwind 4 | ✅ Shared primitives/style |
 | Tables | TanStack Table | 8 | ✅ |
-| Charts | Recharts | 3 | ⬜ |
+| Charts | Recharts | 3 | ✅ Reports page, loaded only when opened (Issue #23) |
 | Date and time | date-fns + date-fns-tz (displayed in Singapore time) | — | ✅ |
 | Package manager / runtime | pnpm · Node.js LTS | Node 24 | ✅ |
 | Code style | ESLint + Prettier | — | ✅ |
@@ -210,7 +210,7 @@ frontend/src
 | Maintenance history (5.6) | Append-only cases and state-change records; the frontend displays a timeline on equipment details |
 | In-app notifications (5.7) | `notification` table + inbox + navigation unread count; channels use a `NotificationChannel` interface (**Adapter / Factory Method pattern**), initially implementing in-app delivery only |
 | Email notifications (optional) | Another `NotificationChannel` implementation using Spring Mail; Mailpit receives development emails |
-| Reports (5.7) | Read-only SQL aggregation in backend `report`; frontend Recharts charts + TanStack Table details, with CSV export |
+| Reports (5.7) | Read-only SQL aggregation in backend `report` (`GET /api/v1/reports`, administrators only); frontend Recharts charts, each with a table view, + TanStack Table details. CSV export not built |
 | Audit records (5.7, rule 9) | Append-only `audit_log` (database triggers reject `UPDATE` and `DELETE`); domain event listeners record actor, action, target, and time |
 | QR codes (optional) | The frontend generates codes for asset tags; custodians can scan with a camera or enter identifiers manually |
 
