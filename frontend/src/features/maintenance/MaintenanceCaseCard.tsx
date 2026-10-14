@@ -1,12 +1,16 @@
 import { Link } from 'react-router';
 import type { ReactNode } from 'react';
 import type { MaintenanceCase } from './queries';
-import { equipmentLabel, personLabel, singaporeDate, statusLabel } from './format';
+import { personLabel, singaporeDate, statusLabel } from './format';
+import { EquipmentName } from './EquipmentName';
 export function MaintenanceCaseCard({
   item,
+  historyLink = false,
   children,
 }: {
   item: MaintenanceCase;
+  /** Link the equipment to the operator lookup; only for views that operators see. */
+  historyLink?: boolean;
   children?: ReactNode;
 }) {
   return (
@@ -17,7 +21,9 @@ export function MaintenanceCaseCard({
       </h3>
       <dl className="maintenance-meta">
         <dt>Equipment</dt>
-        <dd>{equipmentLabel(item)}</dd>
+        <dd>
+          <EquipmentName item={item} linked={historyLink} />
+        </dd>
         <dt>Reported</dt>
         <dd>{singaporeDate(item.reportedAt)}</dd>
         <dt>Reporter</dt>

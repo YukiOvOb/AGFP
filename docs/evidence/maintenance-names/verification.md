@@ -34,3 +34,18 @@ The demo database had no `OPEN` case, so the live queue was empty; the queue car
 | `03-equipment-lookup.png` | Equipment lookup headed by the equipment name, with cases and history |
 | `04-assigned-maintainer.png` | Maintainer's assigned cases at 1440 wide |
 | `05-assigned-mobile.png` | Same at 390 wide |
+
+## Stale wording and history link
+
+Recorded on 2026-10-14 on branch `feature/liu-tongyao-uc04-stale-wording` from main `76a38ea`, same environment as above, on the uncommitted change set that the PR commits.
+
+| Check | Command or method | Result |
+| --- | --- | --- |
+| Frontend | `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` | Passed: 126 component tests (4 new) |
+| Mocked browser suite | `pnpm test:e2e` | Passed: 12 on the final run. Of four runs, two failed: the first (1 test, while a Maven run competed for the machine; its trace was overwritten, cause unconfirmed) and the third (5 tests at the sign-in page, trace shows `net::ERR_NETWORK_CHANGED`, a Windows network change during the run). The second and fourth passed 12 |
+| Backend | `./mvnw -B test -Dtest='Maintenance*Test,Jdbc*Test'` | Passed: 331 (the backend change is two comments) |
+| Real demo | Playwright against the local demo; the frontend dev server serves this checkout | Passed: as custodian, the equipment name on a case opens `/maintenance?history=<id>`; the lookup is pre-filled, shows the item's 2 cases and its history, and is scrolled to the top of the view. As maintainer, the case page has no history link |
+
+| File | Shows |
+| --- | --- |
+| `06-history-link-custodian.png` | The lookup after following the equipment link from a case |
