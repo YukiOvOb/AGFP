@@ -4,6 +4,8 @@ sequenceDiagram
   participant Page as Maintenance React pages
   participant API as MaintenanceController
   participant Service as MaintenanceService Spring proxy
+  participant Names as MaintenanceNames
+  participant Labels as JdbcMaintenanceNameDirectory
   participant Directory as JdbcTechnicianDirectoryAdapter
   participant Equipment as JdbcEquipmentMaintenanceAdapter
   participant Case as MaintenanceCase
@@ -14,6 +16,27 @@ sequenceDiagram
   participant Spring as ApplicationEventPublisher
   participant DB as PostgreSQL
   Note over API,Service: Principal supplies actor ID, service policy checks role and self.<br/>Writes need Session and CSRF, no client expectedVersion or If-Match.
+  Operator->>Page: Read OPEN queue
+  Page->>API: GET cases/open
+  API->>Service: getOpenCases() through secured proxy
+  Note over Service,Repo: Authorization succeeds before returning records.
+  Service->>Repo: findOpenCases() in read-only transaction
+  Repo->>DB: SELECT authorized OPEN queue
+  DB-->>Repo: Case snapshots
+  Repo-->>Service: Restored cases
+  Service-->>API: Returned cases
+  API->>Names: forCases(directory, returnedCases)
+  Names->>Labels: findEquipmentLabels(distinct returned equipment IDs)
+  Labels->>DB: SELECT equipment name and asset_tag WHERE id IN returned IDs
+  DB-->>Labels: Equipment labels
+  Labels-->>Names: Immutable label map
+  Names->>Labels: findUserDisplayNames(distinct returned reporter and technician IDs)
+  Labels->>DB: SELECT display_name WHERE user_id IN returned IDs
+  DB-->>Labels: User names
+  Labels-->>Names: Immutable name map
+  Names-->>API: MaintenanceNames
+  API-->>Page: Required nullable display fields, UUID fallback if missing
+  Note over API,Labels: No lookup on authorization failure, empty sets issue no SQL.<br/>History uses forHistory and one batch of returned actor IDs.<br/>Successful mutation responses use the same post-service projection.
   Operator->>Page: Assign OPEN case to selected technician
   Page->>API: POST cases/id/assignment with technicianId
   API->>Service: assignTechnician(caseId, technicianId, actorId)

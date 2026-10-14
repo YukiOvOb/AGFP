@@ -1,6 +1,6 @@
 # UC04 Report a Fault and Process Maintenance
 
-Owner: Liu Tongyao (@cpg25ncu). This document supplies the use case description, analysis models and design models required by Proposal 9.1. It describes `main` at `310dd505170ae783058fa7e1d38adb4a273a54f0`, fetched on 2026-10-14 (Asia/Singapore). Pending work is identified separately; the models do not add API fields, states or notification consumers to that baseline.
+Owner: Liu Tongyao (@cpg25ncu). This document supplies the use case description, analysis models and design models required by Proposal 9.1. It describes `main` at `76a38eafabd74656cf90d032994339f29c970d8b`, fetched on 2026-10-14 (Asia/Singapore). Pending work is identified separately; the models do not add API fields, states or notification consumers to that baseline.
 
 ## Use Case Description
 
@@ -116,9 +116,17 @@ All paths below are relative to `/api/v1/maintenance`. GET returns 200; POST cre
 | GET | `/equipment/{equipmentId}/history` | OPERATORS: CUSTODIAN or ADMIN |
 | GET | `/report?from={instant}&to={instant}` | REPORT_READER: ADMIN; explicit ordered Instant bounds |
 
-Request DTOs contain equipment/optional loan/description, technicianId, detail or resolutionNote as appropriate. Actor IDs, client timestamps, fault category and priority are absent at this baseline. Case responses contain UUID references, five-state status, fault/resolution data, UTC Instants and a long server version. List endpoints are unpaginated arrays. Technician directory responses already contain displayName/email, ordered by displayName then userId.
+Request DTOs contain equipment/optional loan/description, technicianId, detail or resolutionNote as appropriate. Actor IDs, client timestamps, fault category and priority are absent at this baseline. Case responses retain UUID references, five-state status, fault/resolution data, UTC Instants and a long server version. PR #36 adds `equipmentName`, `equipmentAssetTag`, `reportedByName` and `assignedToName`; history responses add `actorName`. All five display fields are required response properties and nullable: an existing referenced record supplies its label, and an unreadable/missing record supplies null. `assignedToName` is also null when the case is unassigned. The frontend falls back to the corresponding ID when a referenced label is null. List endpoints are unpaginated arrays. Technician directory responses already contain displayName/email, ordered by displayName then userId.
 
 Sources: `MaintenanceController`, `MaintenanceDtos`, `MaintenanceAccessPolicy` linked above; [JdbcTechnicianDirectoryAdapter.java](../app/src/main/java/sg/edu/nus/serms/maintenance/service/jdbc/JdbcTechnicianDirectoryAdapter.java) and [MaintenanceLoanPort.java](../app/src/main/java/sg/edu/nus/serms/maintenance/service/MaintenanceLoanPort.java).
+
+### Response Name Projection
+
+`MaintenanceController` first calls the secured `MaintenanceService` method. Only after its role, identity and case-access checks succeed does `MaintenanceNames` collect distinct equipment, reporter, assigned-technician or history-actor IDs from the returned records. It never looks up labels for arbitrary request IDs or a rejected service call. This projection also decorates successful mutation responses after the service returns.
+
+The read-only `MaintenanceNameDirectory` port is implemented by `JdbcMaintenanceNameDirectory`. Each non-empty label kind uses one batched `IN (:ids)` query: equipment name and asset tag together from Equipment, and display names from Identity. Reporter and technician IDs share the user batch; history only queries its returned actor IDs. Empty sets issue no SQL. Immutable `MaintenanceNames` maps and `MaintenanceEquipmentLabel` records feed response DTOs without changing aggregate state, write transactions or access rules.
+
+Sources: [MaintenanceNameDirectory.java](../app/src/main/java/sg/edu/nus/serms/maintenance/service/MaintenanceNameDirectory.java), [JdbcMaintenanceNameDirectory.java](../app/src/main/java/sg/edu/nus/serms/maintenance/service/jdbc/JdbcMaintenanceNameDirectory.java), [MaintenanceEquipmentLabel.java](../app/src/main/java/sg/edu/nus/serms/maintenance/service/MaintenanceEquipmentLabel.java), and [MaintenanceNames.java](../app/src/main/java/sg/edu/nus/serms/maintenance/api/MaintenanceNames.java).
 
 ## Transactions, Locks, History and Events
 
@@ -161,9 +169,9 @@ The analysis models express responsibility at boundary/control/entity level; the
 
 ## Pending Changes
 
-[Issue #21](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/issues/21) will add fault category/priority, API/form validation, queue priority sort/filter and readable equipment/user names on case, queue and history pages. Planned migration V006 follows [Issue #17](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/issues/17)'s V005. Both were OPEN when checked on 2026-10-14; main contains V001-V004 only. UC03 damaged-return defaults require agreement with Zhou Fanhao. Five states remain under D-008, and #21 includes updating the stale pending wording in contract section 9. The parallel Issue #21 writer's uncommitted files are outside this document's baseline.
+[Issue #21](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/issues/21) will add fault category/priority, API/form validation, queue priority sort/filter. Readable equipment/user names on case, queue and history pages are already delivered by [PR #36](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/36), merged at `76a38eafabd74656cf90d032994339f29c970d8b`. Planned migration V006 follows [Issue #17](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/issues/17)'s V005. Both were OPEN when checked on 2026-10-14; main contains V001-V004 only. UC03 damaged-return defaults require agreement with Zhou Fanhao. Five states remain under D-008, and #21 includes updating the stale pending wording in contract section 9. The parallel Issue #21 writer's uncommitted files are outside this document's baseline.
 
-The current assignment dropdown already shows technician displayName/email; case references/history actors still show UUIDs. Catalogue-selected report equipment is already implemented. `EquipmentHistoryLookup.tsx` still claims the catalogue API is unavailable; this stale wording is recorded in the development log rather than changed here.
+The assignment dropdown shows technician displayName/email. Case cards, queues, equipment results and case details now show equipment names/asset tags and reporter/technician names; history shows actor names. Only Case ID and Loan ID remain as explicit identification fields, with UUID fallbacks for unavailable labels. Catalogue-selected report equipment is implemented, but the report-fault form and equipment-history lookup input still require an equipment UUID. `EquipmentHistoryLookup.tsx` still claims the catalogue API is unavailable; this stale wording is recorded in the development log rather than changed here.
 
 ## Acceptance Criteria and Existing Test Bench
 
@@ -179,6 +187,7 @@ The following maps implemented acceptance to tests already on the baseline. It d
 | Optimistic races and failed consumers retain atomicity | Repository/service tests and MaintenanceTransactionTest model conflicts; MaintenancePostgresIT exercises real optimistic concurrency and rollback |
 | Ordered complete history and accurate reporting | History/report repository tests, report service/snapshot tests and MaintenancePostgresIT |
 | UI validates fields and exposes only permitted actions | maintenance.test.tsx; maintenance.spec.ts covers a mocked signed-in maintainer start/diagnose/resolve flow |
+| Authorized responses show names without per-row lookup or pre-authorization disclosure | JdbcMaintenanceNameDirectoryTest; MaintenanceApiTest; MaintenancePostgresIT; MaintenanceOpenApiTest; MaintenanceJdbcWiringTest; maintenance.test.tsx and maintenance.spec.ts name assertions |
 
 | Test source | What it verifies |
 | --- | --- |
@@ -189,21 +198,22 @@ The following maps implemented acceptance to tests already on the baseline. It d
 | `service/AssignedTechnicianEnforcementTest.java` | Wrong/unassigned technician denied for all work operations; authorization uses reloaded assignment |
 | `service/MaintenanceMethodSecurityTest.java` | Real method-security proxies, explicit role/self constraints, assigned-only reads/work and ADMIN-only report; persistence mocked |
 | `service/MaintenanceTransactionTest.java` | Real Spring proxy and recording transaction manager demonstrate boundary/read-only/rollback signalling; no real database rollback claim |
-| `service/MaintenanceJdbcWiringTest.java` | Production adapter/qualified dependency wiring and MANDATORY write/lock guards without querying PostgreSQL |
+| `service/MaintenanceJdbcWiringTest.java` | Production adapter/qualified dependency wiring, including MaintenanceNameDirectory, and MANDATORY write/lock guards without querying PostgreSQL |
 | `service/SpringMaintenanceEventPublisherTest.java` | Assigned/completed events forwarded exactly once; completion rejects non-terminal outcomes |
 | `service/MaintenanceReportServiceTest.java` | Exact four-query delegation, range validation and real proxy read-only REPEATABLE_READ boundary with mocked persistence |
 | `service/MaintenanceReportSnapshotTest.java` | Immutable zero-filled status counts, range/count/duration invariants and absent empty-set average |
 | `service/jdbc/JdbcEquipmentMaintenanceAdapterTest.java` | Equipment locks/existence, retired rejection, recomputation precedence and avoiding unnecessary version bumps; mocked JDBC |
 | `service/jdbc/JdbcTechnicianDirectoryAdapterTest.java` | ACTIVE MAINTAINER filter, directory ordering and invalid targets; mocked JDBC |
+| `service/jdbc/JdbcMaintenanceNameDirectoryTest.java` | H2 name/asset-tag and user-name IN projections, missing IDs, immutable maps, and no JDBC calls for empty sets; not a real PostgreSQL bench |
 | `service/jdbc/JdbcMaintenanceLoanAdapterTest.java` | Same-equipment ACTIVE/RETURNED loans, missing/mismatched associations and propagated DB failures; mocked JDBC |
 | `repository/jdbc/JdbcMaintenanceCaseRepositoryTest.java` | SQL mappings, server versions, stale update conflict, queue/status filters and deterministic ordering; mocked JDBC |
 | `repository/jdbc/JdbcMaintenanceHistoryRepositoryTest.java` | Audit fields/correlation, eight actions, reconstructed transitions, details, filtering and ordering; mocked JDBC |
 | `repository/jdbc/JdbcMaintenanceReportRepositoryTest.java` | Global status counts, half-open intervals, both terminal outcomes and numeric duration precision; mocked JDBC |
-| `api/MaintenanceApiTest.java` | MockMvc with real method-security service and mocked repositories: Session/CSRF, actor binding, role/assignment denial, validation and safe ProblemDetail mappings |
-| `api/MaintenanceOpenApiTest.java` | All maintenance operations and schemas, absence of client actor fields |
-| `integration/MaintenancePostgresIT.java` | Real PostgreSQL case/equipment/audit commits, eligibility, assignment/version events, wrong loans/technicians, both outcomes and precedence, stale/concurrent assignment, consumer-failure rollback, ordered queries/history and report intervals/averages |
+| `api/MaintenanceApiTest.java` | MockMvc with real method-security service and mocked repositories: Session/CSRF, actor binding, role/assignment denial, validation and safe ProblemDetail mappings; case/history names, null for missing labels, and no name-directory calls after denied access |
+| `api/MaintenanceOpenApiTest.java` | All maintenance operations and schemas, absence of client actor fields; all five display properties required and nullable |
+| `integration/MaintenancePostgresIT.java` | Real PostgreSQL case/equipment/audit commits, eligibility, assignment/version events, wrong loans/technicians, both outcomes and precedence, stale/concurrent assignment, consumer-failure rollback, ordered queries/history and report intervals/averages; real JDBC equipment/asset-tag, reporter, technician and history-actor name projection |
 | `integration/Uc04PostgresTestSupport.java` | Fixture/support class rather than a test suite: explicit migrated named TEST DB, independent IDs, Spring/JDBC transaction setup and controlled event failures |
-| `frontend/src/features/maintenance/maintenance.test.tsx` | MSW component assertions: catalogue UUID selection/reset, form validation/errors, role union, directory/queue, assigned state groups, start/work/terminal controls, unrepairable confirmation, history lookup, SGT report bounds and formatting |
-| `frontend/e2e/maintenance.spec.ts` | Playwright routes mock all APIs: login, CSRF header, own case start/diagnosis/resolve, refreshed history, terminal controls and overflow at configured desktop/mobile widths; no real backend/database |
+| `frontend/src/features/maintenance/maintenance.test.tsx` | MSW component assertions: catalogue UUID selection/reset, form validation/errors, role union, directory/queue, assigned state groups, start/work/terminal controls, unrepairable confirmation, history lookup, SGT report bounds and formatting; equipment/user labels, history actor names and UUID fallbacks |
+| `frontend/e2e/maintenance.spec.ts` | Playwright routes mock all APIs: login, CSRF header, own case start/diagnosis/resolve, refreshed history, equipment/asset-tag and technician/actor name assertions, hidden equipment UUID when labelled, terminal controls and overflow at configured desktop/mobile widths; no real backend/database |
 
-`MaintenancePostgresIT` requires a dedicated migrated PostgreSQL test database; ordinary Maven verify does not enable it by default. On this baseline [maintenance-tests.yml](../.github/workflows/maintenance-tests.yml) does run it in the `maintenance-postgres` job with PostgreSQL 18 and profile `uc04-postgres-it`. This differs from the stale CI statement in [testing.md](testing.md). Its historical [UC01/UC04 verification](evidence/uc01-uc04/verification.md) records 28 real PostgreSQL tests, 24 real API checks and 10 real-browser checks on earlier delivery inputs; those results are evidence references, not this PR's results. Runtime scripts and behavioral suites were not rerun for this documentation-only task, and no member check, deployment or team Done is claimed.
+`MaintenancePostgresIT` requires a dedicated migrated PostgreSQL test database; ordinary Maven verify does not enable it by default. On this baseline [maintenance-tests.yml](../.github/workflows/maintenance-tests.yml) does run it in the `maintenance-postgres` job with PostgreSQL 18 and profile `uc04-postgres-it`. The UC04 row in [testing.md](testing.md) is corrected in this PR (D8), while its other historical rows retain their original baseline. Its historical [UC01/UC04 verification](evidence/uc01-uc04/verification.md) records 28 real PostgreSQL tests, 24 real API checks and 10 real-browser checks on earlier delivery inputs; those results are evidence references, not this PR's results. Runtime scripts and behavioral suites were not rerun for this documentation-only task, and no member check, deployment or team Done is claimed.

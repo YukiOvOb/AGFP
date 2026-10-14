@@ -91,3 +91,38 @@ The dated baseline in historical verification and database-alignment records is 
 ### Authorship
 
 The UC04 document, six diagram sources, index row and this entry were written by Codex under Liu Tongyao's instruction. Existing implementation/test authorship is unchanged. No teammate review, approval or personally recorded effort is claimed.
+
+## 2026-10-14 Synchronize design documents after PR #36
+
+### Task, baseline and authorization
+
+Liu Tongyao (@cpg25ncu) requested this conversation follow-up and confirmed Codex as the sole writer in the existing serms-uc04-design worktree on docs/liu-tongyao-uc04-design. Fetch confirmed [PR #36](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/36) was merged at 76a38eafabd74656cf90d032994339f29c970d8b and that origin/main contains functional commit 9ca0921bc5f32301cc0fa6722ff6733f211d8c2e. The fetched main baseline is 76a38eafabd74656cf90d032994339f29c970d8b.
+
+The initial clean HEAD was 49ffa5cbf2cb7304da9b7a80e7ef64018f8453b7. A normal merge produced 149c0609e6f1be4b1c83f3a3a5e883b7c38ac478 with parents 49ffa5cbf2cb7304da9b7a80e7ef64018f8453b7 and 76a38eafabd74656cf90d032994339f29c970d8b, without conflicts. No rebase or force push was used. PR #35 remains a documentation delivery: eight new files plus the docs/README.md index row and one docs/testing.md workflow cell, with its baseline explanation. This follow-up edits only the UC04 document, design class/sequence sources, this log and the specifically authorized testing row/baseline explanation. UC04 application/frontend code, contracts, migrations and all other testing rows are excluded.
+
+Rules and skills re-read: AGENTS.md, .github/CONTRIBUTING.md, .github/pull_request_template.md, .gitattributes, docs/collaboration/agent-workflow.md, ownership.md and decisions.md, docs/tech-stack.md, docs/testing.md, docs/devlog/README.md, relevant UC01/UC03 contract paths and docs/contracts/README.md, and .agents/skills/serms-worktree/SKILL.md, serms-verify/SKILL.md and serms-pr/SKILL.md. The user explicitly authorized the D8 correction in this follow-up. No subagents were used.
+
+### Changes and discrepancy status
+
+The description now covers the five required nullable name fields, ID fallbacks, the read-only MaintenanceNameDirectory / JdbcMaintenanceNameDirectory, immutable MaintenanceEquipmentLabel and MaintenanceNames, and the controller's batch projection only after secured service calls return authorized records. Each non-empty label kind uses one IN query. The design class and sequence include these dependencies and the secured queue read/name projection. The inventory includes JdbcMaintenanceNameDirectoryTest and the API, PostgreSQL, OpenAPI, wiring, component and E2E name assertions.
+
+- **D9 display UUID portion: resolved by PR #36, merge commit 76a38ea** (full SHA above). Equipment, reporter, technician and history actor labels are displayed; Case ID and Loan ID remain explicit identifiers, with UUID fallback for unreadable labels. Unassigned cases have no technician name. The fault form and equipment lookup still take an equipment UUID.
+- **D9 stale EquipmentHistoryLookup wording: unresolved.** Liu will handle it separately in Issue #21; this PR makes no frontend correction.
+- **D8: corrected in this PR.** The UC04 PostgreSQL integration workflow cell now describes Maintenance PostgreSQL acceptance, .github/workflows/maintenance-tests.yml, job maintenance-postgres, every PR and every main push, PostgreSQL 18 and -Puc04-postgres-it. Ordinary verify still does not enable that suite. Only that cell and the table's baseline explanation changed.
+- **All other D items remain unchanged.** The preceding discrepancy table is retained as the original 310dd50 observation, with this dated section providing D8/D9 updates. D12's code comment remains Liu's separate follow-up.
+
+### Verification
+
+Checks used merge HEAD 149c0609e6f1be4b1c83f3a3a5e883b7c38ac478 with the scoped documentation changes, then collaboration/link/encoding/whitespace checks were repeated after this entry and at the delivered commit. The PR description identifies the final HEAD; the final commit only adds these documentation inputs. Windows PowerShell, Node v24.20.0, Mermaid CLI 12.0.0 and the existing Chromium headless shell were used. Temporary scripts/configuration and six SVG outputs are retained outside tracked files at D:/ChatGPT/SWE5006_Group_Project/.cache/sync-20261014/.
+
+| Check | Result and evidence |
+| --- | --- |
+| All six UC04 Mermaid sources rendered again with mmdc and the temporary Puppeteer configuration | passed; six non-empty SVGs, including changed design class and sequence |
+| node scripts/check-collaboration.mjs | passed; 19 documents and 7 skills |
+| git diff --check and staged whitespace check | passed |
+| Temporary verify-docs.mjs: local links/anchors, case, UTF-8 without BOM, LF, replacement characters, trailing whitespace and test inventory | passed; 10 delivery files, 87 local links before this entry; final counts are recorded in the PR description |
+| Backend/frontend/PostgreSQL behavior suites for this documentation delivery | not run; merged main code is described, not newly altered or independently accepted here |
+| Latest-HEAD hosted CI | separate from local checks; final SHA and actual GitHub results are recorded in the updated PR description |
+| Member check, PR merge, deployment and team Done | not run; not claimed by agent documentation checks |
+
+Codex updated these documents under Liu's instruction. No PR was merged, no other person's PR was commented on, and no shared runtime service or protected port was touched. Historical passes above remain tied to their original versions. PR #35 is for review, with Liu retaining the remaining Issue #21 wording/code follow-ups.

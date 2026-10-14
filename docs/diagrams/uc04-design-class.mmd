@@ -25,6 +25,26 @@ classDiagram
     history(caseId)
     report(from, to)
   }
+  class MaintenanceNameDirectory {
+    <<interface>>
+    findEquipmentLabels(equipmentIds)
+    findUserDisplayNames(userIds)
+  }
+  class MaintenanceEquipmentLabel {
+    <<record>>
+    String name
+    String assetTag
+  }
+  class JdbcMaintenanceNameDirectory
+  class MaintenanceNames {
+    <<record>>
+    equipmentLabels
+    userNames
+    forCases(directory, returnedCases)
+    forHistory(directory, returnedEntries)
+    equipment(equipmentId)
+    user(userId)
+  }
   class MaintenanceAccessPolicy {
     isSelf(authentication, userId)
     isAssigned(authentication, caseId)
@@ -190,6 +210,13 @@ classDiagram
   MaintenanceReportPage --> MaintenanceController
   MaintenanceController --> MaintenanceService
   MaintenanceController --> MaintenanceReportService
+  MaintenanceController --> MaintenanceNameDirectory : after secured service returns
+  MaintenanceController --> MaintenanceNames : response projection
+  MaintenanceNames --> MaintenanceNameDirectory : batch returned IDs only
+  MaintenanceNames --> MaintenanceEquipmentLabel
+  MaintenanceNameDirectory --> MaintenanceEquipmentLabel
+  JdbcMaintenanceNameDirectory ..|> MaintenanceNameDirectory
+  JdbcMaintenanceNameDirectory --> PostgreSQL : one IN query per non-empty label kind
   MaintenanceService --> MaintenanceAccessPolicy : method security
   MaintenanceAccessPolicy --> MaintenanceCaseRepository
   MaintenanceService --> MaintenanceCase
