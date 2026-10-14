@@ -82,3 +82,52 @@ Frontend 126 component tests (4 new: link from a case into the lookup, queue lin
 ### Authorship
 
 Changes, tests and this section were produced by an AI agent (Claude Code) under Liu Tongyao's instruction. The D9/D12 findings came from Codex's UC04 design review (PR #35). No teammate review is claimed.
+
+## 2026-10-15 Fault category and priority (V006)
+
+Branch: `feature/liu-tongyao-uc04-fault-fields` · Baseline: main `c8a4560` (V005 from #40 merged)
+
+### What was built
+
+- **Migration V006**: `fault_category` (`MECHANICAL`, `ELECTRICAL`, `SOFTWARE`, `PHYSICAL_DAMAGE`, `MISSING_PART`, `OTHER`) and `priority` (`LOW`, `MEDIUM`, `HIGH`, `URGENT`) on `serms.maintenance_case`, with CHECK constraints; existing cases receive `OTHER` and `MEDIUM`. A partial index supports the open queue by priority.
+- **API**: the report-fault request takes both as optional fields (defaults `OTHER` / `MEDIUM`; unknown values are a 400); every case response returns them.
+- **Damaged returns (UC03)**: both paths in `LoanService.receive`, the normal `reportFault` call and the direct insert for retired items, record `PHYSICAL_DAMAGE` / `HIGH`.
+- **Pages**: the report form has category and priority selects (preset `Other` / `Medium`, reset after success); cards and the case page show both; the open queue can be filtered by priority and sorted "Highest priority first".
+- **Records**: contract `auth-and-approval.md` section 9 marks the five-state question decided (D-008) with the mapping Reported = `OPEN`, Not Repairable = `UNREPAIRABLE`, Closed folded into the two terminal states, pointing at the state model in `docs/uc04-fault-and-maintenance.md`, which also describes the new fields.
+
+### Design notes
+
+- **Values.** The Proposal lists "fault category" and "priority" without values. The categories cover the kinds of equipment in the catalogue plus `OTHER`; four priorities give the queue a meaningful order without inventing response-time targets.
+- **Fixed at report time.** Category and priority belong to the report, so the aggregate keeps them `final` and the update statement does not touch them.
+- **Older callers keep compiling.** `MaintenanceCaseSnapshot` and `MaintenanceCase` gained constructors with the old argument lists that apply `OTHER` / `MEDIUM`, the same values V006 gives existing rows; dozens of existing tests stay unchanged.
+- **Queue order is a view choice.** The API still lists open cases oldest first; filtering and the priority sort happen in the page (a stable sort, so equal priorities stay oldest first). The open queue is small, and the API contract does not change.
+- **Damaged-return defaults.** A storekeeper marks a return `DAMAGED` after a physical inspection, and the item is blocked until repaired, so `PHYSICAL_DAMAGE` / `HIGH`. This is the UC04 owner's proposal; the issue asks for agreement with the UC03 owner, which is requested on the PR.
+
+### Problems and fixes
+
+| Symptom | Root cause | Fix | How it was verified |
+| --- | --- | --- | --- |
+| Two more tests pinned the schema version (`LoanPostgresIT`, `NotificationContractTest`) | Version assertions at the latest migration | Expect 6 | `LoanPostgresIT` 20 pass; the notification module needs Docker, so CI verifies it |
+| A queue test found "Electrical" twice | A custodian also sees the report form, whose category select contains the same word | Assert on the card's `dd` element | 41 maintenance component tests pass |
+| The first frontend edit script stopped halfway, and `Array.prototype.toSorted` failed type checking | The case page imports differed from the expected text; the project's TypeScript library is ES2022 | Applied the rest separately; used a filtered copy with `sort` | Type check passes |
+
+### Verification
+
+Base `c8a4560` plus this change set, in a separate worktree; Windows 11, Java 25.0.4 (target 17), Node 24.20.0, PostgreSQL 18.6.
+
+| Check | Result |
+| --- | --- |
+| `./mvnw -B test` with `SERMS_APP_TEST_JDBC_URL` | Passed: 587 (584 on that base, 3 new: domain, API accept and default, API invalid values) |
+| `MaintenancePostgresIT`, fresh `serms_uc04_test` with V001-V006 applied by `psql` | Passed: 30 (1 new: persist, default, constraints) |
+| `LoanPostgresIT` (`-Puc03-postgres-it`) | Passed: 20 (fault fields asserted on both damaged-return paths) |
+| `pnpm check:api`, `lint`, `typecheck`, `test`, `build` | Passed: 128 component tests (2 new: form fields, queue filter and sort) |
+| `pnpm test:e2e` | Passed: 12 |
+
+### Deviations
+
+- Category and priority values are defined here because the Proposal does not list them.
+- The damaged-return defaults await the UC03 owner's confirmation.
+
+### Authorship
+
+Implementation, tests, documentation and this section were produced by an AI agent (Claude Code) under Liu Tongyao's instruction. No teammate review is claimed.

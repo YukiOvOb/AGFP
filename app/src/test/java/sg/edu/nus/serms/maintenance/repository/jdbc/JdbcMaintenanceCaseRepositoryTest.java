@@ -51,6 +51,8 @@ class JdbcMaintenanceCaseRepositoryTest {
     when(row.getTimestamp("reported_at")).thenReturn(Timestamp.from(s.reportedAt()));
     when(row.getTimestamp("resolved_at")).thenReturn(s.resolvedAt() == null ? null : Timestamp.from(s.resolvedAt()));
     when(row.getLong("version")).thenReturn(s.version());
+    when(row.getString("fault_category")).thenReturn(s.faultCategory().name());
+    when(row.getString("priority")).thenReturn(s.priority().name());
     return row;
   }
 
@@ -148,7 +150,7 @@ class JdbcMaintenanceCaseRepositoryTest {
     returns(expected);
     assertThat(repository.insert(expected).snapshot()).isEqualTo(expected.snapshot());
     assertThat(parameters).containsExactly(CASE, EQUIPMENT, REPORTER, null, LOAN, "OPEN",
-        "Cable failure", null, Timestamp.from(REPORTED), null);
+        "Cable failure", null, Timestamp.from(REPORTED), null, "OTHER", "MEDIUM");
     assertThat(sql).contains("INSERT INTO serms.maintenance_case", "RETURNING");
     String insertedColumns = sql.substring(0, sql.indexOf("VALUES"));
     assertThat(insertedColumns).doesNotContain("version", "fault_report", "diagnosis");

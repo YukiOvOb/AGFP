@@ -11,8 +11,10 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import sg.edu.nus.serms.maintenance.domain.FaultCategory;
 import sg.edu.nus.serms.maintenance.domain.MaintenanceCase;
 import sg.edu.nus.serms.maintenance.domain.MaintenanceCaseSnapshot;
+import sg.edu.nus.serms.maintenance.domain.MaintenancePriority;
 import sg.edu.nus.serms.maintenance.domain.MaintenanceStatus;
 import sg.edu.nus.serms.maintenance.repository.MaintenanceCaseRepository;
 import sg.edu.nus.serms.maintenance.repository.MaintenanceVersionConflictException;
@@ -20,7 +22,8 @@ import sg.edu.nus.serms.maintenance.repository.MaintenanceVersionConflictExcepti
 @Repository
 public class JdbcMaintenanceCaseRepository implements MaintenanceCaseRepository {
   private static final String COLUMNS = "maintenance_case_id, equipment_id, reported_by, assigned_to, "
-      + "loan_id, status, fault_description, resolution_note, reported_at, resolved_at, version";
+      + "loan_id, status, fault_description, resolution_note, reported_at, resolved_at, version, "
+      + "fault_category, priority";
   private static final RowMapper<MaintenanceCase> MAPPER = JdbcMaintenanceCaseRepository::map;
   private final JdbcOperations jdbc;
 
@@ -33,12 +36,13 @@ public class JdbcMaintenanceCaseRepository implements MaintenanceCaseRepository 
     return jdbc.query("""
         INSERT INTO serms.maintenance_case
           (maintenance_case_id, equipment_id, reported_by, assigned_to, loan_id, status,
-           fault_description, resolution_note, reported_at, resolved_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           fault_description, resolution_note, reported_at, resolved_at, fault_category, priority)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         RETURNING
         """ + COLUMNS, MAPPER, item.maintenanceCaseId(), item.equipmentId(), item.reportedBy(),
         item.assignedTo(), item.loanId(), item.status().name(), item.faultDescription(),
-        item.resolutionNote(), Timestamp.from(item.reportedAt()), timestamp(item.resolvedAt()))
+        item.resolutionNote(), Timestamp.from(item.reportedAt()), timestamp(item.resolvedAt()),
+        item.faultCategory().name(), item.priority().name())
         .stream().findFirst().orElseThrow(() -> new IllegalStateException("Maintenance insert returned no row"));
   }
 
@@ -98,7 +102,8 @@ public class JdbcMaintenanceCaseRepository implements MaintenanceCaseRepository 
         row.getObject("loan_id", UUID.class), MaintenanceStatus.valueOf(row.getString("status")),
         row.getString("fault_description"), row.getString("resolution_note"),
         row.getTimestamp("reported_at").toInstant(), resolvedAt == null ? null : resolvedAt.toInstant(),
-        row.getLong("version")));
+        row.getLong("version"), FaultCategory.valueOf(row.getString("fault_category")),
+        MaintenancePriority.valueOf(row.getString("priority"))));
   }
 
   private static Timestamp timestamp(java.time.Instant value) {

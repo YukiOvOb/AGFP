@@ -1,8 +1,21 @@
 import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
 import { z } from 'zod';
-import type { Status } from './queries';
+import type { FaultCategory, Priority, Status } from './queries';
 export const statuses: Status[] = ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'UNREPAIRABLE'];
 export const statusLabel = (status: Status) => status.replaceAll('_', ' ');
+export const faultCategories: FaultCategory[] = [
+  'MECHANICAL',
+  'ELECTRICAL',
+  'SOFTWARE',
+  'PHYSICAL_DAMAGE',
+  'MISSING_PART',
+  'OTHER',
+];
+/** Highest first, the order the queue uses when sorting by priority. */
+export const priorities: Priority[] = ['URGENT', 'HIGH', 'MEDIUM', 'LOW'];
+/** `PHYSICAL_DAMAGE` becomes `Physical damage`. */
+export const enumLabel = (value: string) =>
+  value.charAt(0) + value.slice(1).toLowerCase().replaceAll('_', ' ');
 // The server sends null names only when a record cannot be read; fall back to the identifier.
 export function equipmentLabel(item: {
   equipmentId: string;
@@ -48,6 +61,15 @@ export const faultSchema = z.object({
   equipmentId: uuid,
   loanId: z.union([uuid, z.literal('')]),
   faultDescription: nonBlank,
+  faultCategory: z.enum([
+    'MECHANICAL',
+    'ELECTRICAL',
+    'SOFTWARE',
+    'PHYSICAL_DAMAGE',
+    'MISSING_PART',
+    'OTHER',
+  ]),
+  priority: z.enum(['URGENT', 'HIGH', 'MEDIUM', 'LOW']),
 });
 export const periodSchema = z
   .object({ from: nonBlank, to: nonBlank })

@@ -2,7 +2,7 @@ import { Link, useParams } from 'react-router';
 import { useAuth } from '@/app/AuthProvider';
 import { ErrorState, LoadingState } from '@/components/Feedback';
 import { message } from '@/api/client';
-import { hasAnyRole, personLabel, singaporeDate, statusLabel, uuid } from './format';
+import { enumLabel, hasAnyRole, personLabel, singaporeDate, statusLabel, uuid } from './format';
 import { useCase, useHistory } from './queries';
 import { MaintenanceHistory } from './MaintenanceHistory';
 import { MaintenanceActions } from './MaintenanceActions';
@@ -36,6 +36,10 @@ function CaseDetail({ id }: { id: string }) {
           <dd>
             <EquipmentName item={item} linked={hasAnyRole(user?.roles, 'CUSTODIAN', 'ADMIN')} />
           </dd>
+          <dt>Fault category</dt>
+          <dd>{enumLabel(item.faultCategory)}</dd>
+          <dt>Priority</dt>
+          <dd>{enumLabel(item.priority)}</dd>
           <dt>Reporter</dt>
           <dd>{personLabel(item.reportedByName, item.reportedBy)}</dd>
           <dt>Assigned technician</dt>
