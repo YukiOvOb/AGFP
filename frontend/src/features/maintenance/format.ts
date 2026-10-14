@@ -3,6 +3,18 @@ import { z } from 'zod';
 import type { Status } from './queries';
 export const statuses: Status[] = ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'UNREPAIRABLE'];
 export const statusLabel = (status: Status) => status.replaceAll('_', ' ');
+// The server sends null names only when a record cannot be read; fall back to the identifier.
+export function equipmentLabel(item: {
+  equipmentId: string;
+  equipmentName: string | null;
+  equipmentAssetTag: string | null;
+}) {
+  if (!item.equipmentName) return item.equipmentId;
+  return item.equipmentAssetTag
+    ? `${item.equipmentName} (${item.equipmentAssetTag})`
+    : item.equipmentName;
+}
+export const personLabel = (name: string | null, id: string) => name ?? id;
 export { hasAnyRole } from '@/lib/roles';
 export const workspaceRoles = ['BORROWER', 'CUSTODIAN', 'MAINTAINER', 'ADMIN'];
 export function singaporeDate(value: string | null) {

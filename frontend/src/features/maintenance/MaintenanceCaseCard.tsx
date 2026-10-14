@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import type { ReactNode } from 'react';
 import type { MaintenanceCase } from './queries';
-import { singaporeDate, statusLabel } from './format';
+import { equipmentLabel, personLabel, singaporeDate, statusLabel } from './format';
 export function MaintenanceCaseCard({
   item,
   children,
@@ -16,12 +16,18 @@ export function MaintenanceCaseCard({
         <Link to={'/maintenance/cases/' + item.maintenanceCaseId}>{item.faultDescription}</Link>
       </h3>
       <dl className="maintenance-meta">
-        <dt>Equipment ID</dt>
-        <dd>{item.equipmentId}</dd>
+        <dt>Equipment</dt>
+        <dd>{equipmentLabel(item)}</dd>
         <dt>Reported</dt>
         <dd>{singaporeDate(item.reportedAt)}</dd>
-        <dt>Reporter ID</dt>
-        <dd>{item.reportedBy}</dd>
+        <dt>Reporter</dt>
+        <dd>{personLabel(item.reportedByName, item.reportedBy)}</dd>
+        {item.assignedTo && (
+          <>
+            <dt>Technician</dt>
+            <dd>{personLabel(item.assignedToName, item.assignedTo)}</dd>
+          </>
+        )}
         <dt>Version</dt>
         <dd>{item.version}</dd>
       </dl>

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ErrorState, LoadingState } from '@/components/Feedback';
 import { message } from '@/api/client';
-import { uuid } from './format';
+import { equipmentLabel, uuid } from './format';
 import { useEquipmentCases, useEquipmentHistory } from './queries';
 import { MaintenanceCaseCard } from './MaintenanceCaseCard';
 import { MaintenanceHistory } from './MaintenanceHistory';
@@ -41,7 +41,7 @@ export function EquipmentHistoryLookup() {
       </form>
       {id && (
         <div className="maintenance-lookup-results">
-          <h3>Equipment {id}</h3>
+          <h3>{cases.data?.[0] ? equipmentLabel(cases.data[0]) : 'Equipment ' + id}</h3>
           {cases.isPending ? (
             <LoadingState />
           ) : cases.isError ? (
