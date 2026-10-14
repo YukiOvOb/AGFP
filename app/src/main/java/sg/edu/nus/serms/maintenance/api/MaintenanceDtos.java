@@ -28,11 +28,21 @@ public final class MaintenanceDtos {
   public record MaintenanceDetailRequest(@NotBlank String detail) {}
   public record CompleteMaintenanceRequest(@NotBlank String resolutionNote) {}
 
-  @Schema(requiredProperties = {"maintenanceCaseId", "equipmentId", "reportedBy", "assignedTo",
+  @Schema(requiredProperties = {"maintenanceCaseId", "equipmentId", "equipmentName",
+      "equipmentAssetTag", "reportedBy", "reportedByName", "assignedTo", "assignedToName",
       "loanId", "status", "faultDescription", "resolutionNote", "reportedAt", "resolvedAt", "version"})
   public record MaintenanceCaseResponse(
-      UUID maintenanceCaseId, UUID equipmentId, UUID reportedBy,
+      UUID maintenanceCaseId, UUID equipmentId,
+      @Schema(nullable = true, description = "Null only when the equipment record cannot be read")
+      String equipmentName,
+      @Schema(nullable = true, description = "Null only when the equipment record cannot be read")
+      String equipmentAssetTag,
+      UUID reportedBy,
+      @Schema(nullable = true, description = "Reporter display name; null only when the user cannot be read")
+      String reportedByName,
       @Schema(nullable = true) UUID assignedTo,
+      @Schema(nullable = true, description = "Technician display name; null when unassigned")
+      String assignedToName,
       @Schema(nullable = true) UUID loanId,
       MaintenanceStatus status, String faultDescription,
       @Schema(nullable = true) String resolutionNote,
@@ -40,23 +50,32 @@ public final class MaintenanceDtos {
       @Schema(nullable = true) Instant resolvedAt,
       @Schema(description = "Server-side version; mutations do not support If-Match or expectedVersion")
       long version) {
-    public static MaintenanceCaseResponse from(MaintenanceCase item) {
+    public static MaintenanceCaseResponse from(MaintenanceCase item, MaintenanceNames names) {
+      var equipment = names.equipment(item.equipmentId());
       return new MaintenanceCaseResponse(item.maintenanceCaseId(), item.equipmentId(),
-          item.reportedBy(), item.assignedTo(), item.loanId(), item.status(), item.faultDescription(),
+          equipment == null ? null : equipment.name(),
+          equipment == null ? null : equipment.assetTag(),
+          item.reportedBy(), names.user(item.reportedBy()),
+          item.assignedTo(), names.user(item.assignedTo()),
+          item.loanId(), item.status(), item.faultDescription(),
           item.resolutionNote(), item.reportedAt(), item.resolvedAt(), item.version());
     }
   }
 
   @Schema(requiredProperties = {"maintenanceCaseId", "equipmentId", "action", "fromStatus",
-      "toStatus", "actorId", "occurredAt", "detail"})
+      "toStatus", "actorId", "actorName", "occurredAt", "detail"})
   public record MaintenanceHistoryResponse(
       UUID maintenanceCaseId, UUID equipmentId, MaintenanceHistoryAction action,
       @Schema(nullable = true) MaintenanceStatus fromStatus,
-      MaintenanceStatus toStatus, UUID actorId, Instant occurredAt,
+      MaintenanceStatus toStatus, UUID actorId,
+      @Schema(nullable = true, description = "Actor display name; null only when the user cannot be read")
+      String actorName,
+      Instant occurredAt,
       @Schema(nullable = true) String detail) {
-    public static MaintenanceHistoryResponse from(MaintenanceHistoryEntry item) {
+    public static MaintenanceHistoryResponse from(MaintenanceHistoryEntry item, MaintenanceNames names) {
       return new MaintenanceHistoryResponse(item.maintenanceCaseId(), item.equipmentId(),
-          item.action(), item.fromStatus(), item.toStatus(), item.actorId(), item.occurredAt(), item.detail());
+          item.action(), item.fromStatus(), item.toStatus(), item.actorId(),
+          names.user(item.actorId()), item.occurredAt(), item.detail());
     }
   }
 
