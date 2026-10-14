@@ -46,3 +46,9 @@ Lock order: Equipment → Reservation → Loan → MaintenanceCase. Handover, ma
 `LoanEvent` contains action (CHECKED_OUT / RETURNED), loanId, reservationId, equipmentId, borrowerId, actorId, dueAt, occurredAt, late, returnCondition, maintenanceCaseId. Published synchronously before commit; database consumers join the transaction, while email/external effects require after-commit/outbox. UUID Loan is the business key; V003 bigint reminderId bridges notification interfaces. Use `LoanNotificationRequestFactory`, never truncate UUIDs to integers.
 
 Wang Yuanmeng owns overdue scheduling/reminder periods outside this module. Return immediately persists RETURNED; `PostgresLoanReminderGuard` rechecks ACTIVE before delivery using the same lock order.
+
+## UC05 Overdue Projection
+
+UC05 exposes `GET /api/v1/overdue?page=0&size=20&order=desc` for `CUSTODIAN` and `ADMIN`. This read-only projection selects `ACTIVE` loans where `due_at < now`; it does not change the UC03 loan state or checkout/return endpoints. Each row has `loanId`, `reservationId`, `borrowerName`, `equipmentName`, `dueAt` (UTC instant) and `overdueSeconds`. `order=desc` lists longest overdue first; `order=asc` reverses that order. Both orders use `loanId` as a stable tie-breaker. Page size is 1–100. The response includes `content`, `totalElements`, `page` and `size`. The frontend formats `dueAt` in Singapore time.
+
+This cross-module read contract is proposed in PR #12 for the UC03 owner to confirm before merge.

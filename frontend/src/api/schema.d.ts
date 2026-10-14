@@ -291,6 +291,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/overdue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listOverdueLoans"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/notifications": {
         parameters: {
             query?: never;
@@ -789,6 +805,27 @@ export interface components {
             totalElements: number;
             /** Format: int32 */
             totalPages: number;
+        };
+        OverdueLoan: {
+            /** Format: uuid */
+            loanId?: string;
+            /** Format: uuid */
+            reservationId?: string;
+            borrowerName?: string;
+            equipmentName?: string;
+            /** Format: date-time */
+            dueAt?: string;
+            /** Format: int64 */
+            overdueSeconds?: number;
+        };
+        OverduePage: {
+            content?: components["schemas"]["OverdueLoan"][];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
         };
         NotificationPage: {
             content: components["schemas"]["NotificationView"][];
@@ -1410,6 +1447,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReservationPage"];
+                };
+            };
+        };
+    };
+    listOverdueLoans: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+                order?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OverduePage"];
                 };
             };
         };

@@ -37,6 +37,10 @@ import sg.edu.nus.serms.maintenance.domain.MaintenanceCompleted;
 import sg.edu.nus.serms.maintenance.domain.MaintenanceStatus;
 import sg.edu.nus.serms.maintenance.service.MaintenanceService;
 import sg.edu.nus.serms.notification.service.LoanReminderScanner;
+import sg.edu.nus.serms.notification.service.CollectionReminderScanner;
+import sg.edu.nus.serms.reservation.service.event.ReservationSubmitted;
+import sg.edu.nus.serms.reservation.service.event.ReservationCancelled;
+import sg.edu.nus.serms.reservation.domain.ReservationStatus;
 import sg.edu.nus.serms.notification.service.NotificationWorker;
 import sg.edu.nus.serms.shared.security.SermsUserPrincipal;
 import sg.edu.nus.serms.testsupport.SermsFixtures;
@@ -65,6 +69,7 @@ class Uc05PostgresIT {
   @Autowired LoanService loans;
   @Autowired MaintenanceService maintenance;
   @Autowired LoanReminderScanner scanner;
+  @Autowired CollectionReminderScanner collectionScanner;
   @Autowired NotificationWorker worker;
   @Autowired PlatformTransactionManager manager;
   @Autowired org.springframework.context.ApplicationEventPublisher events;
@@ -168,14 +173,14 @@ class Uc05PostgresIT {
     mvc.perform(get("/api/v1/notifications").session(approvedSession))
         .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1))
         .andExpect(jsonPath("$.content[0].content").value(
-            "Your reservation " + approved + " has been confirmed."))
+            "Your reservation for UC05 approval camera has been confirmed."))
         .andExpect(jsonPath("$.content[0].readAt").doesNotExist());
     mvc.perform(get("/api/v1/notifications/unread-count").session(approvedSession))
         .andExpect(status().isOk()).andExpect(jsonPath("$.count").value(1));
     String notificationId = jdbc.queryForObject("""
         SELECT id FROM serms.notification_request
         WHERE recipient=? AND content LIKE ? AND status='DELIVERED'
-        """, String.class, approvedRequester.toString(), "%" + approved + "%");
+        """, String.class, approvedRequester.toString(), "%UC05 approval camera%");
     MockHttpSession otherSession = login(otherBorrower);
     mvc.perform(get("/api/v1/notifications").session(otherSession))
         .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(0));
@@ -198,7 +203,7 @@ class Uc05PostgresIT {
     mvc.perform(get("/api/v1/notifications").session(rejectedSession))
         .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1))
         .andExpect(jsonPath("$.content[0].content").value(
-            "Your reservation " + rejected + " was rejected. Reason: Unavailable"));
+            "Your reservation for UC05 approval camera was rejected. Reason: Unavailable"));
     mvc.perform(get("/api/v1/notifications/unread-count").session(rejectedSession))
         .andExpect(status().isOk()).andExpect(jsonPath("$.count").value(1));
   }
@@ -263,7 +268,7 @@ class Uc05PostgresIT {
           SELECT count(*) FROM serms.notification_request
           WHERE recipient=? AND content LIKE ? AND type='BUSINESS_EVENT'
           """, Integer.class, reporter.toString(),
-          "%" + completed.maintenanceCaseId() + "%")).isEqualTo(1);
+          "%UC05 maintenance " + outcome + "%")).isEqualTo(1);
     }
     assertThat(count(reporter, "BUSINESS_EVENT")).isEqualTo(2);
     assertThat(count(technician, "BUSINESS_EVENT")).isEqualTo(2);
@@ -271,7 +276,7 @@ class Uc05PostgresIT {
     worker.deliverPending();
     assertThat(jdbc.queryForObject("""
         SELECT count(*) FROM serms.notification_request
-        WHERE recipient=? AND status='DELIVERED' AND content LIKE 'Maintenance case %'
+        WHERE recipient=? AND status='DELIVERED' AND content LIKE 'Maintenance for %'
         """, Integer.class, reporter.toString())).isEqualTo(2);
     mvc.perform(get("/api/v1/notifications").session(login(reporter)))
         .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(2));
@@ -309,6 +314,56 @@ class Uc05PostgresIT {
         String.class, reminderId)).isEqualTo("CANCELLED");
     scanner.scan();
     assertThat(reminderCount(reminderId)).isEqualTo(2);
+  }
+
+
+  @Test
+  void reservationEventsAndCollectionReminderUsePersistedRecipientsAndCancelPendingReminder() throws Exception {
+    UUID borrower=user("BORROWER"), approver=user("APPROVER"), other=user("BORROWER");
+    UUID equipment=fixtures.equipment("Collection camera", "Camera", "Desk", true);
+    Instant start=now.plusSeconds(3600), end=start.plusSeconds(3600);
+    UUID reservation=fixtures.reservation(borrower,equipment,start,end,"PENDING_APPROVAL");
+    var submitted=new ReservationSubmitted(UUID.randomUUID(),reservation,borrower,equipment,start,end,
+        ReservationStatus.PENDING_APPROVAL);
+    new TransactionTemplate(manager).executeWithoutResult(status->{
+      events.publishEvent(submitted); events.publishEvent(submitted);
+    });
+    assertThat(count(approver,"BUSINESS_EVENT")).isEqualTo(1);
+    assertThat(count(other,"BUSINESS_EVENT")).isZero();
+    jdbc.update("UPDATE serms.reservation SET status='CONFIRMED' WHERE reservation_id=?",reservation);
+    collectionScanner.scan(); collectionScanner.scan();
+    assertThat(count(borrower,"BUSINESS_EVENT")).isEqualTo(1);
+    assertThat(jdbc.queryForObject("SELECT content FROM serms.notification_request WHERE recipient=? AND status='PENDING'",
+        String.class,borrower.toString())).contains("Collection camera","SGT");
+    jdbc.update("UPDATE serms.reservation SET status='CANCELLED' WHERE reservation_id=?",reservation);
+    new TransactionTemplate(manager).executeWithoutResult(status->events.publishEvent(
+        new ReservationCancelled(UUID.randomUUID(),reservation,borrower,equipment)));
+    assertThat(count(borrower,"BUSINESS_EVENT")).isEqualTo(2);
+    worker.deliverPending();
+    assertThat(jdbc.queryForObject("SELECT status FROM serms.notification_request WHERE recipient=? AND content LIKE 'Collect %'",
+        String.class,borrower.toString())).isEqualTo("CANCELLED");
+    mvc.perform(get("/api/v1/notifications").session(login(borrower)))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1));
+  }
+
+  @Test
+  void overdueViewUsesRealLoanAndIsRestrictedToCustodianOrAdmin() throws Exception {
+    UUID borrower=user("BORROWER"), custodian=user("CUSTODIAN"), admin=user("ADMIN");
+    UUID equipment=fixtures.equipment("Overdue camera", "Camera", "Desk", false);
+    UUID reservation=fixtures.reservation(borrower,equipment,now.minusSeconds(7200),now.plusSeconds(3600),"CONFIRMED");
+    asCustodian(custodian);
+    var loan=loans.checkout(reservation,borrower,0,true);
+    when(clock.instant()).thenReturn(now.plusSeconds(7200));
+    mvc.perform(get("/api/v1/overdue").session(login(custodian)))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.content[0].loanId").value(loan.loanId().toString()))
+        .andExpect(jsonPath("$.content[0].borrowerName").exists())
+        .andExpect(jsonPath("$.content[0].equipmentName").value("Overdue camera"));
+    mvc.perform(get("/api/v1/overdue").session(login(admin))).andExpect(status().isOk());
+    mvc.perform(get("/api/v1/overdue").session(login(borrower))).andExpect(status().isForbidden());
+    mvc.perform(get("/api/v1/overdue")).andExpect(status().isUnauthorized());
+    asCustodian(custodian); loans.receive(loan.loanId(),0,"GOOD",null);
+    mvc.perform(get("/api/v1/overdue").session(login(custodian)))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.content.length()").value(0));
   }
 
   private int reminderCount(long reminderId) {

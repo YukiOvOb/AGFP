@@ -15,11 +15,13 @@ import sg.edu.nus.serms.notification.domain.NotificationType;
 public class MaintenanceNotificationListener {
   private final NotificationRequestService requests;
   private final MaintenanceCaseRepository cases;
+  private final NotificationText text;
 
   public MaintenanceNotificationListener(NotificationRequestService requests,
-      MaintenanceCaseRepository cases) {
+      MaintenanceCaseRepository cases, NotificationText text) {
     this.requests = requests;
     this.cases = cases;
+    this.text = text;
   }
 
   @EventListener
@@ -33,7 +35,7 @@ public class MaintenanceNotificationListener {
             "once",
             null,
             null,
-            "You were assigned maintenance case " + event.maintenanceCaseId() + "."));
+            "You were assigned maintenance for " + text.equipment(event.equipmentId()) + "."));
   }
 
   @EventListener
@@ -58,6 +60,6 @@ public class MaintenanceNotificationListener {
         "once",
         null,
         null,
-        "Maintenance case " + event.maintenanceCaseId() + " was " + result + "."));
+        "Maintenance for " + text.equipment(event.equipmentId()) + " was " + result + "."));
   }
 }

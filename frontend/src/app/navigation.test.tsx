@@ -54,7 +54,6 @@ describe('navigation list', () => {
   it('hides reserved pages until their route exists', () => {
     const reserved = navigation.filter((item) => !item.available).map((item) => item.to);
     expect(reserved).toEqual([
-      '/overdue',
       '/manage/equipment',
       '/reports',
       '/admin/users',
@@ -116,7 +115,7 @@ describe('overview and menu', () => {
       'Notifications',
     ]);
     expect(screen.getByText('Approver · Administrator')).toBeInTheDocument();
-    expect(screen.queryByRole('navigation', { name: 'Management' })).not.toBeInTheDocument();
+    expect(within(screen.getByRole('navigation', { name: 'Management' })).getByRole('link', { name: 'Overdue' })).toBeInTheDocument();
   });
   it('opens a page from its card and returns through the brand link', async () => {
     mount('/', ['BORROWER']);

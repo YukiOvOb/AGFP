@@ -27,6 +27,7 @@ public class LoanReminderScanner {
   private final NotificationRequestService requests;
   private final ReminderPolicy policy;
   private final Clock clock;
+  private final NotificationText text;
 
   public LoanReminderScanner(
       JdbcTemplate jdbc,
@@ -34,13 +35,14 @@ public class LoanReminderScanner {
       LoanNotificationRequestFactory factory,
       NotificationRequestService requests,
       @Value("${serms.notifications.due-soon-lead:PT24H}") java.time.Duration leadTime,
-      Clock clock) {
+      Clock clock, NotificationText text) {
     this.jdbc = jdbc;
     this.transactions = new TransactionTemplate(manager);
     this.factory = factory;
     this.requests = requests;
     this.policy = new ReminderPolicy(leadTime);
     this.clock = clock;
+    this.text = text;
   }
 
   @Scheduled(fixedDelayString = "${serms.notifications.scan-ms:60000}", initialDelayString = "${serms.notifications.scan-initial-delay-ms:60000}")
@@ -87,14 +89,16 @@ public class LoanReminderScanner {
     var type = policy.classify(true, snapshots.get(0).dueAt(), clock.instant());
     if (type.isEmpty()) return;
     NotificationType reminderType = type.get();
+    String equipmentName = text.reservationEquipment(
+        jdbc.queryForObject("SELECT reservation_id FROM serms.loan WHERE loan_id=?", UUID.class, loanId));
     var request =
         factory.forLoan(
             loanId,
             reminderType,
             "once",
             reminderType == NotificationType.OVERDUE
-                ? "Your loan is overdue. Please return the equipment."
-                : "Your loan is due soon. Please return the equipment on time.");
+                ? "Your loan of " + equipmentName + " was due at " + text.time(snapshots.get(0).dueAt()) + ". Please return it."
+                : "Your loan of " + equipmentName + " is due at " + text.time(snapshots.get(0).dueAt()) + ".");
     requests.requestOnce(request);
   }
 
