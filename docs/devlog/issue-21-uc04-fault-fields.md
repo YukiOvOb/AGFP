@@ -47,3 +47,38 @@ None from the Proposal. The response change is additive and only the maintenance
 ### Authorship
 
 Implementation, tests, verification and this entry were produced by an AI agent (Claude Code) under Liu Tongyao's instruction. No teammate review is claimed.
+
+## 2026-10-14 Stale wording and a way into equipment history
+
+Branch: `feature/liu-tongyao-uc04-stale-wording` · Baseline: main `76a38ea` (PR #36 merged)
+
+### What was built
+
+- **D9** (from the UC04 design review in PR #35): the equipment lookup said it was "interim" until the shared catalogue API existed. The catalogue API exists, so the text now says what the lookup does.
+- Equipment names on open-queue cards and on the case page link to that item's maintenance history for custodians and administrators: `/maintenance?history=<equipmentId>` pre-fills the lookup, runs it and scrolls to it. Maintainers see the name without a link because the lookup is operator-only; cards inside the lookup are not linked to themselves. An invalid `history` value is ignored.
+- **D12**: the `TechnicianDirectoryPort.ensureTechnician` comment called the adapter future work; it now states the contract that `JdbcTechnicianDirectoryAdapter` already implements. The `MaintenanceHistoryRepository` comment said audit_log was the "intended" source; it is the actual one.
+
+### Design notes
+
+- **Why a link and not a picker.** After #36 no page shows an equipment UUID any more, so a lookup that only accepts a typed UUID was effectively unusable. A catalogue-based picker would not do: the catalogue search excludes `RETIRED` equipment, and unrepairable cases are exactly the ones whose history matters. Every case already carries its equipment ID, so linking from the case reaches retired items too, with no backend change.
+- **Remount instead of syncing state.** The home page passes the validated `history` value as the lookup's `key` and initial value, so a new value starts a fresh lookup without effects that copy URL state into component state.
+- The comment `Shared request correlation integration remains pending` in `JdbcMaintenanceHistoryRepository` was checked and left: every module still generates its own `request_id`.
+
+### Problems and fixes
+
+| Symptom | Root cause | Fix | How it was verified |
+| --- | --- | --- | --- |
+| Following the link landed at the bottom of the history, not at the lookup | The scroll ran before the results loaded; the browser's scroll anchoring then kept the page bottom in view while results were inserted above it | Scroll once, after the cases have loaded | Real demo: `scrollY` 1818 before, 1029 after, lookup heading at the top (`06-history-link-custodian.png`) |
+| Mocked browser suite failed 5 of 12 at the sign-in page (an earlier run had failed 1, cause unconfirmed because its trace was overwritten) | The browser logged `net::ERR_NETWORK_CHANGED`: Windows reported a network change mid-run and Chromium aborted module loads, so the app never rendered | No code change; reran | Runs before and after passed 12 of 12; the trace showed the network error |
+
+### Verification
+
+Frontend 126 component tests (4 new: link from a case into the lookup, queue link, no links for maintainers, invalid parameter), lint, typecheck, build and 12 mocked browser tests; backend maintenance and JDBC unit tests 331 (comment-only changes). Real demo: see [the verification record](../evidence/maintenance-names/verification.md#stale-wording-and-history-link).
+
+### Follow-ups
+
+- The report form still takes an equipment UUID; selecting from the catalogue already fills it. A picker remains a candidate for #26 once a search that includes retired items exists (for example #17's equipment management list).
+
+### Authorship
+
+Changes, tests and this section were produced by an AI agent (Claude Code) under Liu Tongyao's instruction. The D9/D12 findings came from Codex's UC04 design review (PR #35). No teammate review is claimed.

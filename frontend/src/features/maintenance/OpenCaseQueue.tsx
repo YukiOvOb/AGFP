@@ -66,7 +66,7 @@ export function OpenCaseQueue() {
         <div className="maintenance-grid">
           {cases.data.map((item) => (
             <div key={item.maintenanceCaseId}>
-              <MaintenanceCaseCard item={item}>
+              <MaintenanceCaseCard item={item} historyLink>
                 {technicians.isPending ? (
                   <p role="status">Loading technicians…</p>
                 ) : technicians.isError ? (
