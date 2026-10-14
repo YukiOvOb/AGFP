@@ -166,7 +166,7 @@ Each rule implements `ReservationPolicy`; `ReservationRules` runs them and colle
 | Rule | Class | Default | code |
 | --- | --- | --- | --- |
 | End after start; start not in past | `StartInFuturePolicy` | — | `invalid-interval` / `start-in-past` |
-| Minimum/maximum duration (rule 10) | `DurationPolicy` | 30 minutes – 7 days | `too-short` / `too-long` |
+| Minimum/maximum duration (rule 10, Proposal 5.3) | `DurationPolicy` | 30 minutes – 7 days; an item's own `max_borrow_duration` (V005, #22) replaces the 7 days for that item | `too-short` / `too-long` |
 | Booking horizon | `BookingHorizonPolicy` | 90 days | `too-far-ahead` |
 | Concurrent unended reservations (rule 11) | `OpenReservationQuotaPolicy` | 3 (`PENDING_APPROVAL` + `CONFIRMED`, unended) | `quota-exceeded` |
 | No new booking while holding overdue equipment (rule 11) | `OverdueLoanPolicy` | On (`block-overdue-borrowers`); an `ACTIVE` loan of the requester with `due_at` before now | `overdue-loan` |

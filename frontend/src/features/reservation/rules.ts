@@ -6,7 +6,24 @@ import { localToIso } from '@/lib/time';
  */
 export const MIN_MINUTES = 30;
 export const MAX_DAYS = 7;
-export function reservationSchema(now: () => number = Date.now) {
+/** Minutes in an ISO-8601 duration as the server writes it (`PT72H`, `PT2H30M`); null otherwise. */
+export function durationMinutes(iso: string | null | undefined): number | null {
+  const match = iso ? /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?$/.exec(iso) : null;
+  if (!match || !match.slice(1).some(Boolean)) return null;
+  return Number(match[1] ?? 0) * 60 + Number(match[2] ?? 0) + Number(match[3] ?? 0) / 60;
+}
+/** Same wording as the server's DurationPolicy: whole days, else whole hours, else minutes. */
+export function durationText(minutes: number) {
+  if (minutes % (24 * 60) === 0) return plural(minutes / (24 * 60), 'day');
+  if (minutes % 60 === 0) return plural(minutes / 60, 'hour');
+  return `${Math.floor(minutes)} minutes`;
+}
+const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'}`;
+/** `itemMaxMinutes` is the item's own limit (V005); null means the global maximum applies. */
+export function reservationSchema(
+  now: () => number = Date.now,
+  itemMaxMinutes: number | null = null,
+) {
   return z
     .object({
       startAt: z.string().min(1, 'Enter a start time.'),
@@ -43,11 +60,15 @@ export function reservationSchema(now: () => number = Date.now) {
           path: ['endAt'],
           message: `A reservation must last at least ${MIN_MINUTES} minutes.`,
         });
-      if (e - s > MAX_DAYS * 24 * 3_600_000)
+      const maxMinutes = itemMaxMinutes ?? MAX_DAYS * 24 * 60;
+      if (e - s > maxMinutes * 60_000)
         ctx.addIssue({
           code: 'custom',
           path: ['endAt'],
-          message: `A reservation may last at most ${MAX_DAYS} days.`,
+          message:
+            itemMaxMinutes === null
+              ? `A reservation may last at most ${MAX_DAYS} days.`
+              : `This equipment may be reserved for at most ${durationText(itemMaxMinutes)}.`,
         });
     });
 }
