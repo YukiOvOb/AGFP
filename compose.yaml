@@ -32,6 +32,10 @@ services:
       SERMS_APPROVAL_ENABLED: 'true'
       SERMS_SECURITY_SECURE_COOKIES: 'true'
       SERVER_SERVLET_SESSION_COOKIE_SECURE: 'true'
+      # First-admin bootstrap: blank unless set for one start (docs/server-release.md).
+      SERMS_BOOTSTRAP_ADMIN_EMAIL: ${SERMS_BOOTSTRAP_ADMIN_EMAIL:-}
+      SERMS_BOOTSTRAP_ADMIN_DISPLAY_NAME: ${SERMS_BOOTSTRAP_ADMIN_DISPLAY_NAME:-}
+      SERMS_BOOTSTRAP_ADMIN_PASSWORD: ${SERMS_BOOTSTRAP_ADMIN_PASSWORD:-}
     depends_on:
       db:
         condition: service_healthy
