@@ -7,21 +7,22 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import javax.sql.DataSource;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /**
- * One throw-away PostgreSQL 18 per test JVM, migrated with the repository's own V001 and V002
- * scripts ({@code app/src/main/resources/db/migration}). Tests create their own rows with
- * random ids and never truncate, so they can share the database and run in any order.
+ * One throw-away PostgreSQL 18 per test JVM, migrated with every repository migration in order
+ * ({@code app/src/main/resources/db/migration/V*.sql}), the same sequence Flyway applies at
+ * runtime. Tests create their own rows with random ids and never truncate, so they can share the
+ * database and run in any order.
  *
- * <p>This UC01 historical constraint bench intentionally uses V002; the default-runtime
- * integration suite uses the complete Flyway sequence and verifies V004.
+ * <p>Until V005 this bench applied only V001 and V002; the equipment read model now selects V005
+ * columns, so the bench follows the real sequence.
  */
 public final class SermsPostgres {
   static final Path MIGRATIONS = Path.of("src", "main", "resources", "db", "migration");
-  static final String[] SCRIPTS = {"V001__sprint1.sql", "V002__align_serms_model.sql"};
 
   private static PostgreSQLContainer container;
   private static DataSource dataSource;
@@ -58,11 +59,16 @@ public final class SermsPostgres {
     return dataSource;
   }
 
+  /** V001, V002, ... in version order (the names are zero-padded, so name order is version order). */
+  static List<Path> scripts() throws IOException {
+    try (var files = Files.list(MIGRATIONS)) {
+      return files.filter(f -> f.getFileName().toString().matches("V\\d{3}__.+\\.sql")).sorted().toList();
+    }
+  }
+
   private static void migrate(DataSource ds) {
     try (Connection c = ds.getConnection(); Statement s = c.createStatement()) {
-      for (String script : SCRIPTS) {
-        s.execute(Files.readString(MIGRATIONS.resolve(script)));
-      }
+      for (Path script : scripts()) s.execute(Files.readString(script));
     } catch (IOException e) {
       throw new UncheckedIOException("Run tests from app/ so src/main/resources/db/migration is reachable", e);
     } catch (SQLException e) {
