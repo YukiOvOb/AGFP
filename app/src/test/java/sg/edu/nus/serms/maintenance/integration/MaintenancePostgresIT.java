@@ -26,7 +26,9 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import sg.edu.nus.serms.maintenance.domain.*;
 import sg.edu.nus.serms.maintenance.repository.MaintenanceVersionConflictException;
 import sg.edu.nus.serms.maintenance.service.InvalidMaintenanceTechnicianException;
+import sg.edu.nus.serms.maintenance.service.MaintenanceEquipmentLabel;
 import sg.edu.nus.serms.maintenance.service.MaintenanceTechnician;
+import sg.edu.nus.serms.maintenance.service.jdbc.JdbcMaintenanceNameDirectory;
 
 /** Explicit Failsafe profile only. All queries and writes use real V002 PostgreSQL. */
 @Execution(ExecutionMode.SAME_THREAD)
@@ -108,6 +110,22 @@ class MaintenancePostgresIT {
     assertThat(db.service.getActiveTechnicians().stream()
         .filter(entry -> db.users.contains(entry.userId())).toList())
         .extracting(MaintenanceTechnician::userId).containsExactly(expected.get(1), expected.get(0));
+  }
+
+  @Test
+  void nameDirectoryReadsV002EquipmentAndUserColumnsForRequestedIdsOnly() {
+    var directory = new JdbcMaintenanceNameDirectory(
+        new org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate(db.jdbc));
+    UUID otherEquipment = db.equipment();
+    UUID missing = UUID.randomUUID();
+    db.jdbc.update("UPDATE serms.app_user SET display_name = 'UC04 Reporter' WHERE user_id = ?", reporter);
+    db.jdbc.update("UPDATE serms.app_user SET display_name = 'UC04 Technician' WHERE user_id = ?", technician);
+    assertThat(directory.findEquipmentLabels(java.util.Set.of(equipment, otherEquipment, missing)))
+        .containsOnlyKeys(equipment, otherEquipment)
+        .containsEntry(equipment, new MaintenanceEquipmentLabel("UC04 test camera", "uc04-it-" + equipment));
+    assertThat(directory.findUserDisplayNames(java.util.Set.of(reporter, technician, missing)))
+        .containsExactlyInAnyOrderEntriesOf(java.util.Map.of(reporter, "UC04 Reporter",
+            technician, "UC04 Technician"));
   }
 
   @Test
