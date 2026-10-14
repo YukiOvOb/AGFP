@@ -1033,6 +1033,13 @@ export interface components {
             requiresApproval: boolean;
             /** @description Whether the requested window can be reserved; null without a window */
             availableInWindow?: boolean | null;
+            /** @description Free-text description; null when none is recorded */
+            description: string | null;
+            /**
+             * Format: duration
+             * @description ISO-8601 maximum borrowing duration for this item; null when the global limit applies
+             */
+            maxBorrowDuration: string | null;
         };
         AvailabilityView: {
             equipment: components["schemas"]["EquipmentView"];

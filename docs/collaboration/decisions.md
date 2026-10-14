@@ -160,7 +160,7 @@ Decision: every completion task adds or updates its entry under [docs/devlog](..
 
 Status: **Confirmed by the user (repository owner Liu Tongyao) in conversation on 2026-10-14 at 23:34 (Asia/Singapore)**, after a progress review of main `bd6709d`. Replaces the intermediate dates of [D-010](#d-010-delivery-schedule).
 
-Context: #17, #18, #20 and #24 had no branch, PR or Issue comment since they were assigned on 2026-10-14 at 00:34 SGT, and their assignees' latest commits in the repository date from 2026-10-07. The owner considered taking these tasks over himself and decided against it; the owners in [D-007](#d-007-completion-task-ownership) stay as they are.
+Context: #17, #18, #20 and #24 had no branch, PR or Issue comment since they were assigned on 2026-10-14 at 00:34 SGT, and their assignees' latest commits in the repository date from 2026-10-07. The owner considered taking these tasks over and decided against it; the owners in [D-007](#d-007-completion-task-ownership) stay as they are.
 
 Decision:
 

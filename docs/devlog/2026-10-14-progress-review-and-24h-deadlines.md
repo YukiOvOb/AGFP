@@ -6,7 +6,7 @@ Owner: Liu Tongyao (@cpg25ncu) · Event: re-planning · Branch: `docs/liu-tongya
 
 ### What happened
 
-The repository owner asked for a review of project progress, at first with the aim of moving stalled Issues to himself. After the review he decided not to re-assign anything and instead introduced a 24-hour completion rule ([D-012](../collaboration/decisions.md#d-012-24-hour-completion-rule)). The deadline in every open task Issue (#5-#10, #17-#22, #24-#26) and the plan in #27 were rewritten, and each Issue received an agent-labelled comment so its owner is notified.
+The repository owner asked for a review of project progress, at first with the aim of taking over stalled Issues. After the review the owner decided not to re-assign anything and instead introduced a 24-hour completion rule ([D-012](../collaboration/decisions.md#d-012-24-hour-completion-rule)). The deadline in every open task Issue (#5-#10, #17-#22, #24-#26) and the plan in #27 were rewritten, and each Issue received an agent-labelled comment so its owner is notified.
 
 ### Progress at main `bd6709d` (2026-10-14 23:34 SGT)
 
@@ -55,3 +55,26 @@ None from the Proposal. D-010's intermediate dates are replaced by D-012.
 ### Authorship
 
 The review, Issue edits, comments and this entry were produced by an AI agent (Claude Code) under Liu Tongyao's instruction. The rule and its parameters were chosen by Liu Tongyao. No teammate review or acceptance is claimed.
+
+## 2026-10-15 Re-split of the blocking parts
+
+### What happened
+
+Shortly after midnight the repository owner took over the parts of two stalled tasks that block other work, without taking over the tasks themselves:
+
+| From | Moved to the owner | Stays with the original owner |
+| --- | --- | --- |
+| #17 (Zhou Fanhao) | #40: migration V005, the UC01 read fields (description, maximum duration), demo data | Register / update / retire API, category API, management page, audit of those writes |
+| #18 (Zhang Hanming) | #41: first-admin bootstrap for an empty production database | Admin console, user API, deactivation and guard rails, audit viewer |
+
+Reason: V005 blocks #21 (V006 follows V005), #22 (per-equipment limit), #6 and the rest of #17; the bootstrap blocks deployment (#10). Both new Issues are assigned to `cpg25ncu` with a 24-hour deadline (Fri 2026-10-16 00:45 SGT). The moved acceptance items in #17 and #18 are marked "Moved to #40 / #41" rather than deleted; #17's remaining items are due 24 hours after #40 merges because they build on V005; #18's deadline is unchanged. #27 records the re-split as D-007 requires, and #17 and #18 each received an agent-labelled comment for their owners.
+
+### Problems and fixes
+
+| Symptom | Root cause | Fix | How it was verified |
+| --- | --- | --- | --- |
+| Texts written for D-012 called the owner "himself" | The agent assumed pronouns that were never stated | Rephrased without pronouns here, in D-012 and on #27 | Searched the D-012 texts and this log for gendered pronouns |
+
+### Authorship
+
+Issue creation and edits, comments and this section were produced by an AI agent (Claude Code) under Liu Tongyao's instruction. The choice of what to take over was Liu Tongyao's.

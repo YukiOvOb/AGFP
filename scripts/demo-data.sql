@@ -46,4 +46,23 @@ INSERT INTO serms.equipment(equipment_id, asset_tag, name, category, location, s
   ('20000000-0000-0000-0000-000000000007', 'DEMO-CAM-02', 'Retired camera', 'Photography', 'Equipment Store', 'RETIRED', true),
   ('20000000-0000-0000-0000-000000000008', 'DEMO-LIG-01', 'Studio lighting kit', 'Photography', 'Media Lab', 'AVAILABLE', false)
 ON CONFLICT (equipment_id) DO NOTHING;
+-- V005 master data. Fills only values that are still unset, so re-running keeps local edits.
+-- A NULL maximum duration means the global reservation limit applies.
+UPDATE serms.equipment e SET
+  serial_number = COALESCE(e.serial_number, v.serial_number),
+  description = COALESCE(e.description, v.description),
+  max_borrow_duration = COALESCE(e.max_borrow_duration, v.max_borrow_duration)
+FROM (VALUES
+  ('20000000-0000-0000-0000-000000000001'::uuid, 'DEMO-SN-CAM-0001', 'Full-frame mirrorless camera with a 28-70 mm lens and two batteries', interval '3 days'),
+  ('20000000-0000-0000-0000-000000000002'::uuid, 'DEMO-SN-TRI-0001', 'Aluminium tripod with a fluid video head', NULL::interval),
+  ('20000000-0000-0000-0000-000000000003'::uuid, 'DEMO-SN-MIC-0001', 'Two-channel wireless lavalier set with receiver', NULL::interval),
+  ('20000000-0000-0000-0000-000000000004'::uuid, 'DEMO-SN-PRO-0001', 'Portable 1080p projector with HDMI and USB-C inputs', interval '2 days'),
+  ('20000000-0000-0000-0000-000000000005'::uuid, 'DEMO-SN-LAP-0001', 'Engineering laptop with CAD and simulation software', interval '5 days'),
+  ('20000000-0000-0000-0000-000000000006'::uuid, 'DEMO-SN-MEA-0001', 'Handheld digital multimeter with test leads', NULL::interval),
+  ('20000000-0000-0000-0000-000000000007'::uuid, 'DEMO-SN-CAM-0002', 'Older camera body kept for history', NULL::interval),
+  ('20000000-0000-0000-0000-000000000008'::uuid, 'DEMO-SN-LIG-0001', 'Three-light LED studio kit with stands', NULL::interval)
+) AS v(equipment_id, serial_number, description, max_borrow_duration)
+WHERE e.equipment_id = v.equipment_id;
+UPDATE serms.equipment SET condition = 'POOR'
+WHERE equipment_id = '20000000-0000-0000-0000-000000000007' AND condition = 'GOOD';
 COMMIT;
