@@ -7,7 +7,12 @@ const fixtures = JSON.parse(open(__ENV.SERMS_K6_USERS_FILE || './k6-users.local.
 if (!Array.isArray(fixtures) || fixtures.length < 50) throw new Error('50 borrower fixtures are required');
 export const options = {
   scenarios: { reservation: { executor: 'per-vu-iterations', vus: 50, iterations: 1, maxDuration: '3m' } },
-  thresholds: { http_req_failed: ['rate<0.01'], http_req_duration: ['p(95)<3000'], checks: ['rate>0.99'] },
+  thresholds: {
+    http_req_failed: ['rate<0.01'], http_req_duration: ['p(95)<2000'], checks: ['rate>0.99'],
+    'http_req_duration{operation:login}': ['p(95)<2000'],
+    'http_req_duration{operation:search}': ['p(95)<2000'],
+    'http_req_duration{operation:reserve}': ['p(95)<2000'],
+  },
 };
 
 function csrfHeader(jar) {
@@ -28,7 +33,7 @@ export default function () {
   http.get(`${base}/api/v1/auth/csrf`, common);
   const startAt = fixture.startAt;
   const endAt = fixture.endAt;
-  const query = `from=${encodeURIComponent(startAt)}&to=${encodeURIComponent(endAt)}&availableOnly=true&size=20`;
+  const query = `q=${encodeURIComponent(fixture.assetTag)}&from=${encodeURIComponent(startAt)}&to=${encodeURIComponent(endAt)}&availableOnly=true&size=20`;
   const search = http.get(`${base}/api/v1/equipment?${query}`,
     { headers: common.headers, timeout: '15s', tags: { operation: 'search' } });
   check(search, { 'search succeeds': (r) => r.status === 200 });
