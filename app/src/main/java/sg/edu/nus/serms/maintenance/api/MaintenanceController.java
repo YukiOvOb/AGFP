@@ -6,13 +6,16 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import sg.edu.nus.serms.maintenance.api.MaintenanceDtos.*;
+import sg.edu.nus.serms.maintenance.domain.FaultCategory;
 import sg.edu.nus.serms.maintenance.domain.MaintenanceCase;
 import sg.edu.nus.serms.maintenance.domain.MaintenanceHistoryEntry;
+import sg.edu.nus.serms.maintenance.domain.MaintenancePriority;
 import sg.edu.nus.serms.maintenance.service.MaintenanceNameDirectory;
 import sg.edu.nus.serms.maintenance.service.MaintenanceService;
 import sg.edu.nus.serms.maintenance.service.MaintenanceReportService;
@@ -44,7 +47,9 @@ public class MaintenanceController {
   public ResponseEntity<MaintenanceCaseResponse> reportFault(
       @Valid @RequestBody ReportFaultRequest body,
       @AuthenticationPrincipal SermsUserPrincipal me) {
-    var item = service.reportFault(body.equipmentId(), me.getUserId(), body.faultDescription(), body.loanId());
+    var item = service.reportFault(body.equipmentId(), me.getUserId(), body.faultDescription(), body.loanId(),
+        Objects.requireNonNullElse(body.faultCategory(), FaultCategory.OTHER),
+        Objects.requireNonNullElse(body.priority(), MaintenancePriority.MEDIUM));
     return ResponseEntity.created(URI.create("/api/v1/maintenance/cases/" + item.maintenanceCaseId()))
         .body(caseResponse(item));
   }

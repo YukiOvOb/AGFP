@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
-/** Immutable durable state aligned with the merged V002 maintenance_case model. */
+/** Immutable durable state of serms.maintenance_case (V002, fault fields from V006). */
 public record MaintenanceCaseSnapshot(
     UUID maintenanceCaseId,
     UUID equipmentId,
@@ -16,7 +16,17 @@ public record MaintenanceCaseSnapshot(
     String resolutionNote,
     Instant reportedAt,
     Instant resolvedAt,
-    long version) {
+    long version,
+    FaultCategory faultCategory,
+    MaintenancePriority priority) {
+
+  /** Callers without fault fields get the values V006 gives existing rows: OTHER and MEDIUM. */
+  public MaintenanceCaseSnapshot(UUID maintenanceCaseId, UUID equipmentId, UUID reportedBy,
+      UUID assignedTo, UUID loanId, MaintenanceStatus status, String faultDescription,
+      String resolutionNote, Instant reportedAt, Instant resolvedAt, long version) {
+    this(maintenanceCaseId, equipmentId, reportedBy, assignedTo, loanId, status, faultDescription,
+        resolutionNote, reportedAt, resolvedAt, version, FaultCategory.OTHER, MaintenancePriority.MEDIUM);
+  }
 
   public MaintenanceCaseSnapshot {
     Objects.requireNonNull(maintenanceCaseId, "maintenanceCaseId");
@@ -24,6 +34,8 @@ public record MaintenanceCaseSnapshot(
     Objects.requireNonNull(reportedBy, "reportedBy");
     Objects.requireNonNull(status, "status");
     Objects.requireNonNull(reportedAt, "reportedAt");
+    Objects.requireNonNull(faultCategory, "faultCategory");
+    Objects.requireNonNull(priority, "priority");
     faultDescription = requiredText(faultDescription, "faultDescription");
     require(version >= 0, "Negative version");
     boolean terminal = status == MaintenanceStatus.RESOLVED || status == MaintenanceStatus.UNREPAIRABLE;

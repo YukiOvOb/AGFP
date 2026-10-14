@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import type { ReactNode } from 'react';
 import type { MaintenanceCase } from './queries';
-import { personLabel, singaporeDate, statusLabel } from './format';
+import { enumLabel, personLabel, singaporeDate, statusLabel } from './format';
 import { EquipmentName } from './EquipmentName';
 export function MaintenanceCaseCard({
   item,
@@ -24,6 +24,10 @@ export function MaintenanceCaseCard({
         <dd>
           <EquipmentName item={item} linked={historyLink} />
         </dd>
+        <dt>Category</dt>
+        <dd>{enumLabel(item.faultCategory)}</dd>
+        <dt>Priority</dt>
+        <dd>{enumLabel(item.priority)}</dd>
         <dt>Reported</dt>
         <dd>{singaporeDate(item.reportedAt)}</dd>
         <dt>Reporter</dt>

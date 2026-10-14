@@ -15,7 +15,9 @@ public final class MaintenanceDtos {
   public record ReportFaultRequest(
       @NotNull UUID equipmentId,
       @Schema(nullable = true) UUID loanId,
-      @NotBlank String faultDescription) {}
+      @NotBlank String faultDescription,
+      @Schema(nullable = true, description = "Defaults to OTHER") FaultCategory faultCategory,
+      @Schema(nullable = true, description = "Defaults to MEDIUM") MaintenancePriority priority) {}
 
   public record AssignTechnicianRequest(@NotNull UUID technicianId) {}
   @Schema(requiredProperties = {"userId", "email", "displayName"})
@@ -30,7 +32,8 @@ public final class MaintenanceDtos {
 
   @Schema(requiredProperties = {"maintenanceCaseId", "equipmentId", "equipmentName",
       "equipmentAssetTag", "reportedBy", "reportedByName", "assignedTo", "assignedToName",
-      "loanId", "status", "faultDescription", "resolutionNote", "reportedAt", "resolvedAt", "version"})
+      "loanId", "status", "faultDescription", "faultCategory", "priority", "resolutionNote",
+      "reportedAt", "resolvedAt", "version"})
   public record MaintenanceCaseResponse(
       UUID maintenanceCaseId, UUID equipmentId,
       @Schema(nullable = true, description = "Null only when the equipment record cannot be read")
@@ -45,6 +48,7 @@ public final class MaintenanceDtos {
       String assignedToName,
       @Schema(nullable = true) UUID loanId,
       MaintenanceStatus status, String faultDescription,
+      FaultCategory faultCategory, MaintenancePriority priority,
       @Schema(nullable = true) String resolutionNote,
       Instant reportedAt,
       @Schema(nullable = true) Instant resolvedAt,
@@ -58,6 +62,7 @@ public final class MaintenanceDtos {
           item.reportedBy(), names.user(item.reportedBy()),
           item.assignedTo(), names.user(item.assignedTo()),
           item.loanId(), item.status(), item.faultDescription(),
+          item.faultCategory(), item.priority(),
           item.resolutionNote(), item.reportedAt(), item.resolvedAt(), item.version());
     }
   }

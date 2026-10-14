@@ -12,11 +12,13 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import sg.edu.nus.serms.maintenance.service.security.MaintenanceAccessPolicy;
 import org.springframework.transaction.annotation.Transactional;
+import sg.edu.nus.serms.maintenance.domain.FaultCategory;
 import sg.edu.nus.serms.maintenance.domain.MaintenanceAssigned;
 import sg.edu.nus.serms.maintenance.domain.MaintenanceCase;
 import sg.edu.nus.serms.maintenance.domain.MaintenanceCompleted;
 import sg.edu.nus.serms.maintenance.domain.MaintenanceHistoryAction;
 import sg.edu.nus.serms.maintenance.domain.MaintenanceHistoryEntry;
+import sg.edu.nus.serms.maintenance.domain.MaintenancePriority;
 import sg.edu.nus.serms.maintenance.domain.MaintenanceStatus;
 import sg.edu.nus.serms.maintenance.repository.MaintenanceCaseRepository;
 import sg.edu.nus.serms.maintenance.repository.MaintenanceHistoryRepository;
@@ -55,12 +57,20 @@ public class MaintenanceService {
     return reportFault(equipmentId, reportedBy, faultDescription, null);
   }
 
+  /** Without fault fields: category OTHER, priority MEDIUM. */
   @PreAuthorize(MaintenanceAccessPolicy.REPORTER)
   public MaintenanceCase reportFault(UUID equipmentId, UUID reportedBy, String faultDescription,
       UUID loanId) {
+    return reportFault(equipmentId, reportedBy, faultDescription, loanId, FaultCategory.OTHER,
+        MaintenancePriority.MEDIUM);
+  }
+
+  @PreAuthorize(MaintenanceAccessPolicy.REPORTER)
+  public MaintenanceCase reportFault(UUID equipmentId, UUID reportedBy, String faultDescription,
+      UUID loanId, FaultCategory faultCategory, MaintenancePriority priority) {
     Instant now = clock.instant();
     var item = new MaintenanceCase(identifiers.get(), equipmentId, reportedBy, loanId,
-        faultDescription, now);
+        faultDescription, faultCategory, priority, now);
     equipment.ensureEquipmentExists(equipmentId);
     equipment.lockForMaintenance(equipmentId);
     if (loanId != null) loans.ensureLoanMatchesEquipment(loanId, equipmentId);

@@ -29,6 +29,8 @@ const item = (
   loanId: null,
   status,
   faultDescription: 'Camera lens jammed',
+  faultCategory: 'OTHER',
+  priority: 'MEDIUM',
   reportedAt: '2026-10-06T00:00:00Z',
   resolvedAt: status === 'RESOLVED' || status === 'UNREPAIRABLE' ? '2026-10-06T02:30:00Z' : null,
   resolutionNote: status === 'RESOLVED' || status === 'UNREPAIRABLE' ? 'Work completed' : null,
@@ -142,7 +144,12 @@ describe('UC04 maintenance workspace', () => {
     await user.type(screen.getByLabelText('Fault description'), 'Selected camera fault');
     await user.click(screen.getByRole('button', { name: 'Submit fault report' }));
     await screen.findByText(/Fault reported successfully/);
-    expect(body).toEqual({ equipmentId: EQUIPMENT, faultDescription: 'Selected camera fault' });
+    expect(body).toEqual({
+      equipmentId: EQUIPMENT,
+      faultDescription: 'Selected camera fault',
+      faultCategory: 'OTHER',
+      priority: 'MEDIUM',
+    });
     expect(screen.getByLabelText('Equipment ID', { exact: true })).toHaveValue('');
   });
   it('ignores an invalid catalogue equipment parameter', async () => {
@@ -185,12 +192,75 @@ describe('UC04 maintenance workspace', () => {
     await user.type(screen.getByLabelText('Fault description'), ' Lens jammed ');
     await user.click(screen.getByRole('button', { name: 'Submit fault report' }));
     expect(await screen.findByText(/Fault reported successfully/)).toBeVisible();
-    expect(body).toEqual({ equipmentId: EQUIPMENT, faultDescription: 'Lens jammed' });
+    expect(body).toEqual({
+      equipmentId: EQUIPMENT,
+      faultDescription: 'Lens jammed',
+      faultCategory: 'OTHER',
+      priority: 'MEDIUM',
+    });
     expect(screen.getByLabelText('Equipment ID', { exact: true })).toHaveValue('');
     expect(screen.queryByText('Open maintenance queue')).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'View case' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Maintenance report' })).not.toBeInTheDocument();
     expect(screen.queryByText('Maintenance actions')).not.toBeInTheDocument();
+  });
+  it('reports the chosen fault category and priority and resets them after success', async () => {
+    let body: unknown;
+    server.use(
+      http.post(ROOT + '/cases', async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json(
+          { ...item('OPEN', null), faultCategory: 'ELECTRICAL', priority: 'URGENT' },
+          { status: 201 },
+        );
+      }),
+    );
+    mount(['BORROWER'], '/maintenance?equipmentId=' + EQUIPMENT);
+    const user = userEvent.setup();
+    await user.selectOptions(await screen.findByLabelText('Fault category'), 'ELECTRICAL');
+    await user.selectOptions(screen.getByLabelText('Priority'), 'URGENT');
+    await user.type(screen.getByLabelText('Fault description'), 'Charger sparks');
+    await user.click(screen.getByRole('button', { name: 'Submit fault report' }));
+    await screen.findByText(/Fault reported successfully/);
+    expect(body).toMatchObject({ faultCategory: 'ELECTRICAL', priority: 'URGENT' });
+    expect(screen.getByLabelText('Fault category')).toHaveValue('OTHER');
+    expect(screen.getByLabelText('Priority')).toHaveValue('MEDIUM');
+  });
+  it('filters the open queue by priority and sorts it highest first', async () => {
+    lists([
+      {
+        ...item('OPEN', null),
+        maintenanceCaseId: CASE,
+        faultDescription: 'Old low',
+        priority: 'LOW',
+      },
+      {
+        ...item('OPEN', null),
+        maintenanceCaseId: OTHER,
+        faultDescription: 'Newer urgent',
+        priority: 'URGENT',
+        faultCategory: 'ELECTRICAL',
+      },
+    ]);
+    mount(['CUSTODIAN']);
+    const user = userEvent.setup();
+    const titles = () =>
+      screen.getAllByRole('link', { name: /Old low|Newer urgent/ }).map((a) => a.textContent);
+    expect(await screen.findByRole('link', { name: 'Old low' })).toBeVisible();
+    expect(titles()).toEqual(['Old low', 'Newer urgent']);
+    expect(screen.getByText('Electrical', { selector: 'dd' })).toBeVisible();
+    await user.selectOptions(screen.getByLabelText('Sort'), 'priority');
+    expect(titles()).toEqual(['Newer urgent', 'Old low']);
+    await user.selectOptions(
+      screen.getByLabelText('Priority', { selector: '#queue-priority' }),
+      'HIGH',
+    );
+    expect(screen.getByText('No open cases with this priority.')).toBeVisible();
+    await user.selectOptions(
+      screen.getByLabelText('Priority', { selector: '#queue-priority' }),
+      'LOW',
+    );
+    expect(titles()).toEqual(['Old low']);
   });
   it('validates UUID, optional loan UUID and required description without submitting', async () => {
     mount(['BORROWER']);

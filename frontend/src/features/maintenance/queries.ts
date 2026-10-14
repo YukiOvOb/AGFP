@@ -4,6 +4,8 @@ import type { components } from '@/api/schema';
 export type MaintenanceCase = components['schemas']['MaintenanceCaseResponse'];
 export type MaintenanceHistoryEntry = components['schemas']['MaintenanceHistoryResponse'];
 export type Status = MaintenanceCase['status'];
+export type FaultCategory = MaintenanceCase['faultCategory'];
+export type Priority = MaintenanceCase['priority'];
 export const maintenanceKeys = {
   all: ['maintenance'] as const,
   open: () => [...maintenanceKeys.all, 'open'] as const,

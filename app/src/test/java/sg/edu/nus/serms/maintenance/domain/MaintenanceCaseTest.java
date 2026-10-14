@@ -122,4 +122,20 @@ class MaintenanceCaseTest {
     item.resolve("Repaired", NOW);
     assertThat(item.version()).isEqualTo(7);
   }
+
+  @org.junit.jupiter.api.Test
+  void faultCategoryAndPriorityAreKeptThroughSnapshotsAndDefaultForOlderCallers() {
+    var reported = new MaintenanceCase(java.util.UUID.randomUUID(), java.util.UUID.randomUUID(),
+        java.util.UUID.randomUUID(), null, "Lens cracked", FaultCategory.PHYSICAL_DAMAGE,
+        MaintenancePriority.URGENT, java.time.Instant.parse("2026-10-15T00:00:00Z"));
+    org.assertj.core.api.Assertions.assertThat(reported.copy().faultCategory()).isEqualTo(FaultCategory.PHYSICAL_DAMAGE);
+    org.assertj.core.api.Assertions.assertThat(reported.copy().priority()).isEqualTo(MaintenancePriority.URGENT);
+    var older = new MaintenanceCase(java.util.UUID.randomUUID(), java.util.UUID.randomUUID(),
+        java.util.UUID.randomUUID(), null, "Fault", java.time.Instant.parse("2026-10-15T00:00:00Z"));
+    org.assertj.core.api.Assertions.assertThat(older.faultCategory()).isEqualTo(FaultCategory.OTHER);
+    org.assertj.core.api.Assertions.assertThat(older.priority()).isEqualTo(MaintenancePriority.MEDIUM);
+    org.assertj.core.api.Assertions.assertThatThrownBy(() -> new MaintenanceCase(java.util.UUID.randomUUID(),
+        java.util.UUID.randomUUID(), java.util.UUID.randomUUID(), null, "Fault", null, MaintenancePriority.LOW,
+        java.time.Instant.parse("2026-10-15T00:00:00Z"))).isInstanceOf(NullPointerException.class);
+  }
 }
