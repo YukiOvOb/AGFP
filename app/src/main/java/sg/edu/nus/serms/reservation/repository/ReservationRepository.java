@@ -2,6 +2,7 @@ package sg.edu.nus.serms.reservation.repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -24,7 +25,9 @@ import sg.edu.nus.serms.reservation.domain.ReservationStatus;
 public class ReservationRepository {
 
   /** Equipment facts read under {@code FOR UPDATE} at the start of a booking. */
-  public record LockedEquipment(UUID equipmentId, String status, boolean requiresApproval) {}
+  /** {@code maxBorrowDuration} is null when the global reservation limit applies (V005). */
+  public record LockedEquipment(
+      UUID equipmentId, String status, boolean requiresApproval, Duration maxBorrowDuration) {}
 
   public record Page(List<Reservation> items, long totalElements) {}
 
@@ -43,17 +46,23 @@ public class ReservationRepository {
     this.jdbc = jdbc;
   }
 
+  private static Duration seconds(long value, boolean isNull) {
+    return isNull ? null : Duration.ofSeconds(value);
+  }
+
   public Optional<LockedEquipment> lockEquipment(UUID equipmentId) {
     return jdbc
         .query(
-            "SELECT equipment_id, status, requires_approval FROM serms.equipment"
-                + " WHERE equipment_id = :id FOR UPDATE",
+            "SELECT equipment_id, status, requires_approval,"
+                + " EXTRACT(EPOCH FROM max_borrow_duration)::bigint AS max_borrow_seconds"
+                + " FROM serms.equipment WHERE equipment_id = :id FOR UPDATE",
             new MapSqlParameterSource("id", equipmentId),
             (rs, row) ->
                 new LockedEquipment(
                     rs.getObject("equipment_id", UUID.class),
                     rs.getString("status"),
-                    rs.getBoolean("requires_approval")))
+                    rs.getBoolean("requires_approval"),
+                    seconds(rs.getLong("max_borrow_seconds"), rs.wasNull())))
         .stream()
         .findFirst();
   }

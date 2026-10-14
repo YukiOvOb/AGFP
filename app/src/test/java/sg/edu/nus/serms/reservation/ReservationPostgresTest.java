@@ -389,6 +389,22 @@ class ReservationPostgresTest {
     }
 
     @Test
+    void anItemsMaximumBorrowingDurationIsEnforced() {
+      UUID item = camera();
+      jdbc.update("UPDATE serms.equipment SET max_borrow_duration = '2 hours' WHERE equipment_id = ?", item);
+      assertThatThrownBy(() -> reservations.submit(borrower, request(item, 1, 4)))
+          .isInstanceOfSatisfying(
+              ReservationException.RulesBroken.class,
+              e -> {
+                assertThat(e.violations()).extracting(v -> v.code()).containsExactly("too-long");
+                assertThat(e.violations().get(0).message())
+                    .isEqualTo("This equipment may be reserved for at most 2 hours.");
+              });
+      assertThat(reservations.submit(borrower, request(item, 1, 3)).status())
+          .isEqualTo(ReservationStatus.CONFIRMED);
+    }
+
+    @Test
     void bookingRulesAreReportedTogether() {
       UUID item = camera();
       var tooLong = new ReservationRequest(item, at(1), at(1).plus(8, ChronoUnit.DAYS), null);

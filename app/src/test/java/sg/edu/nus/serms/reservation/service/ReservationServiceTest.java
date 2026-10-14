@@ -41,7 +41,7 @@ class ReservationServiceTest {
                 new ReservationLimits(Duration.ofMinutes(30), Duration.ofDays(7), Duration.ofDays(90), 3, true)),
             events,
             Clock.fixed(NOW, ZoneOffset.UTC));
-    when(repository.lockEquipment(item)).thenReturn(Optional.of(new LockedEquipment(item, "AVAILABLE", false)));
+    when(repository.lockEquipment(item)).thenReturn(Optional.of(new LockedEquipment(item, "AVAILABLE", false, null)));
     when(repository.lockRequesterAccountStatus(me)).thenReturn(Optional.of("ACTIVE"));
     when(repository.equipmentCanBeReserved(eq(item), any())).thenReturn(true);
   }
@@ -95,7 +95,7 @@ class ReservationServiceTest {
 
   @Test
   void publishesTheSubmittedEventWithTheStoredStatus() {
-    when(repository.lockEquipment(item)).thenReturn(Optional.of(new LockedEquipment(item, "AVAILABLE", true)));
+    when(repository.lockEquipment(item)).thenReturn(Optional.of(new LockedEquipment(item, "AVAILABLE", true, null)));
     when(repository.findById(any())).thenAnswer(a -> Optional.of(stored(a.getArgument(0), ReservationStatus.PENDING_APPROVAL, false)));
     var r = service.submit(me, request());
     verify(repository).insert(eq(r.reservationId()), eq(me), eq(item), any(), any(), eq(ReservationStatus.PENDING_APPROVAL), isNull());
