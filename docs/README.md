@@ -23,6 +23,7 @@ This index provides navigation without replacing existing standards; historical 
 | Platform/React integration | [Platform REST/React](platform-rest-react.md) |
 | UC01 | [Search and reservation](uc01-search-and-reserve.md) |
 | UC02 | [Approval implementation](uc02-approval-implementation.md) |
+| UC04 | [Fault and maintenance analysis and design](uc04-fault-and-maintenance.md) |
 | Data foundation/historical delivery | [Database](../database/README.md), [Alignment](serms-database-alignment.md) |
 | Notification adaptation/integration | [integration/notifications](../integration/notifications/README.md), [Alignment](notification-interface-alignment.md) |
 

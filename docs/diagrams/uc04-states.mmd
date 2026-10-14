@@ -1,0 +1,36 @@
+stateDiagram-v2
+  [*] --> OPEN: reportFault
+  OPEN --> ASSIGNED: ASSIGN to ACTIVE MAINTAINER
+  ASSIGNED --> IN_PROGRESS: START by assigned MAINTAINER
+  IN_PROGRESS --> IN_PROGRESS: diagnosis, repair action or note; audit only
+  IN_PROGRESS --> RESOLVED: RESOLVE with note and time
+  IN_PROGRESS --> UNREPAIRABLE: MARK_UNREPAIRABLE with note and time
+  RESOLVED --> [*]
+  UNREPAIRABLE --> [*]
+  note right of OPEN
+    Direct report blocks Equipment as UNDER_MAINTENANCE.
+    UC03 damaged return on RETIRED preserves RETIRED
+    and directly inserts a linked OPEN case plus audit.
+    OPEN queue does not include ASSIGNED or IN_PROGRESS.
+  end note
+  note right of IN_PROGRESS
+    Only assigned MAINTAINER may work or complete.
+    Work entries do not update case version.
+    OPEN, ASSIGNED and IN_PROGRESS all block reservation/issue.
+  end note
+  note right of RESOLVED
+    Persist terminal case before Equipment recomputation.
+    RETIRED remains RETIRED.
+    Another active case keeps UNDER_MAINTENANCE.
+    Otherwise ACTIVE loan keeps ON_LOAN.
+    Otherwise Equipment becomes AVAILABLE.
+    No further domain transition or work.
+  end note
+  note right of UNREPAIRABLE
+    Equipment becomes RETIRED.
+    Retirement cannot be reversed.
+    No further domain transition or work.
+  end note
+  %% D-008: Reported = OPEN; Not Repairable = UNREPAIRABLE.
+  %% Proposal Closed is folded into both terminal outcomes; no CLOSED endpoint/state.
+  %% V002 does not make every terminal case column immutable on same-status SQL updates.
