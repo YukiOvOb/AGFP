@@ -1,0 +1,54 @@
+sequenceDiagram
+  actor Reporter as Borrower or Storekeeper
+  actor Operator as Storekeeper or Administrator
+  actor Technician as Assigned Technician
+  participant Workspace as MaintenanceWorkspace boundary
+  participant Page as MaintenanceCasePage boundary
+  participant Control as MaintenanceControl
+  participant Equipment
+  participant Loan
+  participant Case as MaintenanceCase
+  participant Audit as AuditRecord
+  Reporter->>Workspace: Report equipment fault with description and optional loan
+  Workspace->>Control: Report fault as authenticated reporter
+  Control->>Equipment: Check existence and non-retired status
+  opt Loan supplied
+    Control->>Loan: Check equipment association
+  end
+  alt Valid equipment, link and reporter
+    Control->>Equipment: Mark UNDER_MAINTENANCE
+    Control->>Case: Create OPEN with reporter and report time
+    Control->>Audit: Record REPORT_FAULT
+    Control-->>Workspace: Created case ID
+  else Missing, retired, wrong link or unauthorized
+    Control-->>Workspace: Reject without committed maintenance changes
+  end
+  Note over Control,Loan: UC03 damaged return joins reporting to the return transaction.<br/>Already RETIRED items use UC03 direct case/audit insertion and keep RETIRED.
+  Operator->>Workspace: Select OPEN case and active technician
+  Workspace->>Control: Assign technician
+  Control->>Case: Validate OPEN and set ASSIGNED
+  Control->>Audit: Record ASSIGN
+  Control-->>Workspace: Assignment recorded
+  Technician->>Page: Start assigned case
+  Page->>Control: Start maintenance
+  Control->>Case: Validate assignment and set IN_PROGRESS
+  Control->>Audit: Record START
+  loop Optional diagnosis, repair action and note entries
+    Technician->>Page: Enter work detail
+    Page->>Control: Record work
+    Control->>Case: Require assigned actor and IN_PROGRESS
+    Control->>Audit: Append work detail without case state change
+  end
+  Technician->>Page: Complete with resolution note
+  Page->>Control: Resolve or mark unrepairable
+  Control->>Case: Require assigned actor and IN_PROGRESS
+  alt Repaired
+    Control->>Case: Set RESOLVED with note and completion time
+    Control->>Equipment: Recompute from retirement, other cases and ACTIVE loans
+  else Unrepairable
+    Control->>Case: Set UNREPAIRABLE with note and completion time
+    Control->>Equipment: Set RETIRED
+  end
+  Control->>Audit: Record completion
+  Control-->>Page: Completed case and retained history
+  Note over Control,Case: Each mutation validates role, input and current state.<br/>Rejected transitions or wrong technicians do not commit writes.<br/>Terminal cases accept no further work or transition.

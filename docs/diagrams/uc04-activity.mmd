@@ -1,0 +1,55 @@
+%% UC04 at main 310dd50; each successful mutation is one transaction.
+flowchart TD
+  A([Borrower or storekeeper reports a fault]) --> B[Select equipment and enter description<br/>Optional linked loan]
+  B --> C{Session, role, CSRF<br/>and input valid?}
+  C -- No --> X[Show 400, 401 or 403<br/>No committed maintenance writes]
+  C -- Yes --> D[Lock Equipment and validate loan association]
+  D --> E{Equipment exists, not retired<br/>and loan matches?}
+  E -- No --> Y[404 missing, 409 retired<br/>400 invalid loan; rollback]
+  E -- Yes --> F[Set UNDER_MAINTENANCE<br/>Insert OPEN case and report audit<br/>Direct report commits; UC03 commits with the return]
+  R([UC03 receives DAMAGED equipment]) --> R1{Already RETIRED?}
+  R1 -- No --> D
+  R1 -- Yes --> R2[UC03 directly inserts linked OPEN case and audit<br/>Keep RETIRED in the return transaction]
+  R2 --> G
+  F --> G[Storekeeper or ADMIN selects OPEN case<br/>and ACTIVE MAINTAINER]
+  G --> H{Operator allowed, target eligible<br/>case OPEN and snapshot current?}
+  H -- No --> H1[403 role, 400 target<br/>409 transition or version conflict; rollback]
+  H1 --> G
+  H -- Yes --> I[Lock Equipment; persist ASSIGNED<br/>Append audit; publish MaintenanceAssigned; commit]
+  I --> J[Assigned MAINTAINER requests start]
+  J --> K[Lock Equipment, reload case<br/>Check assigned actor and ASSIGNED state]
+  K --> K1{Start permitted?}
+  K1 -- No --> K2[403 wrong technician or 409 state<br/>Rollback and refresh]
+  K2 --> J
+  K1 -- Yes --> L[Persist IN_PROGRESS and START audit; commit]
+  L --> M{Record work or complete?}
+  M -- Diagnosis, repair action or note --> N[Require assigned actor, non-blank detail<br/>and post-lock IN_PROGRESS state]
+  N --> N1{Work permitted?}
+  N1 -- No --> N2[400 detail, 403 actor or 409 state<br/>No appended history]
+  N2 --> M
+  N1 -- Yes --> N3[Append work audit; commit<br/>Case state and version unchanged]
+  N3 --> M
+  M -- Resolve or mark unrepairable --> O[Require assigned actor and IN_PROGRESS<br/>Non-blank resolution note and valid time]
+  O --> O1{Completion permitted?}
+  O1 -- No --> O2[400 validation, 403 actor or 409 state/version<br/>Rollback and refresh]
+  O2 --> M
+  O1 -- Yes --> P{Outcome}
+  P -- RESOLVED --> Q[Persist terminal case<br/>Recompute Equipment]
+  Q --> Q1{Equipment facts by precedence}
+  Q1 -- Already retired --> Q2[Keep RETIRED]
+  Q1 -- Other active case --> Q3[Keep UNDER_MAINTENANCE]
+  Q1 -- No active case, ACTIVE loan --> Q4[Set ON_LOAN]
+  Q1 -- No active case or loan --> Q5[Set AVAILABLE]
+  P -- UNREPAIRABLE --> U[Persist terminal case<br/>Set Equipment RETIRED]
+  Q2 --> V
+  Q3 --> V
+  Q4 --> V
+  Q5 --> V
+  U --> V[Append completion audit<br/>Publish MaintenanceCompleted]
+  V --> W{Writes and synchronous consumers succeed?}
+  W -- Yes --> Z([Commit; retain read-only case and history])
+  W -- No --> W1[Rollback case, equipment and audit<br/>Show safe error]
+  Z --> T[No further transition or work accepted]
+  X --> End([Correct input or stop])
+  Y --> End
+  %% Draft PR 12 supplies notification observers; main has no UC04 production subscriber.
