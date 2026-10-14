@@ -86,7 +86,8 @@ Processing order in one transaction:
 3. Evaluate rules (Section 6), **return all violations together** → 422 `reservation-rule`.
 4. Occupied interval → 409 `reservation-conflict`; existing loan at start → 409 `equipment-unavailable`.
 5. Insert. Even if concurrent requests bypass step 4, `reservation_no_overlap` rejects them (SQLState `23P01`) → 409 `reservation-conflict`; trigger rejection (`23514`) → 409 `equipment-unavailable`.
-6. Publish `ReservationSubmitted` in the same transaction (Section 7).
+6. Append an audit record `RESERVATION_SUBMIT` (actor = requester, entity `Reservation`) in the same transaction (Section 7.1).
+7. Publish `ReservationSubmitted` in the same transaction (Section 7).
 
 ### 3.2 `GET /api/v1/reservations/mine?status&page&size` — My Reservations
 
@@ -100,7 +101,7 @@ Other users' and missing reservations **both return 404**, without revealing exi
 
 - Only `PENDING_APPROVAL` / `CONFIRMED` without a checkout record (Proposal rule 4). Checked out → 409 `not-cancellable` (return rather than cancel); cancelled/rejected → 409 `not-cancellable`.
 - Conditional version update; concurrent changes → 409 `stale-reservation`.
-- Cancellation releases the slot immediately (exclusion applies only to occupying states); publish `ReservationCancelled`.
+- Cancellation releases the slot immediately (exclusion applies only to occupying states); append an audit record `RESERVATION_CANCEL` and publish `ReservationCancelled` in the same transaction.
 
 ### 3.5 `ReservationView`
 
@@ -132,7 +133,7 @@ Other users' and missing reservations **both return 404**, without revealing exi
 | 409 | `/problems/stale-reservation` | Version changed | `violations: []` |
 | 422 | `/problems/reservation-rule` | Policy violations | `violations: [{code, message}]`, all listed |
 
-Stable `violations[].code` values may be used by frontend/tests: `invalid-interval`, `start-in-past`, `too-short`, `too-long`, `too-far-ahead`, `quota-exceeded`.
+Stable `violations[].code` values may be used by frontend/tests: `invalid-interval`, `start-in-past`, `too-short`, `too-long`, `too-far-ahead`, `quota-exceeded`, `overdue-loan`.
 
 ---
 
@@ -166,6 +167,7 @@ Each rule implements `ReservationPolicy`; `ReservationRules` runs them and colle
 | Minimum/maximum duration (rule 10) | `DurationPolicy` | 30 minutes – 7 days | `too-short` / `too-long` |
 | Booking horizon | `BookingHorizonPolicy` | 90 days | `too-far-ahead` |
 | Concurrent unended reservations (rule 11) | `OpenReservationQuotaPolicy` | 3 (`PENDING_APPROVAL` + `CONFIRMED`, unended) | `quota-exceeded` |
+| No new booking while holding overdue equipment (rule 11) | `OverdueLoanPolicy` | On (`block-overdue-borrowers`); an `ACTIVE` loan of the requester with `due_at` before now | `overdue-loan` |
 
 > Provisional team defaults, pending Sprint 2 review; changes require configuration only. Frontend `features/reservation/rules.ts` mirrors duration/start rules for immediate feedback; the backend is authoritative.
 
@@ -179,6 +181,17 @@ Published inside the initiating transaction (Spring `ApplicationEventPublisher`)
 | --- | --- | --- |
 | `reservation.service.event.ReservationSubmitted` | `eventId`, `reservationId`, `requesterId`, `equipmentId`, `startAt`, `endAt`, `status` | Notifications (approvers for `PENDING_APPROVAL`), audit |
 | `reservation.service.event.ReservationCancelled` | `eventId`, `reservationId`, `requesterId`, `equipmentId` | Notifications/audit; UC05 may cancel unsent reminders |
+
+### 7.1 Audit Records
+
+Submit and cancel each append one row to `serms.audit_log` inside the booking transaction, so a refused or rolled-back request leaves no record (Proposal 5.7, business rule 9). Rows are written by `ReservationRepository.audit`, not by an event listener.
+
+| Action | `actor_id` | `entity_type` / `entity_id` | `change_summary` |
+| --- | --- | --- | --- |
+| `RESERVATION_SUBMIT` | Requester | `Reservation` / reservation id | `status=…; equipment=…; slot=start/end` |
+| `RESERVATION_CANCEL` | Requester | `Reservation` / reservation id | `from=…; equipment=…` |
+
+`outcome` is `SUCCESS`; `request_id` is `reservation:<audit id>`. Approval decisions write their own `RESERVATION_DECIDE` record on the same reservation (UC02).
 
 ---
 

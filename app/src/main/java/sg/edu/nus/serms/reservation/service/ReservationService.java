@@ -78,7 +78,11 @@ public class ReservationService {
     List<RuleViolation> violations =
         rules.evaluate(
             new ReservationRuleContext(
-                request, now, repository.countOpen(requesterId, now), equipment.requiresApproval()));
+                request,
+                now,
+                repository.countOpen(requesterId, now),
+                equipment.requiresApproval(),
+                repository.hasOverdueLoan(requesterId, now)));
     if (!violations.isEmpty()) throw new ReservationException.RulesBroken(violations);
 
     if (repository.overlapsHeldSlot(request.equipmentId(), request.startAt(), request.endAt())) {
@@ -104,6 +108,13 @@ public class ReservationService {
     } catch (DataAccessException e) {
       throw translate(e);
     }
+    repository.audit(
+        requesterId,
+        "RESERVATION_SUBMIT",
+        id,
+        "status=" + status + "; equipment=" + request.equipmentId() + "; slot=" + request.startAt()
+            + "/" + request.endAt(),
+        now);
     events.publishEvent(
         new ReservationSubmitted(
             UUID.randomUUID(),
@@ -154,6 +165,12 @@ public class ReservationService {
         reservationId, current.status(), ReservationStatus.CANCELLED, current.version())) {
       throw new ReservationException.StaleVersion();
     }
+    repository.audit(
+        requesterId,
+        "RESERVATION_CANCEL",
+        reservationId,
+        "from=" + current.status() + "; equipment=" + current.equipmentId(),
+        clock.instant());
     events.publishEvent(
         new ReservationCancelled(
             UUID.randomUUID(), reservationId, requesterId, current.equipmentId()));

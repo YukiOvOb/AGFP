@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { AlertCircle, Bell, LoaderCircle } from 'lucide-react';
 import { Button } from './ui/button';
+import { cn } from '@/lib/utils';
 export function LoadingState() {
   return (
     <div className="state" role="status">
@@ -32,6 +33,8 @@ type EmptyProps = {
   description?: string;
   /** For example a button that creates the first item. */
   action?: ReactNode;
+  /** For example `min-h-0 py-8` inside a card, where the full-page height is too tall. */
+  className?: string;
 };
 /** Without props it is the inbox message; pass a title and description for any other list. */
 export function EmptyState({
@@ -39,9 +42,10 @@ export function EmptyState({
   title = 'You’re all caught up',
   description = 'Equipment reminders and reservation updates will appear here.',
   action,
+  className,
 }: EmptyProps = {}) {
   return (
-    <div className="state empty">
+    <div className={cn('state empty', className)}>
       <span className="state-icon">{icon}</span>
       <h2>{title}</h2>
       {description && <p>{description}</p>}

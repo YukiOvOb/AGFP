@@ -60,3 +60,7 @@ See [the verification record](../evidence/frontend-foundation/verification.md): 
 ### Authorship
 
 Design, implementation, tests and this entry were produced by an AI agent (Claude Code) under Liu Tongyao's instruction, who owns the task. No teammate review is claimed.
+
+## 2026-10-14 Merge
+
+Merged with #31 as `fa266a5`. The first hosted run of the `frontend` check failed after 12 seconds at "Generate OpenAPI from backend tests": the Maven wrapper could not download Maven (`wget: Failed to fetch ... apache-maven-3.9.11-bin.zip`). A rerun of that job passed; all twelve checks were green before the merge. The issue checklist was updated; closing is left to the owner.

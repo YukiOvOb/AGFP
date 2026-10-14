@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import sg.edu.nus.serms.reservation.domain.policy.BookingHorizonPolicy;
 import sg.edu.nus.serms.reservation.domain.policy.DurationPolicy;
 import sg.edu.nus.serms.reservation.domain.policy.OpenReservationQuotaPolicy;
+import sg.edu.nus.serms.reservation.domain.policy.OverdueLoanPolicy;
 import sg.edu.nus.serms.reservation.domain.policy.StartInFuturePolicy;
 import sg.edu.nus.serms.reservation.service.ReservationConfiguration;
 import sg.edu.nus.serms.reservation.service.ReservationLimits;
@@ -17,8 +18,12 @@ class ReservationPolicyTest {
   static final Instant NOW = Instant.parse("2026-10-05T02:00:00Z");
 
   static ReservationRuleContext ctx(Instant start, Instant end, int open) {
+    return ctx(start, end, open, false);
+  }
+
+  static ReservationRuleContext ctx(Instant start, Instant end, int open, boolean overdueLoan) {
     return new ReservationRuleContext(
-        new ReservationRequest(UUID.randomUUID(), start, end, null), NOW, open, false);
+        new ReservationRequest(UUID.randomUUID(), start, end, null), NOW, open, false, overdueLoan);
   }
 
   static ReservationRuleContext ctx(Duration startIn, Duration length) {
@@ -108,15 +113,38 @@ class ReservationPolicyTest {
   }
 
   @Test
+  void borrowerWithOverdueEquipmentIsRefused() {
+    var policy = new OverdueLoanPolicy();
+    Instant start = NOW.plusSeconds(3600);
+    assertThat(policy.evaluate(ctx(start, start.plusSeconds(3600), 0, false))).isEmpty();
+    assertThat(policy.evaluate(ctx(start, start.plusSeconds(3600), 0, true)))
+        .hasValueSatisfying(
+            v -> {
+              assertThat(v.code()).isEqualTo("overdue-loan");
+              assertThat(v.message()).contains("past its return time");
+            });
+  }
+
+  static ReservationLimits limits(boolean blockOverdueBorrowers) {
+    return new ReservationLimits(
+        Duration.ofMinutes(30), Duration.ofDays(7), Duration.ofDays(90), 3, blockOverdueBorrowers);
+  }
+
+  @Test
   void standardRulesReportEveryViolationInOrder() {
-    var rules =
-        ReservationConfiguration.rulesFor(
-            new ReservationLimits(Duration.ofMinutes(30), Duration.ofDays(7), Duration.ofDays(90), 3));
+    var rules = ReservationConfiguration.rulesFor(limits(true));
     Instant start = NOW.plus(Duration.ofDays(100));
-    assertThat(rules.evaluate(ctx(start, start.plus(Duration.ofDays(8)), 3)))
+    assertThat(rules.evaluate(ctx(start, start.plus(Duration.ofDays(8)), 3, true)))
         .extracting(RuleViolation::code)
-        .containsExactly("too-long", "too-far-ahead", "quota-exceeded");
+        .containsExactly("too-long", "too-far-ahead", "quota-exceeded", "overdue-loan");
     assertThat(rules.evaluate(ctx(Duration.ofHours(1), Duration.ofHours(2)))).isEmpty();
+  }
+
+  @Test
+  void theOverdueRuleCanBeSwitchedOff() {
+    var rules = ReservationConfiguration.rulesFor(limits(false));
+    Instant start = NOW.plusSeconds(3600);
+    assertThat(rules.evaluate(ctx(start, start.plusSeconds(3600), 0, true))).isEmpty();
   }
 
   @Test

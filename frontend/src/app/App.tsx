@@ -18,6 +18,8 @@ import { ApprovalListPage } from '@/features/approval/ApprovalListPage';
 import { ApprovalDetailPage } from '@/features/approval/ApprovalDetailPage';
 // Component gallery for developers; the import is dropped from production builds.
 const Gallery = import.meta.env.DEV ? lazy(() => import('@/components/ui/Gallery')) : null;
+// The chart library loads only for administrators who open the reports.
+const ReportsPage = lazy(() => import('@/features/report/ReportsPage'));
 export function App() {
   return (
     <Routes>
@@ -42,6 +44,16 @@ export function App() {
           <Route path="/maintenance" element={<MaintenanceHomePage />} />
           <Route path="/maintenance/cases/:caseId" element={<MaintenanceCasePage />} />
           <Route path="/maintenance/report" element={<MaintenanceReportPage />} />
+          <Route element={<RequireRole role="ADMIN" />}>
+            <Route
+              path="/reports"
+              element={
+                <Suspense fallback={<LoadingState />}>
+                  <ReportsPage />
+                </Suspense>
+              }
+            />
+          </Route>
           {Gallery && (
             <Route
               path="/dev/components"

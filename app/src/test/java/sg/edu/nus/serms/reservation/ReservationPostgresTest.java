@@ -15,6 +15,7 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -67,6 +68,8 @@ import sg.edu.nus.serms.testsupport.SermsPostgres;
  */
 @SpringJUnitConfig(ReservationPostgresTest.Config.class)
 class ReservationPostgresTest {
+  static final ReservationLimits LIMITS =
+      new ReservationLimits(Duration.ofMinutes(30), Duration.ofDays(7), Duration.ofDays(90), 3, true);
 
   @TestConfiguration
   @EnableTransactionManagement(proxyTargetClass = true)
@@ -101,10 +104,9 @@ class ReservationPostgresTest {
     ReservationService reservationService(
         ReservationRepository repository,
         org.springframework.context.ApplicationEventPublisher publisher) {
-      var limits = new ReservationLimits(Duration.ofMinutes(30), Duration.ofDays(7), Duration.ofDays(90), 3);
       return new ReservationService(
           repository,
-          ReservationConfiguration.rulesFor(limits),
+          ReservationConfiguration.rulesFor(LIMITS),
           publisher,
           Clock.systemUTC());
     }
@@ -136,6 +138,7 @@ class ReservationPostgresTest {
 
   @Autowired JdbcTemplate jdbc;
   @Autowired ReservationService reservations;
+  @Autowired ReservationRepository repository;
   @Autowired EquipmentSearchService search;
   @Autowired ReservationApprovalService approvalService;
   @Autowired ReservationApprovalAdapter approvalPort;
@@ -421,6 +424,94 @@ class ReservationPostgresTest {
       UUID disabled = fixtures.user("BORROWER", "DISABLED");
       assertThatThrownBy(() -> reservations.submit(disabled, request(camera(), 1, 2)))
           .isInstanceOf(ReservationException.RequesterNotEligible.class);
+    }
+  }
+
+  /** Proposal rule 11 (overdue borrowers) and business rule 9 (who did what, and when). */
+  @Nested
+  class OverdueAndAudit {
+    /** Same rules and repository, with a clock two hours ahead, inside a real transaction. */
+    <T> T twoHoursLater(Function<ReservationService, T> call) {
+      var later =
+          new ReservationService(
+              repository,
+              ReservationConfiguration.rulesFor(LIMITS),
+              event -> {},
+              Clock.offset(Clock.systemUTC(), Duration.ofHours(2)));
+      return new TransactionTemplate(transactions).execute(status -> call.apply(later));
+    }
+
+    /** A loan due in one hour: overdue for the clock two hours ahead. */
+    UUID shortLoan(UUID requester) {
+      UUID r =
+          fixtures.reservation(
+              requester, camera(), Instant.now().plusSeconds(60), Instant.now().plusSeconds(3600), "CONFIRMED");
+      fixtures.checkOut(r, fixtures.user("CUSTODIAN"));
+      return r;
+    }
+
+    int auditRows(UUID reservationId, String action) {
+      return jdbc.queryForObject(
+          "SELECT count(*) FROM serms.audit_log WHERE entity_type = 'Reservation'"
+              + " AND entity_id = ? AND action = ?",
+          Integer.class,
+          reservationId,
+          action);
+    }
+
+    @Test
+    void borrowerWithAnOverdueLoanCannotReserveUntilItIsReturned() {
+      UUID loanReservation = shortLoan(borrower);
+      assertThat(repository.hasOverdueLoan(borrower, Instant.now())).isFalse();
+      assertThat(repository.hasOverdueLoan(borrower, Instant.now().plus(Duration.ofHours(2)))).isTrue();
+      UUID item = camera();
+      assertThatThrownBy(() -> twoHoursLater(s -> s.submit(borrower, request(item, 1, 2))))
+          .isInstanceOfSatisfying(
+              ReservationException.RulesBroken.class,
+              e -> assertThat(e.violations()).extracting(v -> v.code()).containsExactly("overdue-loan"));
+      assertThat(jdbc.queryForObject(
+              "SELECT count(*) FROM serms.reservation WHERE equipment_id = ?", Integer.class, item))
+          .isZero();
+      // Another borrower is not affected by this borrower's overdue loan.
+      UUID other = fixtures.user("BORROWER");
+      assertThat(twoHoursLater(s -> s.submit(other, request(item, 1, 2))).status())
+          .isEqualTo(ReservationStatus.CONFIRMED);
+      jdbc.update(
+          "UPDATE serms.loan SET status = 'RETURNED', return_by = ?, returned_at = now(),"
+              + " return_condition = 'GOOD' WHERE reservation_id = ?",
+          fixtures.user("CUSTODIAN"),
+          loanReservation);
+      assertThat(twoHoursLater(s -> s.submit(borrower, request(camera(), 1, 2))).status())
+          .isEqualTo(ReservationStatus.CONFIRMED);
+    }
+
+    @Test
+    void submitAndCancelAreAuditedWithTheBorrowerAsActor() {
+      var r = reservations.submit(borrower, request(camera(), 1, 2));
+      reservations.cancel(borrower, r.reservationId());
+      assertThat(auditRows(r.reservationId(), "RESERVATION_SUBMIT")).isOne();
+      assertThat(auditRows(r.reservationId(), "RESERVATION_CANCEL")).isOne();
+      var rows =
+          jdbc.queryForList(
+              "SELECT actor_id, outcome, change_summary FROM serms.audit_log"
+                  + " WHERE entity_id = ? ORDER BY occurred_at, action DESC",
+              r.reservationId());
+      assertThat(rows).extracting(row -> row.get("actor_id")).containsOnly(borrower);
+      assertThat(rows).extracting(row -> row.get("outcome")).containsOnly("SUCCESS");
+      assertThat(rows.get(0).get("change_summary").toString()).contains("status=CONFIRMED");
+      assertThat(rows.get(1).get("change_summary").toString()).startsWith("from=CONFIRMED");
+    }
+
+    @Test
+    void aRefusedBookingLeavesNoAuditRecord() {
+      UUID item = camera();
+      reservations.submit(borrower, request(item, 1, 3));
+      UUID other = fixtures.user("BORROWER");
+      assertThatThrownBy(() -> reservations.submit(other, request(item, 2, 4)))
+          .isInstanceOf(ReservationException.SlotTaken.class);
+      assertThat(jdbc.queryForObject(
+              "SELECT count(*) FROM serms.audit_log WHERE actor_id = ?", Integer.class, other))
+          .isZero();
     }
   }
 
