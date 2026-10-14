@@ -114,7 +114,7 @@ export const navigation: NavItem[] = [
     group: 'manage',
     available: false,
   },
-  // Reserved for Issue #23.
+  // Issue #23.
   {
     to: '/reports',
     label: 'Reports',
@@ -122,7 +122,7 @@ export const navigation: NavItem[] = [
     icon: ChartColumn,
     roles: ['ADMIN'],
     group: 'manage',
-    available: false,
+    available: true,
   },
   // Reserved for Issue #18.
   {

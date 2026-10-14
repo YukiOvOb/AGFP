@@ -34,6 +34,9 @@
   --border: #e1e7e0;
   --input: #cdd9ce;
   --ring: #a78239;
+  /* Chart marks. A single series uses --chart-1: the brand green stepped up in chroma so it
+     passes the data-viz colour checks (lightness band, chroma floor, 3:1 on white). */
+  --chart-1: #1b7f57;
   /* Status tones used by badges; see src/lib/status.ts. */
   --tone-ok: #e3f1e4;
   --tone-ok-foreground: #2f6b45;

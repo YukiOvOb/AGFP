@@ -36,7 +36,7 @@ The frontend and backend are separate: a React single-page application, a Spring
 | Forms and validation | React Hook Form + Zod |
 | UI components / styling | shadcn/ui + Tailwind CSS 4 |
 | Tables | TanStack Table 8 |
-| Charts | Recharts 3 (planned) |
+| Charts | Recharts 3 (reports page) |
 | Date and time | date-fns + date-fns-tz (displayed in Singapore time) |
 | Package manager / runtime | pnpm · Node.js 24 LTS |
 | Code style | ESLint + Prettier |

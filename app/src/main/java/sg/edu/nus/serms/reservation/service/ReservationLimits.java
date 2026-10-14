@@ -10,4 +10,5 @@ public record ReservationLimits(
     @DefaultValue("30m") Duration minDuration,
     @DefaultValue("7d") Duration maxDuration,
     @DefaultValue("90d") Duration bookingHorizon,
-    @DefaultValue("3") int maxOpenReservations) {}
+    @DefaultValue("3") int maxOpenReservations,
+    @DefaultValue("true") boolean blockOverdueBorrowers) {}

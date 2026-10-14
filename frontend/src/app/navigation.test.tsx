@@ -53,12 +53,7 @@ describe('role names', () => {
 describe('navigation list', () => {
   it('hides reserved pages until their route exists', () => {
     const reserved = navigation.filter((item) => !item.available).map((item) => item.to);
-    expect(reserved).toEqual([
-      '/manage/equipment',
-      '/reports',
-      '/admin/users',
-      '/admin/audit',
-    ]);
+    expect(reserved).toEqual(['/manage/equipment', '/admin/users', '/admin/audit']);
     expect(visibleNavigation(['ADMIN', 'CUSTODIAN']).some((item) => !item.available)).toBe(false);
   });
   it('shows a reserved page to its roles once it is switched on', () => {
@@ -115,7 +110,12 @@ describe('overview and menu', () => {
       'Notifications',
     ]);
     expect(screen.getByText('Approver · Administrator')).toBeInTheDocument();
-    expect(within(screen.getByRole('navigation', { name: 'Management' })).getByRole('link', { name: 'Overdue' })).toBeInTheDocument();
+    // Both delivered management pages follow their order in the navigation list.
+    expect(
+      within(screen.getByRole('navigation', { name: 'Management' }))
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['Overdue', 'Reports']);
   });
   it('opens a page from its card and returns through the brand link', async () => {
     mount('/', ['BORROWER']);
