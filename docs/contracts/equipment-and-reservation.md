@@ -38,6 +38,7 @@ Owner: Member 1 (search and reservation). The repository version is authoritativ
 - Exclude `RETIRED` equipment; sort by name, then asset tag.
 - `availableInWindow` is `null` without a window. With a window, `true` means a reservation submitted **now** would be accepted. Criteria match the insert trigger: `serms.equipment_can_reserve(equipment, from)` (not retired/under maintenance, no open fault, existing loan due by `from`) **and** no overlapping `PENDING_APPROVAL` / `CONFIRMED` / `FULFILLED` reservation.
 - Invalid parameters return 400 `/problems/validation`, with an explanatory `detail` (e.g. "Choose a time window to show only available equipment").
+- Since V005 (#40) each item also carries `description` (null when none is recorded) and `maxBorrowDuration`, an ISO-8601 duration such as `PT72H` that is null when the global limit in section 6 applies. The same two fields appear in the `equipment` object of 2.3.
 
 ```json
 {
@@ -45,7 +46,8 @@ Owner: Member 1 (search and reservation). The repository version is authoritativ
     {
       "equipmentId": "…", "assetTag": "CAM-001", "name": "Canon EOS R6",
       "category": "Camera", "location": "COM1 Lab", "status": "AVAILABLE",
-      "requiresApproval": false, "availableInWindow": true
+      "requiresApproval": false, "availableInWindow": true,
+      "description": "Full-frame mirrorless camera", "maxBorrowDuration": "PT72H"
     }
   ],
   "page": 0, "size": 20, "totalElements": 1, "totalPages": 1
