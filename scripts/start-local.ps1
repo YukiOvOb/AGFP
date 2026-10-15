@@ -60,7 +60,8 @@ if (!$SkipBuild) {
   Write-Output 'Building the backend (test verification is a separate command)...'
   Push-Location $repo
   try {
-    RunLogged $MavenCommand @('-B','-f','app/pom.xml','package','-DskipTests') (Join-Path $runtime 'build-backend.log')
+    # Clean first: app/target content left by another branch's build would otherwise be packaged into the JAR.
+    RunLogged $MavenCommand @('-B','-f','app/pom.xml','clean','package','-DskipTests') (Join-Path $runtime 'build-backend.log')
   } finally { Pop-Location }
   Push-Location (Join-Path $repo 'frontend')
   try {
@@ -83,9 +84,11 @@ $keys = @('PGPASSWORD','SERMS_DB_URL','SERMS_DB_USER','SERMS_DB_PASSWORD','SPRIN
 $previous = @{}; foreach ($key in $keys) { $previous[$key] = [Environment]::GetEnvironmentVariable($key, 'Process') }
 $state = [ordered]@{repo=$repo; postgresBin=$pg; data=$data; databasePort=$DatabasePort; backendPort=$BackendPort; webPort=$WebPort; backendJar=$runtimeJar; backendPid=0; frontendPid=0}
 $started = $false
-function Ready([string]$url) {
+function Ready([string]$url, [Diagnostics.Process]$process, [string]$log) {
   for ($i=0; $i -lt 90; $i++) {
     try { $result = Invoke-RestMethod -Uri $url -TimeoutSec 2; if ($result.status -eq 'UP') { return } } catch {}
+    # A process that has already exited cannot become ready; report its log instead of waiting out the retries.
+    if ($process.HasExited) { throw "Process $($process.Id) exited before $url became ready. Inspect $log (and the .err file next to it)." }
     Start-Sleep -Milliseconds 500
   }
   throw "Readiness check failed: $url. Inspect $runtime logs."
@@ -119,14 +122,14 @@ try {
   Write-Output 'Starting Spring Boot and applying the existing Flyway migrations...'
   $backend = Start-Process -FilePath $java -ArgumentList @('-jar',('"'+$runtimeJar+'"')) -WorkingDirectory $repo -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $runtime 'backend.log') -RedirectStandardError (Join-Path $runtime 'backend.err')
   $state.backendPid = $backend.Id
-  Ready "http://127.0.0.1:$BackendPort/api/v1/health"
+  Ready "http://127.0.0.1:$BackendPort/api/v1/health" $backend (Join-Path $runtime 'backend.log')
   $env:SERMS_LOCAL_DEMO_PASSWORD = $access.demoPassword
   RunLogged (Join-Path $pg 'psql.exe') @('-h','127.0.0.1','-p',"$DatabasePort",'-U','serms_local','-d','serms_local_demo','-w','-f',(Join-Path $PSScriptRoot 'demo-data.sql')) (Join-Path $runtime 'seed.log')
   $env:SERMS_API_TARGET = "http://127.0.0.1:$BackendPort"
   Write-Output 'Starting React with same-origin forwarding to the real backend...'
   $frontend = Start-Process -FilePath $node -ArgumentList @(('"'+$vite+'"'),'--host','127.0.0.1','--port',"$WebPort") -WorkingDirectory (Join-Path $repo 'frontend') -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $runtime 'frontend.log') -RedirectStandardError (Join-Path $runtime 'frontend.err')
   $state.frontendPid = $frontend.Id
-  Ready "http://127.0.0.1:$WebPort/api/v1/health"
+  Ready "http://127.0.0.1:$WebPort/api/v1/health" $frontend (Join-Path $runtime 'frontend.log')
   $state | ConvertTo-Json | Set-Content -LiteralPath $stateFile -Encoding utf8
   Write-Output "Local SERMS: http://127.0.0.1:$WebPort"
   Write-Output "Local-only accounts/password: $accessFile"
