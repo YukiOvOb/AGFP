@@ -8,7 +8,7 @@ sequenceDiagram
   participant P as ReservationRules (Strategy)
   participant R as ReservationRepository
   participant D as PostgreSQL 18
-  participant E as Event listeners (notification / audit)
+  participant E as Event listeners (notification)
   B->>W: Enter interval and submit
   W->>W: Zod validation (end>start, duration, future start)
   W->>C: POST /api/v1/reservations + X-XSRF-TOKEN
@@ -18,6 +18,7 @@ sequenceDiagram
   R->>D: SELECT … FROM equipment FOR UPDATE
   S->>R: lockRequesterAccountStatus (FOR UPDATE)
   S->>R: countOpen(requester, now)
+  S->>R: hasOverdueLoan(requester, now)
   S->>P: evaluate(context)
   P-->>S: Violations
   alt Violations
@@ -31,6 +32,7 @@ sequenceDiagram
       D-->>S: exclusion violation
       S-->>C: SlotTaken → 409
     else Success
+      S->>R: audit RESERVATION_SUBMIT (same transaction)
       S->>E: publish ReservationSubmitted (same transaction)
       S-->>C: Reservation
       C-->>W: 201 Created + ReservationView

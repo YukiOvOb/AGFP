@@ -6,7 +6,7 @@ Test bench requirements remain defined in [Technology stack §5](tech-stack.md#5
 
 | Check | Working directory and command | Prerequisites / current workflow |
 | --- | --- | --- |
-| Backend | `app/`: Windows `mvnw.cmd -B verify`; macOS/Linux `./mvnw -B verify` | Java 17; PostgreSQL/Testcontainers cases require Docker. `Frontend and API contract` and `Notification and default PostgreSQL tests` run backend checks |
+| Backend | `app/`: Windows `mvnw.cmd -B verify`; macOS/Linux `./mvnw -B verify` | Java 17; PostgreSQL/Testcontainers cases require Docker, or `SERMS_APP_TEST_JDBC_URL` (+ `_DB_USER`, `_DB_PASSWORD`) pointing at an isolated PostgreSQL 18 database named `serms_test` with `btree_gist` available. `Frontend and API contract` and `Notification and default PostgreSQL tests` run backend checks |
 | Complete PostgreSQL/UC03 regression | Root: `scripts/test-zhoufanhao.ps1`; without Docker supply `-PostgresBin '<PostgreSQL 18 bin>'` | Isolated PostgreSQL 18; database, app regression and UC03. CI also uses `-Puc03-postgres-it` |
 | UC04 PostgreSQL integration | `app/`: `mvnw.cmd -B -Duc04.postgres=true verify` (Linux: `./mvnw`) | Explicitly configured, already migrated TEST database; see `Uc04PostgresTestSupport`. On every PR and every push to main, `Maintenance PostgreSQL acceptance` ([maintenance-tests.yml](../.github/workflows/maintenance-tests.yml), job `maintenance-postgres`) runs `MaintenancePostgresIT` on PostgreSQL 18 with `-Puc04-postgres-it`. Ordinary `verify` still does not automatically enable the suite |
 | Frontend API types | `frontend/`: generate `app/target/openapi.json`, set `OPENAPI_FILE=../app/target/openapi.json`, then `pnpm check:api` | Actual backend verify output; `Frontend and API contract` |
@@ -17,6 +17,7 @@ Test bench requirements remain defined in [Technology stack §5](tech-stack.md#5
 | Security | GitHub `CI` workflow | Existing gitleaks, Trivy, Dependency Review; local document checks do not replace them |
 | Collaboration navigation/skills | Root: `node scripts/check-collaboration.mjs` | Added `Collaboration documentation` workflow; required branch-protection checks unchanged |
 | Real local demo | Root: startup, `node scripts/smoke-local.mjs`, data/browser checks and shutdown in [local demo](local-demo.md) | Dedicated local PostgreSQL cluster/accounts; creates actual demonstration transactions; not a full exception/overdue suite |
+| UC01 real browser | Root, with the local demo running: `node scripts/check-uc01-browser.mjs` | Two borrowers, desktop and mobile; conflict, item limit, approval routing, cancellation; cancels what it creates. Set `SERMS_CHROMIUM` to a preinstalled Chromium when Playwright's browser download is unavailable. Record: [UC01 verification](evidence/uc01/verification.md) |
 
 Windows environment example, working directory `frontend/`:
 
