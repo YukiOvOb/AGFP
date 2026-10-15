@@ -31,6 +31,16 @@ Compose declares the database volume **external**, requiring `SERMS_DB_VOLUME`; 
 
 During that transition, prepare the candidate Compose file outside the tracked checkout from the allowed main SHA, pass the existing server-only `.env` explicitly, and start **only** its `db` service with project `agfp`. Confirm it mounts the inventoried volume at `/var/lib/postgresql`. A native/older PostgreSQL server requires a verified dump/restore into the agreed 18 volume; do not switch to a new empty database just to make health pass. The release script finds the prestarted DB by Compose labels even while the tracked checkout still contains the static Compose file.
 
+## First Administrator (#41)
+
+A fresh production database has no accounts, and `scripts/demo-data.sql` must never run there. The application creates the first administrator from three one-off settings; there is no public endpoint.
+
+1. Only if the inventory shows no active `ADMIN`: add `SERMS_BOOTSTRAP_ADMIN_EMAIL`, `SERMS_BOOTSTRAP_ADMIN_DISPLAY_NAME` and `SERMS_BOOTSTRAP_ADMIN_PASSWORD` to the server-only `.env` (mode 600). The password needs at least 12 characters and at most 72 bytes; choose it privately and never put it in Issues, logs or chat.
+2. Start the application once. With no active administrator it creates an `ACTIVE` user with the `ADMIN` role, stores only the password hash, writes a `USER_BOOTSTRAP_ADMIN` row to `serms.audit_log` and logs the email address. If an active administrator already exists it changes nothing and logs that. An invalid value, or an email that belongs to another account, stops the start with a message that does not contain the password.
+3. Delete the three lines from `.env` and restart, then sign in and change nothing else until the deployed acceptance below.
+
+Leaving the settings in place is harmless for later starts (an administrator exists), but the password would remain in the file, so remove them.
+
 ## Main-SHA and Handover Gates
 
 1. Keep repository variable `SERMS_PRODUCTION_READY` absent/false until access, inventory, isolated restore rehearsal, local acceptance and release coordination are complete. This is a release prerequisite; branch protection and collaborator permissions are unchanged.

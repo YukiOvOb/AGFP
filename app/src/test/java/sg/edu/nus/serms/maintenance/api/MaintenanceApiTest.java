@@ -157,6 +157,29 @@ class MaintenanceApiTest {
   }
 
   @Test
+  void reportAcceptsFaultCategoryAndPriorityAndDefaultsMissingOnes() throws Exception {
+    String body = fault().substring(0, fault().length() - 1)
+        + ",\"faultCategory\":\"ELECTRICAL\",\"priority\":\"URGENT\"}";
+    mvc.perform(mutation("/cases", body, "BORROWER")).andExpect(status().isCreated())
+        .andExpect(jsonPath("$.faultCategory").value("ELECTRICAL"))
+        .andExpect(jsonPath("$.priority").value("URGENT"));
+    verify(cases).insert(argThat(item -> item.faultCategory() == FaultCategory.ELECTRICAL
+        && item.priority() == MaintenancePriority.URGENT));
+    mvc.perform(mutation("/cases", fault(), "BORROWER")).andExpect(status().isCreated())
+        .andExpect(jsonPath("$.faultCategory").value("OTHER"))
+        .andExpect(jsonPath("$.priority").value("MEDIUM"));
+  }
+
+  @Test
+  void unknownFaultCategoryOrPriorityIsAValidationProblem() throws Exception {
+    for (String extra : new String[] {",\"faultCategory\":\"FIRE\"}", ",\"priority\":\"CRITICAL\"}"}) {
+      String body = fault().substring(0, fault().length() - 1) + extra;
+      mvc.perform(mutation("/cases", body, "BORROWER")).andExpect(status().isBadRequest());
+    }
+    verify(cases, never()).insert(any());
+  }
+
+  @Test
   void adminWithSeparatelyHeldBorrowerRoleCanReportWithLoanId() throws Exception {
     String body = fault().substring(0, fault().length() - 1) + ",\"loanId\":\"" + OTHER + "\"}";
     mvc.perform(mutation("/cases", body, "ADMIN", "BORROWER")).andExpect(status().isCreated())

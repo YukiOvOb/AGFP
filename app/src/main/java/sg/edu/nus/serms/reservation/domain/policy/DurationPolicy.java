@@ -6,7 +6,10 @@ import java.util.Optional;
 import sg.edu.nus.serms.reservation.domain.ReservationRuleContext;
 import sg.edu.nus.serms.reservation.domain.RuleViolation;
 
-/** Minimum and maximum borrowing duration (Proposal rule 10). */
+/**
+ * Minimum and maximum borrowing duration (Proposal rule 10, Proposal 5.3). An item's own maximum
+ * (V005 {@code max_borrow_duration}) replaces the global maximum for that item.
+ */
 public final class DurationPolicy implements ReservationPolicy {
   private final Duration minimum;
   private final Duration maximum;
@@ -27,9 +30,12 @@ public final class DurationPolicy implements ReservationPolicy {
       return Optional.of(
           new RuleViolation("too-short", "A reservation must last at least " + human(minimum) + "."));
     }
-    if (requested.compareTo(maximum) > 0) {
-      return Optional.of(
-          new RuleViolation("too-long", "A reservation may last at most " + human(maximum) + "."));
+    Duration itemLimit = c.equipmentMaxDuration();
+    Duration limit = itemLimit == null ? maximum : itemLimit;
+    if (requested.compareTo(limit) > 0) {
+      return Optional.of(new RuleViolation("too-long", itemLimit == null
+          ? "A reservation may last at most " + human(maximum) + "."
+          : "This equipment may be reserved for at most " + human(itemLimit) + "."));
     }
     return Optional.empty();
   }

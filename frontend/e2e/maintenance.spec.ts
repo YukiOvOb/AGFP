@@ -25,6 +25,8 @@ test('maintainer signs in, starts own case, diagnoses and resolves it', async ({
     loanId: null,
     status: 'ASSIGNED',
     faultDescription: 'Camera lens jammed',
+    faultCategory: 'MECHANICAL',
+    priority: 'HIGH',
     reportedAt: '2026-10-06T00:00:00Z',
     resolvedAt: null,
     resolutionNote: null,

@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
-/** UC04 aggregate containing only state representable by V002. */
+/** UC04 aggregate over serms.maintenance_case; fault category and priority are fixed at report time. */
 public final class MaintenanceCase {
   private static final MaintenanceStateMachine TRANSITIONS = new MaintenanceStateMachine();
   private final UUID maintenanceCaseId;
@@ -12,6 +12,8 @@ public final class MaintenanceCase {
   private final UUID reportedBy;
   private final UUID loanId;
   private final String faultDescription;
+  private final FaultCategory faultCategory;
+  private final MaintenancePriority priority;
   private final Instant reportedAt;
   private final long version;
   private MaintenanceStatus status;
@@ -21,8 +23,15 @@ public final class MaintenanceCase {
 
   public MaintenanceCase(UUID maintenanceCaseId, UUID equipmentId, UUID reportedBy,
       UUID loanId, String faultDescription, Instant reportedAt) {
+    this(maintenanceCaseId, equipmentId, reportedBy, loanId, faultDescription,
+        FaultCategory.OTHER, MaintenancePriority.MEDIUM, reportedAt);
+  }
+
+  public MaintenanceCase(UUID maintenanceCaseId, UUID equipmentId, UUID reportedBy,
+      UUID loanId, String faultDescription, FaultCategory faultCategory,
+      MaintenancePriority priority, Instant reportedAt) {
     this(new MaintenanceCaseSnapshot(maintenanceCaseId, equipmentId, reportedBy, null, loanId,
-        MaintenanceStatus.OPEN, faultDescription, null, reportedAt, null, 0));
+        MaintenanceStatus.OPEN, faultDescription, null, reportedAt, null, 0, faultCategory, priority));
   }
 
   private MaintenanceCase(MaintenanceCaseSnapshot snapshot) {
@@ -33,6 +42,8 @@ public final class MaintenanceCase {
     loanId = snapshot.loanId();
     status = snapshot.status();
     faultDescription = snapshot.faultDescription();
+    faultCategory = snapshot.faultCategory();
+    priority = snapshot.priority();
     resolutionNote = snapshot.resolutionNote();
     reportedAt = snapshot.reportedAt();
     resolvedAt = snapshot.resolvedAt();
@@ -45,7 +56,8 @@ public final class MaintenanceCase {
 
   public MaintenanceCaseSnapshot snapshot() {
     return new MaintenanceCaseSnapshot(maintenanceCaseId, equipmentId, reportedBy, assignedTo,
-        loanId, status, faultDescription, resolutionNote, reportedAt, resolvedAt, version);
+        loanId, status, faultDescription, resolutionNote, reportedAt, resolvedAt, version,
+        faultCategory, priority);
   }
 
   public MaintenanceCase copy() { return restore(snapshot()); }
@@ -57,6 +69,8 @@ public final class MaintenanceCase {
   public UUID loanId() { return loanId; }
   public MaintenanceStatus status() { return status; }
   public String faultDescription() { return faultDescription; }
+  public FaultCategory faultCategory() { return faultCategory; }
+  public MaintenancePriority priority() { return priority; }
   public String resolutionNote() { return resolutionNote; }
   public Instant reportedAt() { return reportedAt; }
   public Instant resolvedAt() { return resolvedAt; }

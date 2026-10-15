@@ -12,7 +12,7 @@ import { equipmentStatus, slotReason, toneClass } from '@/lib/status';
 import { formatRange, localToIso } from '@/lib/time';
 import { equipmentKeys, useAvailability } from '@/features/equipment/queries';
 import { reservationKeys } from './queries';
-import { reservationSchema, type ReservationForm } from './rules';
+import { durationMinutes, durationText, reservationSchema, type ReservationForm } from './rules';
 const LOOKAHEAD_DAYS = 14;
 type Violation = { code: string; message: string };
 /** UC01 step 2: check an item's held slots and submit a reservation. */
@@ -28,6 +28,9 @@ export function ReservePage() {
     return { from: from.toISOString(), to: to.toISOString() };
   });
   const availability = useAvailability(equipmentId, view.from, view.to);
+  // The item's own limit (V005) once availability has loaded; react-hook-form reads the resolver
+  // on every render, so validation follows it.
+  const itemMaxMinutes = durationMinutes(availability.data?.equipment.maxBorrowDuration);
   const [failure, setFailure] = useState<{ detail: string; violations: Violation[] } | null>(null);
   const {
     register,
@@ -35,7 +38,7 @@ export function ReservePage() {
     setError,
     formState: { errors },
   } = useForm<ReservationForm>({
-    resolver: zodResolver(reservationSchema()),
+    resolver: zodResolver(reservationSchema(Date.now, itemMaxMinutes)),
     defaultValues: { startAt: query.get('from') ?? '', endAt: query.get('to') ?? '', purpose: '' },
   });
   const create = useMutation({
@@ -154,6 +157,11 @@ export function ReservePage() {
                 {...register('purpose')}
               />
               {errors.purpose && <p className="field-error">{errors.purpose.message}</p>}
+              {itemMaxMinutes !== null && (
+                <p className="muted small">
+                  This item can be reserved for at most {durationText(itemMaxMinutes)}.
+                </p>
+              )}
               {a.equipment.requiresApproval && (
                 <p className="muted small">
                   This equipment needs approval. Your request waits for an approver before it is

@@ -671,6 +671,16 @@ export interface components {
             /** Format: uuid */
             loanId?: string | null;
             faultDescription: string;
+            /**
+             * @description Defaults to OTHER
+             * @enum {string|null}
+             */
+            faultCategory?: "MECHANICAL" | "ELECTRICAL" | "SOFTWARE" | "PHYSICAL_DAMAGE" | "MISSING_PART" | "OTHER" | null;
+            /**
+             * @description Defaults to MEDIUM
+             * @enum {string|null}
+             */
+            priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT" | null;
         };
         MaintenanceCaseResponse: {
             /** Format: uuid */
@@ -694,6 +704,10 @@ export interface components {
             /** @enum {string} */
             status: "OPEN" | "ASSIGNED" | "IN_PROGRESS" | "RESOLVED" | "UNREPAIRABLE";
             faultDescription: string;
+            /** @enum {string} */
+            faultCategory: "MECHANICAL" | "ELECTRICAL" | "SOFTWARE" | "PHYSICAL_DAMAGE" | "MISSING_PART" | "OTHER";
+            /** @enum {string} */
+            priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
             resolutionNote: string | null;
             /** Format: date-time */
             reportedAt: string;

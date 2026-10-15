@@ -15,6 +15,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sg.edu.nus.serms.loan.domain.*;
+import sg.edu.nus.serms.maintenance.domain.FaultCategory;
+import sg.edu.nus.serms.maintenance.domain.MaintenancePriority;
 import sg.edu.nus.serms.maintenance.service.MaintenanceService;
 import sg.edu.nus.serms.shared.domain.RecordNotFoundException;
 import sg.edu.nus.serms.shared.security.SermsUserPrincipal;
@@ -22,6 +24,9 @@ import sg.edu.nus.serms.shared.security.SermsUserPrincipal;
 @Service
 @Transactional
 public class LoanService {
+  /** Fault fields for a damaged return (#21); proposed by the UC04 owner, pending UC03 confirmation. */
+  static final FaultCategory DAMAGED_RETURN_CATEGORY = FaultCategory.PHYSICAL_DAMAGE;
+  static final MaintenancePriority DAMAGED_RETURN_PRIORITY = MaintenancePriority.HIGH;
   private final JdbcTemplate jdbc;
   private final Clock clock;
   private final MaintenanceService maintenance;
@@ -106,11 +111,13 @@ public class LoanService {
         caseId = UUID.randomUUID();
         jdbc.update("""
             INSERT INTO serms.maintenance_case(maintenance_case_id,equipment_id,reported_by,loan_id,
-                fault_description,reported_at) VALUES (?,?,?,?,?,?)
-            """, caseId, equipmentId, actor, loanId, note.strip(), Timestamp.from(now));
+                fault_description,reported_at,fault_category,priority) VALUES (?,?,?,?,?,?,?,?)
+            """, caseId, equipmentId, actor, loanId, note.strip(), Timestamp.from(now),
+            DAMAGED_RETURN_CATEGORY.name(), DAMAGED_RETURN_PRIORITY.name());
         auditCase(actor, caseId, now, note.strip());
       } else {
-        caseId = maintenance.reportFault(equipmentId, actor, note.strip(), loanId).maintenanceCaseId();
+        caseId = maintenance.reportFault(equipmentId, actor, note.strip(), loanId,
+            DAMAGED_RETURN_CATEGORY, DAMAGED_RETURN_PRIORITY).maintenanceCaseId();
       }
     }
     // Reload state: reportFault may already have changed it.
