@@ -4,53 +4,6 @@ Member 1 updates after weekly meetings. Preserve snapshots, newest first, as Spr
 
 ---
 
-## Member 1 Update 2026-10-15
-
-Recorded by Member 1 (Shi Wenqi) on returning to the project ([D-013](../collaboration/decisions.md#d-013-shi-wenqi-resumes-member-1-work)). `main` is `f9596c1`. No meeting is recorded here; the facts come from merged PRs, open Issues and local runs.
-
-### Merged since the 2026-10-14 snapshot
-
-| PR | Content | Author |
-| --- | --- | --- |
-| [#32](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/32) | UC01 overdue-borrower rule and submit/cancel audit | Liu Tongyao (on Member 1's behalf, D-004) |
-| [#33](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/33) | Administrator reports with charts | Liu Tongyao |
-| [#42](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/42) | V005 equipment master data and UC01 read fields | Liu Tongyao |
-| [#43](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/43) | First-administrator bootstrap | Liu Tongyao |
-| [#44](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/44) | UC01 per-item maximum borrowing duration | Liu Tongyao (on Member 1's behalf, D-004) |
-| [#45](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/45) | UC04 fault category and priority (V006) | Liu Tongyao |
-| [#12](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/12) | UC05 notifications, overdue scanner and overdue view | Wang Yuanmeng |
-| [#39](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/39) | DevSecOps checks, PostgreSQL backup and load scenario | Wang Yuanmeng |
-| [#47](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/47) | Local-demo evidence for the 2026-10-15 completion work | Liu Tongyao |
-
-### Use-case status
-
-| Use case | Owner | On `main` | Open acceptance |
-| --- | --- | --- | --- |
-| UC01 Search/reserve | Member 1 Shi Wenqi | Complete feature set incl. rules 9-11 and per-item limit | Member check and UC01 part of Issue #9; real-browser evidence added 2026-10-15 ([record](../evidence/uc01/verification.md)) |
-| UC02 Approval | Member 2 Zhang Hanming | API, pages, real adapter | Issue #8; draft #46 (coverage gate, real UC02 flows) |
-| UC03 Checkout/return | Member 3 Zhou Fanhao | Checkout/return, damage to maintenance | Issues #6, #17, #20 |
-| UC04 Maintenance | Member 4 Liu Tongyao | Full flow with fault category/priority | Issue #21 (UC03 owner's confirmation), #9 |
-| UC05 Overdue/notifications | Member 5 Wang Yuanmeng | Scanner, events, inbox, overdue view | Issues #7, #19, #25 (ZAP after deployment) |
-
-### Deadlines from Issue #27 still open
-
-| Task | Owner | Due (D-012) |
-| --- | --- | --- |
-| #18 Admin console, user API, audit viewer | Zhang Hanming | Thu 2026-10-15 23:00 SGT |
-| #20 UC03 checkout lookup | Zhou Fanhao | Thu 2026-10-15 23:00 SGT |
-| #24 Coverage gate and real all-role E2E (draft #46) | Zhang Hanming | Gate Thu 2026-10-15 23:00 SGT; final pass after #17, #18, #19 |
-| #17 Equipment management | Zhou Fanhao | Fri 2026-10-16 01:06 SGT |
-| #5, #8 sign-offs; #6 sign-off | Liu Tongyao, Zhang Hanming; Zhou Fanhao | Thu 23:00; Fri 01:06 SGT |
-| #26 Visual polish | Liu Tongyao | 24 h after the last feature PR |
-| #10 Server handover and release | Liu Tongyao with Shi Wenqi | After the server access; Thu 2026-10-22 at the latest |
-
-### Risks
-
-1. **#17 and #18 are the largest open items and both feed the #24 final pass and feature freeze.** If either misses its deadline the owner should say so on the Issue the same day so #27 can be re-split.
-2. **Server access.** The new repository is not yet connected to the server; Member 1 asked not to connect it yet. #10 keeps its D-005 position as the last step.
-3. **Dependabot backlog.** 22 dependency PRs (#48-#69) are open, including major upgrades (Vitest 5, TanStack Table 9, Spring Boot parent in the notification adapter). Merging them during feature freeze needs the owners in [ownership boundaries](../collaboration/ownership.md#shared-files-at-risk-of-concurrent-edits) to agree; none is merged by this update.
-4. **Node.js version drift.** The frontend declares Node.js 24; the 2026-10-15 Member 1 run used Node.js 22 and passed, so CI remains the reference.
-
 ## Integration Update 2026-10-14
 
 `main` is `b3def12`. The integration line is merged: [#11](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/11) local demo (merge `f077ce7`); [#13](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/13) Spring Boot 4, `web` + `app` + `db` packaging and gated deployment, merged into the branch of #14 (`db376ab`); and [#14](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/14) UC01/UC04 acceptance fixes, which carried both into `main` (merge `b3def12`). The content of `main` equals the release-preparation head `15ec983`; all twelve hosted checks passed on `db376ab` before the merge. The `Deploy` run after each merge failed without reaching the server: the repository has no deployment secrets, and since #13 the release gate stops while `SERMS_PRODUCTION_READY` is unset.

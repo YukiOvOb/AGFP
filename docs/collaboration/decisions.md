@@ -173,18 +173,6 @@ Unchanged: the presentation on Mon 2026-10-26, deployment and code freeze on Thu
 
 Limits: a deadline does not change contracts, merge permissions, checks, test benches or the Definition of Done, and a missed deadline does not move a task to someone else automatically; re-splits are recorded on the plan Issue as D-007 describes. The owner set this rule; other members' acceptance is shown by their own activity on the Issues and is not assumed here.
 
-## D-013 Shi Wenqi Resumes Member 1 Work
-
-Status: **Stated by Shi Wenqi (Member 1) in conversation on 2026-10-15 (Asia/Singapore)**. Acknowledgement by the repository owner, Liu Tongyao, is pending and is not assumed here.
-
-Context: [D-004](#d-004-local-first-integration-and-wenqi-task-execution) and [D-007](#d-007-completion-task-ownership) assign no Issue to Shi Wenqi while the account is unavailable. The earlier repository `YukiOvOb/AGFP` was suspended; the team continued in this repository.
-
-Statement: Shi Wenqi is back, works as GitHub account `YukiOvOb`, and completes Member 1's UC01 and requirements/task/Sprint duties in person. Deliveries go through Shi Wenqi's own branch and PRs under that account. The new repository is not to be connected to the server yet.
-
-Unchanged: the owners and deadlines of D-007/D-012 and Issue assignees (changing an assignee is the repository owner's action); work Liu Tongyao executed on Member 1's behalf stays recorded as Liu Tongyao's; #10 keeps its D-005 position as the last step; contracts, checks, test benches and merge permissions. A PR by Shi Wenqi still needs green CI and a member check before team Done.
-
-Follow-up: once the repository owner acknowledges this, Issues touching UC01 (for example the UC01 part of #9) may be assigned to `YukiOvOb`.
-
 ## UC05 Projection Contract Confirmation (2026-10-15)
 
 Status: **Directly authorized by repository owner Liu Tongyao in conversation on 2026-10-15 (Asia/Singapore)**. The owner instructed Codex to complete Wang Yuanmeng's PR #12/#39 closeout and send the necessary comments on the owner's behalf, then explicitly transferred the pending UC05 overdue-projection contract-confirmation task from Zhou Fanhao to Liu Tongyao for delegated completion.

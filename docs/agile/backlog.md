@@ -2,7 +2,7 @@
 
 Sources: Project Proposal Chapter 5 (functional), Chapter 6 (business rules), Chapter 7 (non-functional), Section 8.3 (DevSecOps), team ownership, and [Technology stack](../tech-stack.md). Requirement IDs are stable and referenced by tasks, PRs, and tests.
 
-Current tracking (2026-10-15): `main` `f9596c1` contains UC01-UC05, the notification platform and overdue view (#12), DevSecOps checks (#39), reports (#33), V005 equipment master data (#42), the first-admin bootstrap (#43), the per-item limit (#44) and UC04 fault fields (#45). Remaining tasks, owners and deadlines are on [Issue #27](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/issues/27) ([D-007](../collaboration/decisions.md#d-007-completion-task-ownership), [D-012](../collaboration/decisions.md#d-012-24-hour-completion-rule)). Shi Wenqi resumed Member 1 work on 2026-10-15 ([D-013](../collaboration/decisions.md#d-013-shi-wenqi-resumes-member-1-work)); work Liu Tongyao executed on Member 1's behalf under [D-004](../collaboration/decisions.md#d-004-local-first-integration-and-wenqi-task-execution) stays recorded as Liu Tongyao's. Cloud deployment remains last ([D-005](../collaboration/decisions.md#d-005-local-closeout-and-cloud-last)). Historical Sprint task tables below are kept as written; the Status columns of section 2 are current.
+Current tracking (2026-10-14): use the [integration update](sprint-status.md#integration-update-2026-10-14) and [Issue #27](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/issues/27) (tasks #15-#26, with #5-#10 retained; owners per [D-007](../collaboration/decisions.md#d-007-completion-task-ownership)). Main `b3def12` includes UC01-UC04, the notification platform, the complete local demo and the Spring Boot 4 release packaging. Liu Tongyao executes UC01 takeover and local/release integration under [D-004](../collaboration/decisions.md#d-004-local-first-integration-and-wenqi-task-execution). Basic local acceptance comes first, then later user-defined changes, with cloud deployment last under [D-005](../collaboration/decisions.md#d-005-local-closeout-and-cloud-last). Historical Sprint task tables remain below and are not today's Done claims.
 
 ## 1. Ownership
 
@@ -10,13 +10,13 @@ Each member owns one full-stack feature (queries, backend, frontend, test bench)
 
 | Member | Business feature | Shared responsibility |
 | --- | --- | --- |
-| Member 1 Shi Wenqi | UC01 Search/reserve equipment | Requirements, task management, Sprint progress |
-| Member 2 Zhang Hanming | UC02 Review/approve reservations | Architecture, frontend templates, UI consistency |
-| Member 3 Zhou Fanhao | UC03 Equipment checkout/return | Database, domain model, system integration |
-| Member 4 Liu Tongyao | UC04 Fault reports/maintenance | Testing, security, quality checks |
-| Member 5 Wang Yuanmeng | UC05 Overdue detection/notifications | Git, CI/CD, deployment, release evidence |
+| Member 1 Shi Wenqi | UC01 Search/reserve equipment | GitHub, CI/CD, deployment/release evidence |
+| Member 2 Zhang Hanming | UC02 Review/approve reservations | Test strategy, security, quality |
+| Member 3 Zhou Fanhao | UC03 Equipment checkout/return | Database, domain model, integration |
+| Member 4 Liu Tongyao | UC04 Fault reports/maintenance | Product Backlog, Sprint management, progress consolidation |
+| Member 5 Wang Yuanmeng | UC05 Overdue detection/notifications | Architecture, design rules, page consistency |
 
-2026-10-15: the shared-responsibility column again follows the team division of work, as do the [Sprint plan](sprint-plan.md) and [ownership boundaries](../collaboration/ownership.md); the 2026-10-07 edit of this table had swapped them. This restores consistency between documents and does not reassign completion tasks, which follow [D-007](../collaboration/decisions.md#d-007-completion-task-ownership). Historical task Member numbers/authorship below remain for traceability.
+2026-10-07: long-term supporting duties corrected against the provided Team 07 plan. Historical task Member numbers/authorship below remain for traceability; subsequent supporting tasks follow this table.
 
 Shared authentication, roles, templates, and tables are prerequisites for all use cases and follow Sprint 1 order.
 
@@ -39,31 +39,28 @@ Priority: **M** = Must (course acceptance), **S** = Should, **C** = Could (time 
 
 ### 2.2 UC01 Search and Reserve Equipment (Member 1)
 
-| ID | User story | Acceptance | Priority | Status | Tests / evidence |
-| --- | --- | --- | --- | --- | --- |
-| R1.1 | As a borrower, search by name/category/location | Case-insensitive substring search; exclude retired; pagination | M | ✅ main | `ReservationPostgresTest.Search`; `search.test.tsx`; real browser |
-| R1.2 | View available equipment in an interval | Available/unavailable per result, available-only filter, same rules as submission | M | ✅ main | `Search#reportsAvailabilityForTheRequestedWindowAndCanShowOnlyFreeItems`; real browser |
-| R1.3 | View occupied slots for an item | Next 14 days, no occupant identity | M | ✅ main | `Search#availabilityListsHeldSlotsWithoutRevealingWhoHoldsThem`; real browser |
-| R1.4 | Reserve a slot | Confirm without approval, otherwise pending; visible in My reservations | M | ✅ main | `Submit#equipmentWithoutApprovalIsConfirmedImmediately`, `#equipmentThatNeedsApprovalStartsPending`; real browser |
-| R1.5 | No overlapping slots for an item (rules 1, 12) | Includes pending approval; one concurrent winner | M | ✅ main | `Submit#parallelRequestsForTheSameSlotBookItExactlyOnce`; real browser (two borrowers) |
-| R1.6 | No booking equipment under maintenance / with open faults / retired (rules 2, 8) | 409 / 404 with explanation | M | ✅ main | `Submit#equipmentUnderMaintenanceOrWithAnOpenFaultCannotBeReserved`, `#retiredOrUnknownEquipmentIsNotFound` |
-| R1.7 | Duration/quota rules (10, 11), per-item limit, overdue borrowers | All violations returned together; configurable values; item limit replaces the global maximum | M | ✅ main (item limit #44, overdue rule #32) | `ReservationPolicyTest`; `#anItemsMaximumBorrowingDurationIsEnforced`; `OverdueAndAudit#borrowerWithAnOverdueLoanCannotReserveUntilItIsReturned`; real browser |
-| R1.8 | Cancel reservations (rule 4) | Pending/confirmed may cancel and release slot; no cancellation after checkout | M | ✅ main | `ReservationPostgresTest.Cancel`; real browser |
-| R1.9 | View personal reservations | Own records only, status filters | M | ✅ main | `MyReservations#listsOnlyMyReservationsNewestStartFirstAndFiltersByStatus` |
-| R1.10 | Share search links | Criteria stored in URL | S | ✅ main | `search.test.tsx` › restores a shared search link; real browser |
-| R1.11 | Automatically cancel expired pending reservations | Scheduler sets `CANCELLED` | C | Dropped ([D-009](../collaboration/decisions.md#d-009-scope-freeze)) | — |
-| R1.12 | Audit submit and cancel (rule 9, Proposal 5.7) | One audit row per success in the same transaction; none for refusals | S | ✅ main (#32) | `OverdueAndAudit#submitAndCancelAreAuditedWithTheBorrowerAsActor`, `#aRefusedBookingLeavesNoAuditRecord` |
-
-"Real browser" is `scripts/check-uc01-browser.mjs` on the local demo; results in the [UC01 verification record](../evidence/uc01/verification.md).
+| ID | User story | Acceptance | Priority | Status |
+| --- | --- | --- | --- | --- |
+| R1.1 | As a borrower, search by name/category/location | Case-insensitive substring search; exclude retired; pagination | M | ✅ This branch |
+| R1.2 | View available equipment in an interval | Available/unavailable per result, available-only filter, same rules as submission | M | ✅ This branch |
+| R1.3 | View occupied slots for an item | Next 14 days, no occupant identity | M | ✅ This branch |
+| R1.4 | Reserve a slot | Confirm without approval, otherwise pending; visible in My reservations | M | ✅ This branch |
+| R1.5 | No overlapping slots for an item (rules 1, 12) | Includes pending approval; one concurrent winner | M | ✅ This branch |
+| R1.6 | No booking equipment under maintenance / with open faults / retired (rules 2, 8) | 409 / 404 with explanation | M | ✅ This branch |
+| R1.7 | Duration/quota rules (10, 11) | All violations returned together; configurable values | M | ✅ This branch (values await Sprint 2 review) |
+| R1.8 | Cancel reservations (rule 4) | Pending/confirmed may cancel and release slot; no cancellation after checkout | M | ✅ This branch |
+| R1.9 | View personal reservations | Own records only, status filters | M | ✅ This branch |
+| R1.10 | Share search links | Criteria stored in URL | S | ✅ This branch |
+| R1.11 | Automatically cancel expired pending reservations | Scheduler sets `CANCELLED` | C | ⬜ Agree with Member 2 |
 
 ### 2.3 Other Use Cases (Owners Maintain Detailed Stories)
 
 | ID | Use case | Key requirements | Owner | Progress |
 | --- | --- | --- | --- | --- |
-| R2 | UC02 Review/approve | Direct confirmation if unnecessary; approve; rejection reason/slot release; no self-approval; immutable decisions | Member 2 | On main; Issue #8 acceptance and draft #46 (coverage gate, real UC02 flows) open |
+| R2 | UC02 Review/approve | Direct confirmation if unnecessary; approve; rejection reason/slot release; no self-approval; immutable decisions | Member 2 | API/pages/real adapter on main; Issue #8 member/browser acceptance open |
 | R3 | UC03 Checkout/return | Validate checkout, record custodian, return condition, damage to maintenance | Zhou Fanhao | Backend/pages/V004 on main; Issue #6 validation and member acceptance open |
-| R4 | UC04 Faults/maintenance | Fault blocks booking, assign technician, transitions, repaired availability/unrepairable retirement, history | Member 4 | On main with fault category/priority (#45); Issue #9 acceptance and #21 confirmation open |
-| R5 | UC05 Overdue/notifications | Due-soon/overdue, retries/limit, deduplication, cancel after return, own inbox | Member 5 | Scanner, events and overdue view merged (#12); Issue #7 and #19 acceptance open |
+| R4 | UC04 Faults/maintenance | Fault blocks booking, assign technician, transitions, repaired availability/unrepairable retirement, history | Member 4 | Backend/API/pages on main; Issue #9 full integrated acceptance open |
+| R5 | UC05 Overdue/notifications | Due-soon/overdue, retries/limit, deduplication, cancel after return, own inbox | Member 5 | APIs/inbox/worker/guard on main; Issue #7 overdue producer and full acceptance open |
 
 ### 2.4 UC03 Stories and Acceptance
 
@@ -122,8 +119,7 @@ Status: ✅ complete, 🔶 in progress / on a branch, ⬜ not started. Owner mea
 
 | Task | Owner | Status |
 | --- | --- | --- |
-| Completion/demo flow | Member 1 | ✅ Updated 2026-10-15: [sprint-status.md](sprint-status.md#member-1-update-2026-10-15), [demo-script.md](demo-script.md) |
-| UC01 fixes, tests, diagrams, pattern explanations | Member 1 | ✅ 2026-10-15: real-browser check, analysis/design class diagrams, [UC01 verification](../evidence/uc01/verification.md) |
+| Completion/demo flow | Member 1 | ✅ Initial: [sprint-status.md](sprint-status.md), [demo-script.md](demo-script.md) |
 | Shared layout/style/interaction review | Member 2 | ⬜ |
 | Database/data/state checks | Member 3 | ⬜ |
 | Functional/security/quality (ZAP, k6) | Member 4 | ⬜ |
@@ -133,5 +129,5 @@ Status: ✅ complete, 🔶 in progress / on a branch, ⬜ not started. Owner mea
 
 | Task | Owner | Status |
 | --- | --- | --- |
-| Tasks/Sprint/agile evidence | Member 1 | ✅ Index consolidated 2026-10-15: [agile-evidence.md](agile-evidence.md); Sprint 3 Review and Sprint 4 report sections remain |
-| Individual use cases/design/code/tests/contributions | Each member | Member 1: [UC01](../uc01-search-and-reserve.md), [contribution record](contribution-shi-wenqi.md); others ⬜ |
+| Tasks/Sprint/agile evidence | Member 1 | 🔶 Index: [agile-evidence.md](agile-evidence.md) |
+| Individual use cases/design/code/tests/contributions | Each member | ⬜ |
