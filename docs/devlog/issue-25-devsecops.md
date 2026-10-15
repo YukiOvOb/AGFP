@@ -22,3 +22,15 @@ None in the delivered local scope. Email notifications and other dropped feature
 
 ## Authorship
 Prepared with Codex assistance under Wang Yuanmeng's request; no human review or time claim is attributed.
+
+## 2026-10-15 owner-directed integration closeout
+
+Liu Tongyao directed Codex to complete Wang Yuanmeng's PR #12/#39 closeout and necessary repository comments. Wang retains DevSecOps authorship/ownership. Codex is the sole closeout writer in `C:/Users/14824/.codex/worktrees/yuanmeng-devsecops-closeout/SWE5006_Group_Project`, branch `codex/yuanmeng-devsecops-closeout`; source HEAD was `9e026912fc6d73e8ad3c5d9c9f0c711afcf11c4d`.
+
+PR #12 merged as `0345a5054d2610a32adcc2c10cc8454b9ecd53b4`. This branch was synchronized with that actual main revision. The resulting application/frontend/database/integration/Compose files are identical to the UC05 closeout input, with no additional application changes from #39. Its native PostgreSQL 18.6 verification passed 589 ordinary tests, 20 UC03 and 10 UC05 integration tests; frontend API checks, lint/typecheck/build, 133 tests, 12 Playwright cases, real local smoke and real Chromium UC05 acceptance passed. See [the exact input and evidence record](2026-10-15-yuanmeng-uc05-closeout.md). Those local results are reused only for identical source; hosted checks must run for this PR's final HEAD.
+
+`bash -n scripts/backup.sh` and `node --check scripts/load-k6.js` passed on Windows/Git Bash and Node 24.20.0. Git mode `100755` confirms the backup script is executable. The earlier scratch restore and 50-VU run above are Wang's recorded rehearsal evidence, not a new production run by Codex. The final integration adds only the original six DevSecOps files plus this closeout record. No migrations, API contracts, production cron entries or branch-protection settings are changed.
+
+The final warm reservation p95 remains **2.26 s > 2 s**: functional success does not establish performance acceptance. The [durable follow-up](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/issues/25#issuecomment-6184186165) retains the failed threshold, final-baseline rerun and sanitized-summary requirement. Production backup scheduling/timezone and the deployed ZAP baseline remain under #10/#25. Issue #25 stays open. Latest-HEAD CI, CodeQL findings, actual merge, deployment, member checks and team Done are recorded separately; no member approval, personal test or effort hours are invented.
+
+Rules/skills: the UC05 closeout record lists shared rules read; `serms-integrate`, `serms-verify`, `serms-pr` and `serms-worktree` guide this phase. Codex authored this dated integration section under Liu's instruction.
