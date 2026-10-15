@@ -19,7 +19,7 @@ Existing Flyway migrations run unchanged on the dedicated `serms_local_demo` dat
 
 The backend uses the existing `local` profile for HTTP cookies. Production Secure cookie settings are unchanged. Vite forwards `/api` to the selected backend using `SERMS_API_TARGET`; ordinary development retains its existing 8081 default.
 
-Build logs, runtime JAR, database, access file and process state live under the ignored `.cache/local-demo/`. The runtime JAR is copied outside `app/target` so a regression build can clean its own artifacts while the demo continues running. Use `-SkipBuild` only when the existing artifacts correspond to the desired source. Use `-KeepAlive` in a terminal/automation runner that cleans child processes when its job exits.
+Build logs, runtime JAR, database, access file and process state live under the ignored `.cache/local-demo/`. The runtime JAR is copied outside `app/target` so a regression build can clean its own artifacts while the demo continues running. The launcher runs a clean backend build (`clean package`) because stale `app/target` content from another branch's build, such as migration files that no longer exist in the source tree, would otherwise be packaged into the JAR and break startup. Use `-SkipBuild` only when the existing artifacts correspond to the desired source. Use `-KeepAlive` in a terminal/automation runner that cleans child processes when its job exits.
 
 ## Verification and Shutdown
 

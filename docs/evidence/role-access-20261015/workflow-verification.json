@@ -1,0 +1,81 @@
+{
+  "status": "passed",
+  "mocked": false,
+  "runId": "ae79509918",
+  "startedAt": "2026-10-15T03:05:55.654Z",
+  "finishedAt": "2026-10-15T03:10:05.852Z",
+  "checks": [
+    "desktop: borrower real UI login, menu and backend permissions",
+    "desktop: approver real UI login, menu and backend permissions",
+    "desktop: custodian real UI login, menu and backend permissions",
+    "desktop: maintainer real UI login, menu and backend permissions",
+    "desktop: admin real UI login, menu and backend permissions",
+    "desktop: real empty approval queue",
+    "desktop: required rejection comment, persisted rejection and borrower status",
+    "desktop: rejection releases real allocation",
+    "desktop: separate approver confirms actual borrower request",
+    "desktop: committed approval notification delivered and marked read",
+    "desktop: custodian physical checkout and damaged return with required note",
+    "desktop: auto-created linked maintenance assigned, diagnosed, repaired and resolved",
+    "desktop: equipment restored and actual administrator report page loads",
+    "desktop: real dual-role login and own pending browser reservation",
+    "desktop: own-request marker and UI block both decision controls",
+    "desktop: browser-forged self APPROVED is 403 with no persisted side effects",
+    "desktop: browser-forged self REJECTED is 403 with no persisted side effects",
+    "desktop: a different real approver can decide the same request exactly once",
+    "mobile: borrower real UI login, menu and backend permissions",
+    "mobile: approver real UI login, menu and backend permissions",
+    "mobile: custodian real UI login, menu and backend permissions",
+    "mobile: maintainer real UI login, menu and backend permissions",
+    "mobile: admin real UI login, menu and backend permissions",
+    "mobile: real empty approval queue",
+    "mobile: required rejection comment, persisted rejection and borrower status",
+    "mobile: rejection releases real allocation",
+    "mobile: separate approver confirms actual borrower request",
+    "mobile: committed approval notification delivered and marked read",
+    "mobile: custodian physical checkout and damaged return with required note",
+    "mobile: auto-created linked maintenance assigned, diagnosed, repaired and resolved",
+    "mobile: equipment restored and actual administrator report page loads",
+    "mobile: real dual-role login and own pending browser reservation",
+    "mobile: own-request marker and UI block both decision controls",
+    "mobile: browser-forged self APPROVED is 403 with no persisted side effects",
+    "mobile: browser-forged self REJECTED is 403 with no persisted side effects",
+    "mobile: a different real approver can decide the same request exactly once",
+    "temporary dual-role assignment restored; pre-existing roles untouched"
+  ],
+  "records": [
+    {
+      "reservationId": "3c8fe48f-83cc-4f69-8812-389d28c9b7a5",
+      "purpose": "desktop rejection 1792033560130"
+    },
+    {
+      "reservationId": "70cad742-0df2-4624-9be3-967f1227be39",
+      "purpose": "desktop approval-to-damaged-return 1792033561074"
+    },
+    {
+      "reservationId": "44d754bf-0128-49c8-8b5d-5f31ed07f829",
+      "purpose": "desktop self-approval 1792033683426"
+    },
+    {
+      "reservationId": "b597de05-01b5-4ace-b30f-853eeaea2860",
+      "purpose": "mobile rejection 1792033689931"
+    },
+    {
+      "reservationId": "9bb3aff6-d985-45a0-8c6f-90e41a490bd3",
+      "purpose": "mobile approval-to-damaged-return 1792033691206"
+    },
+    {
+      "reservationId": "7f0b5177-84a6-4416-b4d6-cc101a3fd37b",
+      "purpose": "mobile self-approval 1792033803481"
+    }
+  ],
+  "dualRoleAddedByRun": true,
+  "dualRoleRestored": true,
+  "startingHead": "6bad66922963369ecb28ba20959dc2a66dd27fe7",
+  "fetchedMain": "2e9eda35973f0929c19fa3e613688d902a361f9d",
+  "sourceHashes": {
+    "scripts/check-uc02-browser.mjs": "a7b4cbd794ada65cc73e2f1e3db2c4fafd6abd719c003b85bd79be30adfac8a9",
+    "frontend/src/app/App.tsx": "6064328a3118f8adb9760179eb3d359c6f05d16cfdfd1591e6723419e530c192",
+    "frontend/src/app/RequireRole.tsx": "b3b5155810089af3df190e632f768589c59d1a4f2bc5be28cc2c0db681c0d84f"
+  }
+}
