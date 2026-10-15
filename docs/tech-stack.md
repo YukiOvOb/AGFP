@@ -70,7 +70,7 @@ The Status column describes verified implementation at main `b3def12`: ✅ imple
 | CI/CD | GitHub Actions | 🔶 Application/security checks pass; complete-system deployment pending |
 | Secret scanning | gitleaks | ✅ |
 | Vulnerability scanning | Trivy (filesystem + Docker images) | ✅ Filesystem scan on every PR; `app` and `web` image scans in the `release-images` check |
-| Dependency checks | Dependency Review (PR stage) + Dependabot (weekly automated upgrades) | ✅ Dependency Review; Dependabot pending |
+| Dependency checks | Dependency Review (PR stage) + Dependabot (weekly automated upgrades) | ✅ Dependency Review; 🔶 Dependabot configured, version updates paused until after the 2026-10-22 code freeze (majors ignored, minor/patch grouped) |
 | Code security scanning | CodeQL (Java + TypeScript) | ⬜ Issue #25 |
 | Post-deployment security scanning | OWASP ZAP Baseline | ⬜ Best effort in Issue #25 |
 | Load testing | k6 (50 concurrent users) | ⬜ Best effort in Issue #25 |
