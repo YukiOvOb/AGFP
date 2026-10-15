@@ -39,19 +39,24 @@ Priority: **M** = Must (course acceptance), **S** = Should, **C** = Could (time 
 
 ### 2.2 UC01 Search and Reserve Equipment (Member 1)
 
+Status re-checked 2026-10-15 against `main` `0345a50`; PR numbers refer to the team repository. Test mapping: [UC01 §1.2](../uc01-search-and-reserve.md#12-alternative-and-exception-flows).
+
 | ID | User story | Acceptance | Priority | Status |
 | --- | --- | --- | --- | --- |
-| R1.1 | As a borrower, search by name/category/location | Case-insensitive substring search; exclude retired; pagination | M | ✅ This branch |
-| R1.2 | View available equipment in an interval | Available/unavailable per result, available-only filter, same rules as submission | M | ✅ This branch |
-| R1.3 | View occupied slots for an item | Next 14 days, no occupant identity | M | ✅ This branch |
-| R1.4 | Reserve a slot | Confirm without approval, otherwise pending; visible in My reservations | M | ✅ This branch |
-| R1.5 | No overlapping slots for an item (rules 1, 12) | Includes pending approval; one concurrent winner | M | ✅ This branch |
-| R1.6 | No booking equipment under maintenance / with open faults / retired (rules 2, 8) | 409 / 404 with explanation | M | ✅ This branch |
-| R1.7 | Duration/quota rules (10, 11) | All violations returned together; configurable values | M | ✅ This branch (values await Sprint 2 review) |
-| R1.8 | Cancel reservations (rule 4) | Pending/confirmed may cancel and release slot; no cancellation after checkout | M | ✅ This branch |
-| R1.9 | View personal reservations | Own records only, status filters | M | ✅ This branch |
-| R1.10 | Share search links | Criteria stored in URL | S | ✅ This branch |
-| R1.11 | Automatically cancel expired pending reservations | Scheduler sets `CANCELLED` | C | ⬜ Agree with Member 2 |
+| R1.1 | As a borrower, search by name/category/location | Case-insensitive substring search; exclude retired; pagination | M | ✅ main |
+| R1.2 | View available equipment in an interval | Available/unavailable per result, available-only filter, same rules as submission | M | ✅ main |
+| R1.3 | View occupied slots for an item | Next 14 days, no occupant identity | M | ✅ main |
+| R1.4 | Reserve a slot | Confirm without approval, otherwise pending; visible in My reservations | M | ✅ main |
+| R1.5 | No overlapping slots for an item (rules 1, 12) | Includes pending approval; one concurrent winner | M | ✅ main |
+| R1.6 | No booking equipment under maintenance / with open faults / retired (rules 2, 8) | 409 / 404 with explanation | M | ✅ main |
+| R1.7 | Duration/quota rules (10, 11) | All violations returned together; configurable values | M | ✅ main (values: 30 min–7 days, 90-day horizon, 3 open) |
+| R1.8 | Cancel reservations (rule 4) | Pending/confirmed may cancel and release slot; no cancellation after checkout | M | ✅ main |
+| R1.9 | View personal reservations | Own records only, status filters | M | ✅ main |
+| R1.10 | Share search links | Criteria stored in URL | S | ✅ main |
+| R1.11 | Automatically cancel expired pending reservations | Scheduler sets `CANCELLED` | C | Dropped by [D-009](../collaboration/decisions.md#d-009-scope-freeze); expired requests can only be rejected |
+| R1.12 | A borrower holding overdue equipment cannot reserve (rule 11) | 422 `overdue-loan` with the other violations; allowed after return; switchable | M | ✅ main (#32) |
+| R1.13 | An item's own maximum borrowing duration | `max_borrow_duration` (V005) replaces 7 days for that item; page states the limit | S | ✅ main (#44) |
+| R1.14 | Reservation submit/cancel are audited (Proposal 5.7, rule 9) | One audit row per change, same transaction, borrower as actor | S | ✅ main (#32) |
 
 ### 2.3 Other Use Cases (Owners Maintain Detailed Stories)
 
@@ -119,7 +124,7 @@ Status: ✅ complete, 🔶 in progress / on a branch, ⬜ not started. Owner mea
 
 | Task | Owner | Status |
 | --- | --- | --- |
-| Completion/demo flow | Member 1 | ✅ Initial: [sprint-status.md](sprint-status.md), [demo-script.md](demo-script.md) |
+| Completion/demo flow | Member 1 | ✅ Updated 2026-10-15: [completion status](sprint-status.md#member-1-completion-status-2026-10-15), [demo-script.md](demo-script.md) |
 | Shared layout/style/interaction review | Member 2 | ⬜ |
 | Database/data/state checks | Member 3 | ⬜ |
 | Functional/security/quality (ZAP, k6) | Member 4 | ⬜ |
@@ -129,5 +134,6 @@ Status: ✅ complete, 🔶 in progress / on a branch, ⬜ not started. Owner mea
 
 | Task | Owner | Status |
 | --- | --- | --- |
-| Tasks/Sprint/agile evidence | Member 1 | 🔶 Index: [agile-evidence.md](agile-evidence.md) |
+| Tasks/Sprint/agile evidence | Member 1 | ✅ Consolidated 2026-10-15: [agile-evidence.md](agile-evidence.md); team sign-off pending |
+| UC01 use case/design/tests (Member 1 part of the report) | Member 1 | ✅ [UC01](../uc01-search-and-reserve.md) refreshed 2026-10-15 |
 | Individual use cases/design/code/tests/contributions | Each member | ⬜ |

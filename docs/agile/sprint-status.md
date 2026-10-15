@@ -4,6 +4,57 @@ Member 1 updates after weekly meetings. Preserve snapshots, newest first, as Spr
 
 ---
 
+## Member 1 Completion Status 2026-10-15
+
+Sprint 3 task "organize completion status and demonstration" (Member 1). Baseline: team repository `main` `0345a50`; `YukiOvOb/AGFP` `main` was brought to the same content the same day (its PR #14, merge `b5b762a`) so the repository that holds the server's deployment settings tracks the team repository again. Sources are merge commits on `main` and the [development log](../devlog/README.md); PR numbers below are team-repository PRs. No meetings, hours or member sign-offs are inferred.
+
+### Merged since the 2026-10-14 update
+
+| PR | Change | Issue |
+| --- | --- | --- |
+| #28 | Repository closeout, completion decisions D-007 to D-011, development log | — |
+| #31 | Shared frontend components, design tokens, overview page | #16 |
+| #32 | UC01 overdue-borrower rule and reservation audit | #22 |
+| #33 | Administrator reports with charts | #23 |
+| #35, #36, #37 | UC04 analysis/design documents, readable names, wording and history link | #21 |
+| #38 | 24-hour completion rule (D-012) | — |
+| #42 | V005 equipment master data and UC01 read fields | #40 (part of #17) |
+| #43 | First-administrator bootstrap | #41 (part of #18) |
+| #44 | UC01 per-item maximum borrowing duration | #22 |
+| #45 | UC04 fault category and priority (V006) | #21 |
+| #47 | Completion evidence on the local demo | — |
+| #12 | UC05 notifications, overdue scanner and overdue view | #19, #7 |
+
+### Use-case status on `main`
+
+| Use case / area | Owner | On `main` | Open |
+| --- | --- | --- | --- |
+| UC01 Search/reserve | Member 1 (executed by Liu Tongyao under D-004) | Search, availability, reserve, cancel, 5 booking policies incl. overdue rule and item limit, audit | Member browser acceptance (#9) |
+| UC02 Approval | Zhang Hanming | API, pages, real adapter | Admin console and audit viewer pages (#18); acceptance (#8) |
+| UC03 Checkout/return | Zhou Fanhao | Checkout/return, damage to maintenance, V004 | Checkout lookup (#20); equipment/category management pages (#17); acceptance (#6) |
+| UC04 Faults/maintenance | Liu Tongyao | Workflow, readable names, category/priority (V006) | Full exception acceptance (#9) |
+| UC05 Overdue/notifications | Wang Yuanmeng | Inbox, delivery, overdue scanner and view | Acceptance (#7) |
+| Reports | Liu Tongyao | Administrator reports with charts | — |
+| Quality/DevSecOps | Zhang Hanming, Wang Yuanmeng | 12 required checks | Coverage gate and all-role browser flows (#24); CodeQL, Dependabot, backup runbook, k6, ZAP (#25) |
+| Frontend polish | Liu Tongyao | Component foundation | Visual polish after feature freeze (#26) |
+| Deployment | Liu Tongyao with Shi Wenqi | Gated `web` + `app` + `db` release workflow | Server preparation and first release (#10) |
+
+UC01 verification on `0345a50` (2026-10-15): 86 UC01 backend tests on PostgreSQL 18 and 22 UC01 component tests passed, 0 failures; details in [UC01 §6](../uc01-search-and-reserve.md#6-test-bench-and-execution). All 12 required checks passed on the same commit in `YukiOvOb/AGFP` PR #14.
+
+### Risks
+
+| # | Risk | Impact | Action | Owner |
+| --- | --- | --- | --- | --- |
+| 1 | The server still runs the old single-container welcome page; the gated release needs a PostgreSQL 18 volume, backup directory, server `.env`, host fingerprint secret and `SERMS_PRODUCTION_READY` | Demo primary environment unavailable until #10 | Prepare the server per [server release](../server-release.md) before the 2026-10-22 code freeze; keep the local demo as fallback | #10 owners |
+| 2 | Equipment/category and admin pages (#17, #18) not on `main` | Item limits and accounts set only through demo data/bootstrap | Finish under D-012; demo uses seeded data meanwhile | Zhou Fanhao, Zhang Hanming |
+| 3 | Member acceptance (#6–#9) not recorded | Agent checks are not team Done | Each owner runs the [demo script](demo-script.md) part and records it on the Issue | Each owner |
+
+### Next steps
+
+1. Owners of #17, #18, #20, #24, #25 merge under D-012; feature freeze before #26.
+2. #10: server preparation and first gated release, then a deployed run of the demo script.
+3. Each member records acceptance of their use case; Member 1 updates this file and the [evidence index](agile-evidence.md) after the Sprint Review.
+
 ## Integration Update 2026-10-14
 
 `main` is `b3def12`. The integration line is merged: [#11](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/11) local demo (merge `f077ce7`); [#13](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/13) Spring Boot 4, `web` + `app` + `db` packaging and gated deployment, merged into the branch of #14 (`db376ab`); and [#14](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/14) UC01/UC04 acceptance fixes, which carried both into `main` (merge `b3def12`). The content of `main` equals the release-preparation head `15ec983`; all twelve hosted checks passed on `db376ab` before the merge. The `Deploy` run after each merge failed without reaching the server: the repository has no deployment secrets, and since #13 the release gate stops while `SERMS_PRODUCTION_READY` is unset.
