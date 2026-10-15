@@ -35,7 +35,9 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Start Docker Desktop or provide -PostgresBin' }
     $taskStarted = $true; $taskReady = $false
     for ($taskAttempt=0; $taskAttempt -lt 60; $taskAttempt++) {
-      docker exec $taskContainer pg_isready -U serms_test *> $null
+      # The image's temporary init server accepts Unix-socket connections, then restarts.
+      # Only the final server listens on TCP; do not accept temporary socket readiness.
+      docker exec $taskContainer pg_isready -h 127.0.0.1 -p 5432 -U serms_test -d postgres *> $null
       if ($LASTEXITCODE -eq 0) { $taskReady = $true; break }
       Start-Sleep -Seconds 1
     }
