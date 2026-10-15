@@ -11,13 +11,11 @@
 name: CI
 
 on:
-  # No paths-ignore for PRs: branch protection requires all three checks, including for documentation-only PRs.
+  # No paths-ignore: branch protection requires all three checks on PRs, and the release gate
+  # (scripts/verify-release.mjs) requires them on the main SHA, including documentation-only pushes.
   pull_request:
   push:
     branches: [main]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
 
 concurrency:
   group: ci-${{ github.ref }}
