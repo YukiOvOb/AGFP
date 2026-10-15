@@ -21,7 +21,7 @@ Keep the full JaCoCo report and additionally report/check the combined `service`
 
 Approval PostgreSQL verification is independent of mocked frontend tests. Real browser acceptance, admin pages still absent from main, remote CI, member acceptance and deployment must be reported separately.
 
-## Results
+## Initial delivery results
 
 Verified inputs: starting HEAD above plus this branch's listed source/config/test changes; no production Java changed after the successful backend run. Java 25.0.4 compiled with release 17, Maven Wrapper 3.9.11, PostgreSQL 18.6 native binaries, Node 24.19.0, pnpm 11.25.0 (provided runtime; package declares 11.19.0), Chromium via Playwright 1.63.0, Windows PowerShell/pwsh.
 
@@ -44,7 +44,7 @@ Main was rechecked with `git ls-remote origin refs/heads/main` after implementat
 
 ## Remaining scope
 
-This delivers the coverage/UC02 regression slice only. Full #24 closeout still needs future admin users/audit (#18), equipment management (#17), overdue UI/scanner (#19), and the final combined live workflow after those features land. Browser self-approval with a dual-role account remains separate from the passing real PostgreSQL/API self-decision tests. No Issue is closed and no team Done, merge or deployment is claimed.
+This delivers the coverage/UC02 regression slice only. Full #24 closeout still needs future admin users/audit (#18), equipment management (#17), overdue UI/scanner (#19), and the final combined live workflow after those features land. Dual-role browser self-decision acceptance was completed in the follow-up below. No Issue is closed and no team Done, merge or deployment is claimed.
 
 ## Publication and CI follow-up — 2026-10-15
 
@@ -55,3 +55,11 @@ The GitHub connector could not create a PR (integration HTTP 403). The existing 
 Initial gitleaks 8.24.3 findings were `generic-api-key` matches on consecutive environment-variable **names**, not stored credentials. Construct the same nine names from prefix/suffix lists instead. Scanner rules, thresholds, workflow permissions and the existing ignore file are unchanged. The official matching scanner was downloaded only into ignored cache and its published checksum verified. The proposed feature commit is rescanned with the exact first-parent commit range used by CI, excluding ignored local runtime files.
 
 The runner was reverified after the equivalent environment-list rewrite: 590 regression + 30 UC02 PostgreSQL + 20 UC03 PostgreSQL cases passed, zero failures/errors/skips (`.cache/uc02-verify-ci-fix.log`). Its original committed version remains in local Git recovery history/backup; only this newly created draft feature branch is updated using an explicit expected-old-SHA lease, never main. Final-HEAD hosted results are reported in the PR rather than inferred from the initial successful jobs.
+
+## Dual-role/browser evidence follow-up — 2026-10-15
+
+Starting HEAD `f7bf0f11b82a8d429c19e5c95f8b243767ac8d77` subsequently passed all ten hosted workflows; the PR links those actual runs. The user then authorized continuing the real dual-role self-decision acceptance. The new test/SQL/evidence-only changes are recorded in [the UC02 follow-up](issue-8-approval-postgres-browser.md#2026-10-15-dual-role-browser-self-decision-follow-up); main still matches `2e9eda35973f0929c19fa3e613688d902a361f9d`.
+
+The expanded live command passed **37 checks**, including both forged decision choices at both viewport widths, zero persisted side effects, an independent approver's successful decision, and temporary-role restoration. A fresh real login confirmed BORROWER-only afterwards. [Reviewed public-safe evidence](../evidence/uc02-dual-role-20261015/README.md) binds the actual run to script/SQL hashes. Four fresh equipment items now isolate normal/self scenarios per viewport; no historical data or production role/API/schema is changed.
+
+Frontend lint/typecheck/build, 130 components and 12 existing mocked E2E checks passed. SQL wrong-database/invalid-ID guards, Node syntax, diff checks and collaboration documentation passed. Application production code is unchanged. The new commit's hosted CI must run again; the previous green commit is not current-HEAD CI. Do not close #8/#24 or claim member/deployment acceptance.

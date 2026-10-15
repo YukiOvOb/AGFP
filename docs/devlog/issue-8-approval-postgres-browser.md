@@ -25,6 +25,35 @@ Live browser final result is recorded after execution in the quality log, not in
 
 ## Remaining acceptance
 
-- Real dual-role browser self-approval scenario (the rule is already covered with actual roles and PostgreSQL through MockMvc).
+- Real dual-role browser self-approval: now passed on desktop/mobile; see the dated follow-up and evidence below.
 - Admin users/audit UI (#18), future overdue page/scanner (#19), new equipment management pages when merged, and corresponding final combined browser run.
 - Latest-HEAD hosted CI, independent member verification, main integration and deployment. No messages/Issue comments or merge were performed.
+
+## 2026-10-15: dual-role browser self-decision follow-up
+
+Owner: Zhang Hanming; agent assistance: Codex. The user authorized continuing the remaining real-browser self-decision acceptance and updating the existing delivery; no merge/deployment/Issue comments are authorized. Starting branch HEAD `f7bf0f11b82a8d429c19e5c95f8b243767ac8d77`; fetched main remains `2e9eda35973f0929c19fa3e613688d902a361f9d`. Same sole-writer worktree and rule sources as the quality log. Allowed changes: browser runner/explicit local test fixtures, guard/read-only assertion SQL, evidence and task logs. Production APIs, identity/reservation/approval implementation, shared contracts and migrations are excluded.
+
+### Design
+
+- Reuse the second existing local-demo borrower, not a mock principal or a new production account. The guarded fixture temporarily adds APPROVER while retaining BORROWER. Record whether this run inserted the assignment; cleanup removes only a role added by this run and preserves any pre-existing assignment.
+- Use fresh, per-run/self-test equipment for desktop and mobile. No booked/loan/decision history is reset. The same extracted guard requires the isolated PostgreSQL 18 demo database, exactly the six explicitly provisioned demo user IDs and the expected active second borrower.
+- Actual UI login confirms both roles through the real `auth/me` response. The actor submits a reservation through the real browser and sees “Your request” in the approval queue; its detail page exposes neither decision choice nor submission control.
+- Bypass the UI only through the actual page's `fetch`, using its real cookie session and CSRF cookie. Both APPROVED and REJECTED must return 403 `/problems/self-approval`, not a missing-role or missing-CSRF rejection.
+- After each attempt, compare read-only PostgreSQL snapshots of reservation status/version, final decision rows, successful approval audits and recipient notification-request count. Also verify the independent approver's real API still sees an undecided pending reservation.
+- A different real approver rejects the same request through the UI. Verify exactly one final decision, audit and new notification request; the dual-role borrower sees Rejected. Restore the temporary role after all contexts close, including on failures.
+
+### Verification
+
+`node scripts/check-uc02-browser.mjs --publishable-evidence` passed **37 actual checks** (original 26, ten dual-role scenario checks and role restoration), with no uncaught page errors or document overflow. Run `3aebf50674`: 2026-10-15 10:37–10:42 SGT. A separate fresh login after cleanup returned only BORROWER.
+
+All three SQL entry points reject the wrong database; invalid run IDs reject before the fixture transaction commits. Node syntax/diff/documentation checks passed. Frontend lint/typecheck/build, 130 component tests and 12 separately labelled mocked browser tests passed. Existing nonfatal chart/dependency/bundle warnings remain. No production/backend code changed, so this step did not invent new backend-test counts or reuse earlier CI as latest-HEAD evidence.
+
+[Reviewed screenshots and safe verification JSON](../evidence/uc02-dual-role-20261015/README.md) include exact source hashes and actual checks; both screenshots were visually inspected and contain only synthetic identities. Raw traces/cookies/passwords remain ignored/private. Services were stopped; fixture/history/logs preserved.
+
+### Problems, decisions and follow-ups
+
+- Schema inspection showed NotificationRequest has no persisted source ID. Compare this actor's request count in the single-writer demo and use fixture-specific reservation/decision/audit counts; do not add a speculative column.
+- Creating another account would break the existing six-user provisioning guard. Temporarily extend the existing second borrower's roles instead, preserving the five primary role accounts and removing only an assignment inserted by this run.
+- Extract the original guard for reuse by setup, read-only snapshot and cleanup; do not duplicate a weaker guard for a mutating helper.
+- No product defect or API change was required: the existing UI and service already prohibit both self-approval and self-rejection. This delivery adds execution evidence, not a new business policy or design pattern.
+- The previous commit's ten hosted workflows passed; latest-commit CI after publication is pending. Future-page integration, full all-page allow/deny matrix, independent member acceptance, main integration and deployment remain open. Abruptly killing the runner can interrupt cleanup; only a recorded normal teardown/fresh-login check establishes restoration.
