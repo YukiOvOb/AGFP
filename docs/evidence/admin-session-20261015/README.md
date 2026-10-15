@@ -74,6 +74,10 @@ prove backend correctness on their own; the live requests and PostgreSQL tests a
 
 ## Remaining acceptance
 
+The subsequent historical notification upgrade assertion repair and its independent 12-case
+PostgreSQL result are recorded in the [notification-contract follow-up](notification-contract-followup.md).
+The original source-hash JSON above remains unchanged.
+
 Latest delivered-HEAD hosted CI and member review/check; merge-time migration coordination;
 main integration, deployed acceptance and final new-page regression after all dependent feature PRs
 merge. No Issue closure, branch-protection change, production deployment or human test is claimed.

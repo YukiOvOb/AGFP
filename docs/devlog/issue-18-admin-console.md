@@ -258,3 +258,47 @@ PRs merge. No Issue is closed or whole-team Done claimed here. First-admin boots
 Codex-assisted code and verification for Zhang Hanming, under the user's existing implementation
 authorization and Wang's reply supplied by the user. No personally executed human test, GitHub
 approval, public confirmation, effort hours or deployment is invented.
+
+## 2026-10-15 Hosted notification-contract regression follow-up
+
+### What happened and scope
+
+The user authorized repairing the remaining PR #72 CI regression. Starting clean HEAD:
+`d10f7e82ca2ca9ab63a97c50733b4721f495c142`; branch/worktree and sole writer unchanged.
+Fetched main remains `0be0a29af011862824c6aaab642512241764bcd9`. Re-read the implementation,
+verification, worktree and PR skills and their applicable collaboration/testing/contract sources.
+Scope is one compatibility test plus this factual log/evidence; production, upstream contracts,
+migrations, APIs, dependencies, workflow conditions and acceptance standards remain unchanged.
+
+The old delivered HEAD passed 10 of 11 workflows; [Notification PostgreSQL contract run
+38742301680](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/actions/runs/38742301680)
+failed one of twelve cases: `existingV2NotificationsUpgradeWithoutLosingHistory`, expected 6 but
+actual 7. The upgrade itself completed V007 successfully; its final schema-inventory assertion still
+described the pre-session-version release. This was not a failed notification delivery or lost history.
+
+### Fix and verification
+
+Update the exact expected schema version to 7, also checking Flyway's current version is 7,
+the added column is BIGINT and all pre-existing upgrade users received session version 0.
+Retain every notification count, delivered/read/attempt state, canonical dedup-key, foreign-key and
+legacy immutability assertion. No tests skipped, fixtures changed or new success threshold loosened.
+
+Run the complete pinned compatibility module on a new disposable loopback PostgreSQL18.6 cluster
+with separate `serms_test` / `serms_upgrade` databases; seed only the latter with V001/V002 and the
+unchanged V2 notification fixture. The existing preparation script verifies all five public contract
+sources byte-for-byte against `01b50778701ed8a729039790238581bb59e929b5`. Maven Wrapper3.9.11,
+Java25.0.4/release17, unchanged historical adapter Boot3.5.16: **12 tests passed, zero failures,
+errors or skips**, ending 2026-10-15 21:30:24 SGT. The adapter JAR duplicate-upstream-class check
+passed. The disposable server was stopped, environment restored, data/logs retained under ignored
+`.cache/notification-native-*`; no existing application/database touched. The historical Flyway
+PostgreSQL support warning remains visible; production dependencies were not changed or suppressed.
+
+The main application's earlier 745 checks and UI evidence remain bound to their original inputs;
+this test-only follow-up did not rerun or relabel those local results. Current CI will exercise all
+workflows on the new delivered HEAD. See the [follow-up evidence](../evidence/admin-session-20261015/notification-contract-followup.md).
+Member review, main merge, migration-number coordination, deployment and team Done remain separate.
+
+### Authorship
+
+Codex-assisted repair/verification for Zhang Hanming at the user's request. No teammate comment,
+human approval, working hours, Issue closure or production action was performed or invented.
