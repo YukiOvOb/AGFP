@@ -27,7 +27,9 @@ export function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/notifications" element={<NotificationPage />} />
-          <Route path="/loans" element={<LoanPage />} />
+          <Route element={<RequireRole roles={['BORROWER', 'CUSTODIAN']} />}>
+            <Route path="/loans" element={<LoanPage />} />
+          </Route>
           <Route element={<RequireRole role="APPROVER" />}>
             <Route path="/approvals" element={<ApprovalListPage />} />
             <Route path="/approvals/:reservationId" element={<ApprovalDetailPage />} />

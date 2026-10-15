@@ -57,3 +57,13 @@ All three SQL entry points reject the wrong database; invalid run IDs reject bef
 - Extract the original guard for reuse by setup, read-only snapshot and cleanup; do not duplicate a weaker guard for a mutating helper.
 - No product defect or API change was required: the existing UI and service already prohibit both self-approval and self-rejection. This delivery adds execution evidence, not a new business policy or design pattern.
 - The previous commit's ten hosted workflows passed; latest-commit CI after publication is pending. Future-page integration, full all-page allow/deny matrix, independent member acceptance, main integration and deployment remain open. Abruptly killing the runner can interrupt cleanup; only a recorded normal teardown/fresh-login check establishes restoration.
+
+## 2026-10-15: current-page allow/deny closeout
+
+The user authorized continuing the current-page role matrix and responsibility/evidence checklist. Starting HEAD `6bad669`, fetched main `2e9eda3`; full revision and rule/ownership boundaries are in [the quality follow-up](issue-24-quality-gates.md#current-page-permission-matrix-and-scope-audit--2026-10-15).
+
+The new [real role matrix](../evidence/role-access-20261015/README.md) passed for anonymous, all five roles and a second borrower on desktop/mobile: 168 page visits, 308 read API probes, 120 valid-CSRF role-denied writes and four cross-user write denials; actual session/CSRF/logout behavior and no side effects were checked. The route inventory is explicit and also checked in CI. This completes the current-page matrix gap, not future-page or deployed acceptance.
+
+The test reproduced a `/loans` page-gating inconsistency (API 403 without hiding the page shell); the minimal shared guard extension fixes it without changing backend roles/contracts. All 134 frontend components and 12 existing mocked E2E cases passed. Details, original failed attempts, hashes, screenshots and excluded future work are retained in the linked records.
+
+Scope correction: admin user management and audit viewer #18 are assigned to Hanming; bootstrap #41 alone was completed by Liu. [Remaining work](../evidence/hanming-delivery-status-20261015.md) makes this explicit. No unrequested admin/session implementation, migration, remote message, Issue closure, merge or cloud action was performed.

@@ -69,3 +69,40 @@ Frontend lint/typecheck/build, 130 components and 12 existing mocked E2E checks 
 The approval workflow for `62cd4bb` failed before Maven/tests: `createdb` reported “terminating connection due to administrator command”. The readiness loop used the default Unix socket, which can accept connections on the Docker image's temporary initialization server before its intentional shutdown/restart. This matches the official [PostgreSQL image entrypoint](https://github.com/docker-library/postgres/blob/master/docker-entrypoint.sh), whose temporary server uses an empty TCP listen-address list.
 
 Change the readiness probe to explicit `127.0.0.1:5432` / `postgres`, so it waits for the final TCP listener. Keep fail-closed startup, database isolation, all tests and thresholds unchanged. This is a test-runtime fix, not an approval-product change. Local Windows has no Docker; the native PostgreSQL path and live browser results are separate evidence. The exact Docker path must be reverified in hosted CI rather than claiming a local Docker pass or merely rerunning an unchanged flaky probe.
+
+## Current-page permission matrix and scope audit — 2026-10-15
+
+### Scope and sources
+
+Owner Hanming authorized continuing the remaining current-page acceptance and evidence checklist. Sole writer: Codex, same worktree/branch. Starting HEAD `6bad66922963369ecb28ba20959dc2a66dd27fe7`; freshly fetched main remains `2e9eda35973f0929c19fa3e613688d902a361f9d`. All ten hosted workflows on the starting HEAD passed, including the corrected Docker readiness, 590 regression + 30 UC02 + 20 UC03 and the actual negative coverage exercise; links are in PR #46. These historical runs do not certify the next commit.
+
+Read AGENTS, CONTRIBUTING, the three task/verification/PR skills, contracts/auth-and-approval, contract index, technology/testing/ownership/decisions, development-log and agent-workflow rules, current Issues #8/#18/#24/#27/#41, actual App/navigation and service permissions. Allowed additions: explicit matrix, isolated read-only SQL/browser verification, minimal demonstrated route-guard fix/tests, frontend CI inventory check and evidence. Excluded: admin implementation, backend authentication/session or contract changes, migrations, external messages, main merge/deployment.
+
+### Built and design
+
+- An independent expected-policy manifest covers all 12 current application routes and 22 real read API families. It does not learn expected permission from the rendered menu. Node tests and the live runner reject route inventory drift; new pages require review/extension.
+- Run every page/API with anonymous, all five single-role accounts and a second borrower, at desktop/mobile widths. Check actual content/deny/login states, valid-CSRF denied mutations, owner-scoped 404s, failed-CSRF logout retaining its session, and successful UI logout invalidating it.
+- Guarded READ ONLY SQL obtains an already completed real UC02 handover/repair fixture. Before/after fingerprints prove business records, successful audits, notification read state and roles stay unchanged. No new schema, production accounts, role elevation or reset is needed.
+- Reuse the existing RequireRole component with an explicit any-of role list for `/loans`; no new permission model/design pattern. ADMIN remains non-privileged without a separately assigned role.
+- Added a [responsibility/evidence checklist](../evidence/hanming-delivery-status-20261015.md). Scope audit corrected the earlier conversational omission: #18 remains Hanming's admin/user/audit task; only bootstrap moved to Liu's #41. It is not counted as another member's remaining feature or declared complete.
+
+### Problems and fixes
+
+| Symptom | Root cause | Fix | Verification |
+| --- | --- | --- | --- |
+| Some local ports could not be bound (8097, later 8107) | Launcher bind check failed; process ownership was not established | Use other dedicated ports; do not stop or claim ownership of an unknown listener | First run used 55447/8107/5197; evidence-format rerun used 55457/8117/5207; isolation guards passed |
+| Initial snapshot SQL fails before browser launch | Test used `approval_decision_id`, whereas the merged schema uses `approval_id` | Read existing DDL and correct only the test query | Read-only query and complete matrix pass; no schema rewrite |
+| APPROVER opening `/loans` renders My loans and a 403 API banner | Menu and backend roles are correct, but the page had only a signed-in guard | Wrap loan route in explicit BORROWER-or-CUSTODIAN guard | Baseline live failure reproduced; corrected matrix passes; three negative component cases make zero loan reads; ADMIN+BORROWER remains allowed |
+| Pre-commit Gitleaks flags a verification hash | The JSON used a filename containing `access` as a key immediately followed by a high-entropy SHA-256 value | Store provenance as explicit `{path, sha256}` records instead; do not suppress/relax scanning | Rerun the real matrix to bind final source hashes; rescan staged files and committed range |
+
+### Verification and limitations
+
+`node scripts/check-role-browser.mjs --publishable-evidence` passed **66 grouped checks** on 2026-10-15 11:03–11:04 SGT: **168 page observations, 308 read calls, 120 denied writes, four cross-user writes**, all role menu/CSRF/logout/viewport checks and unchanged database fingerprints. These are observations, not inflated JUnit counts. [Safe JSON and four visually inspected screenshots](../evidence/role-access-20261015/README.md) bind exact executed input hashes. Raw traces remain private.
+
+Frontend lint/typecheck/build, **134 component tests**, **12 mocked E2E** and **6 matrix Node tests** passed; existing nonfatal chart/dependency/bundle warnings remain. Backend production sources and generated API contracts are unchanged. Current-HEAD hosted CI must be rerun after publication, separately from the initial all-green HEAD. Full real workflow rerun is recorded after execution rather than inferred.
+
+The subsequent complete `check-uc02-browser.mjs` rerun passed **37 live checks**, run `ae79509918`, 11:05–11:10 SGT, with the changed frontend guard; [safe summary](../evidence/role-access-20261015/workflow-verification.json) records actual inputs. Fresh login after teardown confirms BORROWER-only; both new SQL guards reject the wrong database. A separate role probe initially ran before the full workflow's teardown and correctly still saw APPROVER; it is not recorded as restored until the later probe passed. No production/backend code changed. Runtime services are stopped at handover; database history/logs/private traces are retained.
+
+Final evidence-format rerun: **11:12:46–11:13:38 SGT**, all **66 grouped checks** and the same detailed counts passed. Committed matrix JSON/screenshots now represent this rerun, after replacing filename-keyed hashes with explicit `{path, sha256}` records to avoid a Gitleaks false positive. All nine input hashes match, the new SQL wrong-database guards fail closed, BORROWER-only fresh login passes, and all four final screenshots were visually rechecked. Full-workflow production inputs did not change in this metadata-only correction.
+
+Future equipment #17, Hanming's admin #18, overdue #19 and final combined-page acceptance remain open. CodeQL/Dependabot/backup/load/ZAP are Wang's #25, not silently assumed complete or reassigned. No effort, human check, merge or deployed acceptance is claimed. Authorship: Codex-assisted implementation/testing for Hanming.
