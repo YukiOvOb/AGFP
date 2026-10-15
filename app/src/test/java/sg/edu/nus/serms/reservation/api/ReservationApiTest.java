@@ -184,13 +184,16 @@ class ReservationApiTest {
   @Test
   void searchPassesFiltersAndReportsWindowAvailability() throws Exception {
     when(search.search(any())).thenReturn(new SearchResult(List.of(new EquipmentSummary(ITEM, "CAM-001",
-        "Canon EOS R6", "Camera", "COM1 Lab", EquipmentStatus.AVAILABLE, false, true)), 1, 0, 20));
+        "Canon EOS R6", "Camera", "COM1 Lab", EquipmentStatus.AVAILABLE, false, true,
+        "Full-frame mirrorless camera", java.time.Duration.ofHours(48))), 1, 0, 20));
     mvc.perform(get("/api/v1/equipment").with(user(BORROWER))
             .param("q", "canon").param("category", "Camera")
             .param("from", "2026-10-10T01:00:00Z").param("to", "2026-10-10T03:00:00Z")
             .param("availableOnly", "true"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content[0].availableInWindow").value(true))
+        .andExpect(jsonPath("$.content[0].description").value("Full-frame mirrorless camera"))
+        .andExpect(jsonPath("$.content[0].maxBorrowDuration").value("PT48H"))
         .andExpect(jsonPath("$.totalPages").value(1));
     verify(search).search(argThat(c -> "canon".equals(c.keyword()) && "Camera".equals(c.category())
         && c.availableOnly() && Instant.parse("2026-10-10T01:00:00Z").equals(c.from())));
@@ -219,13 +222,15 @@ class ReservationApiTest {
     var to = Instant.parse("2026-10-11T00:00:00Z");
     when(search.availability(ITEM, new TimeWindow(from, to))).thenReturn(new EquipmentSearchService.Availability(
         new EquipmentSummary(ITEM, "CAM-001", "Canon EOS R6", "Camera", "COM1 Lab",
-            EquipmentStatus.AVAILABLE, false, false),
+            EquipmentStatus.AVAILABLE, false, false, null, null),
         new TimeWindow(from, to), false,
         List.of(new BusySlot(Instant.parse("2026-10-10T01:00:00Z"), Instant.parse("2026-10-10T03:00:00Z"), "RESERVED"))));
     mvc.perform(get("/api/v1/equipment/" + ITEM + "/availability").with(user(BORROWER))
             .param("from", from.toString()).param("to", to.toString()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.available").value(false))
+        .andExpect(jsonPath("$.equipment.description").isEmpty())
+        .andExpect(jsonPath("$.equipment.maxBorrowDuration").isEmpty())
         .andExpect(jsonPath("$.busySlots[0].reason").value("RESERVED"))
         .andExpect(jsonPath("$.busySlots[0].requesterId").doesNotExist());
   }
