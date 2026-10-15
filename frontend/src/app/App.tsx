@@ -3,6 +3,7 @@ import { Link, Route, Routes } from 'react-router';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { HomePage } from '@/features/home/HomePage';
 import { LoanPage } from '@/features/loan/LoanPage';
+import { OverduePage } from '@/features/overdue/OverduePage';
 import { NotificationPage } from '@/features/notification/NotificationPage';
 import { EquipmentSearchPage } from '@/features/equipment/EquipmentSearchPage';
 import { ReservePage } from '@/features/reservation/ReservePage';
@@ -27,8 +28,11 @@ export function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/notifications" element={<NotificationPage />} />
-          <Route element={<RequireRole roles={['BORROWER', 'CUSTODIAN']} />}>
+          <Route element={<RequireRole role={['BORROWER', 'CUSTODIAN']} />}>
             <Route path="/loans" element={<LoanPage />} />
+          </Route>
+          <Route element={<RequireRole role={['CUSTODIAN', 'ADMIN']} />}>
+            <Route path="/overdue" element={<OverduePage />} />
           </Route>
           <Route element={<RequireRole role="APPROVER" />}>
             <Route path="/approvals" element={<ApprovalListPage />} />

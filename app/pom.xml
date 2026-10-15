@@ -52,7 +52,7 @@
    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId><version>3.5.6</version><configuration><includes><include>**/ApprovalPostgresIT.java</include></includes><failIfNoTests>true</failIfNoTests></configuration><executions><execution><goals><goal>integration-test</goal><goal>verify</goal></goals></execution></executions></plugin>
   </plugins></build></profile>
   <profile><id>uc03-postgres-it</id><build><plugins>
-   <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId><version>3.5.6</version><configuration><includes><include>**/LoanPostgresIT.java</include></includes><failIfNoTests>true</failIfNoTests></configuration><executions><execution><goals><goal>integration-test</goal><goal>verify</goal></goals></execution></executions></plugin>
+   <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId><version>3.5.6</version><configuration><includes><include>**/LoanPostgresIT.java</include><include>**/Uc05PostgresIT.java</include></includes><failIfNoTests>true</failIfNoTests></configuration><executions><execution><goals><goal>integration-test</goal><goal>verify</goal></goals></execution></executions></plugin>
   </plugins></build></profile>
   <profile>
    <id>uc04-postgres-it</id>
