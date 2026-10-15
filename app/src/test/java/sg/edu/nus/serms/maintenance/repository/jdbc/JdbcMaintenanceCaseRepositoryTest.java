@@ -50,7 +50,9 @@ class JdbcMaintenanceCaseRepositoryTest {
     when(row.getString("resolution_note")).thenReturn(s.resolutionNote());
     when(row.getTimestamp("reported_at")).thenReturn(Timestamp.from(s.reportedAt()));
     when(row.getTimestamp("resolved_at")).thenReturn(s.resolvedAt() == null ? null : Timestamp.from(s.resolvedAt()));
-    when(row.getInt("version")).thenReturn(s.version());
+    when(row.getLong("version")).thenReturn(s.version());
+    when(row.getString("fault_category")).thenReturn(s.faultCategory().name());
+    when(row.getString("priority")).thenReturn(s.priority().name());
     return row;
   }
 
@@ -148,7 +150,7 @@ class JdbcMaintenanceCaseRepositoryTest {
     returns(expected);
     assertThat(repository.insert(expected).snapshot()).isEqualTo(expected.snapshot());
     assertThat(parameters).containsExactly(CASE, EQUIPMENT, REPORTER, null, LOAN, "OPEN",
-        "Cable failure", null, Timestamp.from(REPORTED), null);
+        "Cable failure", null, Timestamp.from(REPORTED), null, "OTHER", "MEDIUM");
     assertThat(sql).contains("INSERT INTO serms.maintenance_case", "RETURNING");
     String insertedColumns = sql.substring(0, sql.indexOf("VALUES"));
     assertThat(insertedColumns).doesNotContain("version", "fault_report", "diagnosis");
@@ -178,7 +180,7 @@ class JdbcMaintenanceCaseRepositoryTest {
     var updated = repository.update(item(MaintenanceStatus.ASSIGNED, 17, true));
     assertThat(updated.snapshot()).isEqualTo(expected.snapshot());
     assertThat(parameters).containsExactly(TECHNICIAN, LOAN, "ASSIGNED", "Cable failure",
-        null, null, CASE, 17);
+        null, null, CASE, 17L);
     assertThat(sql).contains("WHERE maintenance_case_id = ? AND version = ?", "RETURNING");
     assertThat(sql.substring(sql.indexOf("SET"), sql.indexOf("WHERE"))).doesNotContain("version");
   }
@@ -191,7 +193,7 @@ class JdbcMaintenanceCaseRepositoryTest {
     assertThat(updated.version()).isEqualTo(4);
     assertThat(updated.resolvedAt()).isEqualTo(RESOLVED);
     assertThat(parameters).containsExactly(TECHNICIAN, null, status.name(), "Cable failure",
-        "Completion note", Timestamp.from(RESOLVED), CASE, 3);
+        "Completion note", Timestamp.from(RESOLVED), CASE, 3L);
   }
 
   @Test

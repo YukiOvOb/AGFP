@@ -1,0 +1,18 @@
+stateDiagram-v2
+  state Equipment {
+    [*] --> AVAILABLE
+    AVAILABLE --> ON_LOAN: legal checkout
+    ON_LOAN --> AVAILABLE: good receipt and no active case
+    ON_LOAN --> UNDER_MAINTENANCE: damage or active fault case
+    AVAILABLE --> UNDER_MAINTENANCE: independent fault
+    UNDER_MAINTENANCE --> AVAILABLE: all repaired and no ACTIVE loan
+    UNDER_MAINTENANCE --> ON_LOAN: all repaired while possession remains
+    UNDER_MAINTENANCE --> RETIRED: unrepairable
+    RETIRED --> RETIRED: receive equipment without restoring it
+  }
+  state Loan {
+    [*] --> ACTIVE
+    ACTIVE --> ACTIVE: overdue does not imply receipt
+    ACTIVE --> RETURNED: physical receipt GOOD or DAMAGED
+    RETURNED --> [*]
+  }

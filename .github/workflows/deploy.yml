@@ -1,60 +1,61 @@
-# 自动部署：push 到 main（即 PR 合并后）→ SSH 进香港服务器 → 同步代码 → docker compose 重建 → 健康检查。
-#
-# 与 Lumie-platform/deploy.yml 同一套思路（SSH 上机部署），差别：
-#   - Lumie 先把镜像推到阿里云 ACR 再拉；AGFP 直接在服务器上 build，少一套镜像仓库凭据。
-#   - Lumie 用 release 分支触发；AGFP 按要求 main 合并即部署。
-#
-# 仓库 Secrets（已配置）：
-#   DEPLOY_HOST      156.226.176.180（香港机）
-#   DEPLOY_PORT      22000
-#   DEPLOY_USER      root
-#   DEPLOY_SSH_KEY   专用私钥，对应服务器 authorized_keys 里 github-actions-deploy@agfp
-#
-# 服务器侧约定（scripts/deploy.sh 实现）：
-#   代码目录 /opt/agfp，Docker Compose 启动，容器只绑 127.0.0.1:8789，
-#   由 nginx 以 https://<域名> 反代对外。域名与证书就绪前，部署照样进行，只是没有对外入口。
-#
-# 注意：main 已开分支保护，只能经 PR 合并进来，CI 全绿是合并前提，本工作流在合并后触发。
 name: Deploy
-
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
+    paths-ignore: ['**.md', 'docs/**']
   workflow_dispatch: {}
-
 concurrency:
   group: deploy-production
   cancel-in-progress: false
-
 permissions:
   contents: read
-
+  checks: read
 jobs:
-  deploy:
-    name: deploy (main → HK)
+  release-gate:
     runs-on: ubuntu-latest
+    timeout-minutes: 18
     steps:
-      - name: Deploy over SSH
+      - name: Reject non-main execution before checkout or secrets
+        run: test "$GITHUB_REF" = refs/heads/main
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify handover and current main SHA checks
+        run: node scripts/verify-release.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SERMS_PRODUCTION_READY: ${{ vars.SERMS_PRODUCTION_READY }}
+  deploy:
+    needs: release-gate
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Require trusted host identity
+        env:
+          HOST_FINGERPRINT: ${{ secrets.DEPLOY_HOST_FINGERPRINT }}
+        run: test -n "$HOST_FINGERPRINT"
+      - name: Deploy verified main over SSH
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          RELEASE_SHA: ${{ github.sha }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           port: ${{ secrets.DEPLOY_PORT }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          command_timeout: 15m
+          fingerprint: ${{ secrets.DEPLOY_HOST_FINGERPRINT }}
+          envs: RELEASE_SHA
+          command_timeout: 20m
           script: |
             set -euo pipefail
             APP_DIR=/opt/agfp
-            REPO=https://github.com/${{ github.repository }}.git
-            # 首次部署：仓库还不在服务器上，先克隆；之后只做硬同步（.env、data/ 不受影响）
-            if [ ! -d "$APP_DIR/.git" ]; then
-              git clone --branch main "$REPO" "$APP_DIR"
-            fi
+            test -d "$APP_DIR/.git"
+            test -f "$APP_DIR/.env"
             cd "$APP_DIR"
             git fetch origin main
-            git reset --hard "${{ github.sha }}"
-            echo "==> HEAD: $(git log --oneline -1)"
-            bash scripts/deploy.sh
+            test "$(git rev-parse origin/main)" = "$RELEASE_SHA"
+            RELEASE_SCRIPT=$(mktemp)
+            trap 'rm -f "$RELEASE_SCRIPT"' EXIT
+            git show "$RELEASE_SHA:scripts/deploy.sh" > "$RELEASE_SCRIPT"
+            APP_DIR="$APP_DIR" bash "$RELEASE_SCRIPT"

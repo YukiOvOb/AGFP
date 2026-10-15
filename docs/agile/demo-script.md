@@ -1,47 +1,47 @@
-# 演示脚本
+# Demo Script
 
-Sprint 3 起用于 Sprint 评审和最终演示。目标时长 10 分钟，按业务流程串起五个用例；每个用例由负责人讲解自己的部分。
+Used from Sprint 3 for Sprint Reviews and the final demo. Target: 10 minutes, connecting five use cases in business order; each owner presents their part.
 
-## 1. 准备
+## 1. Preparation
 
-| 项目 | 内容 |
+| Item | Content |
 | --- | --- |
-| 环境 | 主：https://serms.midas.cyou（合并后自动部署）；备用：本地 `docker compose up` |
-| 账号 | 借用人 ×2、审批人、库管、技术员、管理员各一个（演示前由 Member 3 准备种子数据，密码不写进仓库） |
-| 设备 | 至少：一台无需审批的相机、一台需要审批的示波器、一台维修中的设备、一台报废设备 |
-| 浏览器 | 两个窗口（借用人 A、B），用于演示时段冲突 |
-| 备用材料 | `docs/evidence/` 下的截图；CI 上的测试报告；Playwright 录像（`pnpm test:e2e` 的 trace） |
+| Environment | Primary: https://serms.midas.cyou (automatic post-merge deployment); fallback: local `docker compose up` |
+| Accounts | Two borrowers, one each approver/custodian/technician/admin (Member 3 seeds before demo; no passwords in repository) |
+| Equipment | At least a camera without approval, an oscilloscope requiring approval, an item under maintenance, a retired item |
+| Browser | Two windows (borrowers A/B) for conflicts |
+| Fallback material | `docs/evidence/` screenshots, CI reports, Playwright recordings (`pnpm test:e2e` trace) |
 
-## 2. 流程
+## 2. Flow
 
-| 步骤 | 讲解人 | 操作 | 要说明的点 |
+| Step | Presenter | Action | Explanation |
 | --- | --- | --- | --- |
-| 0 | Member 1 | 打开看板和需求清单 | 需求编号 → 任务 → PR → 测试 的追溯关系 |
-| 1 | Member 2 | 借用人 A 登录 | Session + CSRF；菜单按角色显示，权限在后端检查 |
-| 2 | Member 1 | Find equipment：按类别 “Camera” 搜索，填明天 09:00–11:00 | 结果显示 Free / Not free；URL 里保存了搜索条件（复制链接给 B） |
-| 3 | Member 1 | 勾选 “只显示可用”，进入相机的预约页 | 右侧显示未来 14 天的占用时段，不显示占用人 |
-| 4 | Member 1 | 提交 09:00–11:00 | 立即 “已确认”；进入 “我的预约” |
-| 5 | Member 1 | 借用人 B 打开 A 分享的链接，预约 10:00–12:00 | 409 时段冲突（数据库排他约束保证，即使同时提交也只有一个成功，见并发测试） |
-| 6 | Member 1 | B 改为 11:00–12:00 | 成功：时间段是半开区间，11:00 不冲突 |
-| 7 | Member 1 | B 预约 8 天 | 422，列出 “最多 7 天”；规则用策略模式实现，数值可配置 |
-| 8 | Member 1 | A 预约示波器 | “等待审批”；`ReservationSubmitted` 事件 → 通知审批人 |
-| 9 | Member 2 | 审批人批准 / 拒绝（填理由） | 不能审批自己的预约；拒绝后时段释放 |
-| 10 | Member 5 | A 打开通知收件箱 | 审批结果通知；未读数量 |
-| 11 | Member 3 | 库管为 A 的相机办理领用 | A 的预约不能再取消（规则 4） |
-| 12 | Member 3 | 归还时登记 “损坏” | 自动生成维修工单，设备转为维修中 |
-| 13 | Member 4 | 技术员处理工单至 “已修复” | 维修期间设备在搜索中显示 Not free，修复后恢复 |
-| 14 | Member 5 | 演示逾期提醒（预置一条已逾期借用） | 定时扫描、去重、重试 |
-| 15 | Member 5 | 打开 GitHub Actions 最近一次 main 运行 | 测试 → 扫描 → 构建 → 部署 → 部署后检查 |
-| 16 | Member 4 | 打开测试和覆盖率报告 | 每人的测试台；覆盖率 ≥ 70% |
+| 0 | Member 1 | Open board/backlog | Requirement → task → PR → test traceability |
+| 1 | Member 2 | Borrower A logs in | Session + CSRF; role-based menus, backend authorization |
+| 2 | Member 1 | Find equipment: Camera, tomorrow 09:00–11:00 | Free / Not free, URL preserves criteria (share with B) |
+| 3 | Member 1 | Select available-only, open camera reservation | Next 14 days' busy slots; no borrower identity |
+| 4 | Member 1 | Submit 09:00–11:00 | Immediate confirmation; My reservations |
+| 5 | Member 1 | B opens shared link, reserves 10:00–12:00 | 409 overlap; exclusion constraint ensures one concurrent winner (see tests) |
+| 6 | Member 1 | B changes to 11:00–12:00 | Success: half-open intervals do not overlap at 11:00 |
+| 7 | Member 1 | B reserves 8 days | 422, maximum 7 days; configurable Strategy rules |
+| 8 | Member 1 | A reserves oscilloscope | Pending approval; `ReservationSubmitted` → notify approvers |
+| 9 | Member 2 | Approver approves/rejects with reason | No self-approval; rejection releases slot |
+| 10 | Member 5 | A opens inbox | Decision notification and unread count |
+| 11 | Member 3 | Custodian checks out A's camera | Reservation cannot be cancelled (rule 4) |
+| 12 | Member 3 | Record damaged return | Automatic maintenance case; equipment under maintenance |
+| 13 | Member 4 | Technician resolves case | Not free during maintenance; available after repair |
+| 14 | Member 5 | Demonstrate overdue reminder with seeded overdue loan | Scheduled scanning, deduplication, retry |
+| 15 | Member 5 | Open latest main Actions run | Tests → scans → build → deployment → verification |
+| 16 | Member 4 | Open test/coverage reports | Individual benches, coverage ≥ 70% |
 
-## 3. 出问题时
+## 3. If Problems Occur
 
-- 线上不可用：切换到本地 compose 环境。
-- 某一步失败：展示该步骤的截图和对应的自动化测试（UC01 的每个异常流程都有测试，见 [UC01 文档第 1.2 节](../uc01-search-and-reserve.md#12-备选与异常流程)）。
+- Site unavailable: switch to local Compose.
+- Failed step: show screenshots and corresponding tests (UC01 exception flows all have tests; [Section 1.2](../uc01-search-and-reserve.md#12-alternative-and-exception-flows)).
 
-## 4. UC01 当前可演示的程度（2026-10-05）
+## 4. Current UC01 Demonstration Readiness (2026-10-05)
 
-在风险 1（迁移进入 `app/`）完成之前，UC01 的完整流程可以通过以下两种方式演示：
+Before risk 1 (migrations into `app/`) is resolved, demonstrate UC01 in either way:
 
-1. `cd frontend && pnpm test:e2e`：在真实浏览器里跑 “登录 → 搜索 → 预约 → 取消”（接口为模拟数据）。
-2. `cd app && ./mvnw verify`：在 PostgreSQL 18 容器上跑 29 个集成测试，包括 8 个并发请求抢同一时段。
+1. `cd frontend && pnpm test:e2e`: login → search → reserve → cancel in a real browser (mock API data).
+2. `cd app && ./mvnw verify`: 29 PostgreSQL 18 integration tests, including 8 concurrent requests for a slot.

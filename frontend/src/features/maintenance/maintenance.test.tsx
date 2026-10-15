@@ -20,11 +20,17 @@ const item = (
 ): MaintenanceCase => ({
   maintenanceCaseId: CASE,
   equipmentId: EQUIPMENT,
+  equipmentName: 'Field Camera',
+  equipmentAssetTag: 'CAM-001',
   reportedBy: OTHER,
+  reportedByName: 'Omar Reporter',
   assignedTo,
+  assignedToName: assignedTo === null ? null : assignedTo === ME ? 'Mia Tech' : 'Other Tech',
   loanId: null,
   status,
   faultDescription: 'Camera lens jammed',
+  faultCategory: 'OTHER',
+  priority: 'MEDIUM',
   reportedAt: '2026-10-06T00:00:00Z',
   resolvedAt: status === 'RESOLVED' || status === 'UNREPAIRABLE' ? '2026-10-06T02:30:00Z' : null,
   resolutionNote: status === 'RESOLVED' || status === 'UNREPAIRABLE' ? 'Work completed' : null,
@@ -113,6 +119,7 @@ function detail(initial = item()) {
           fromStatus: initial.status,
           toStatus: state.status,
           actorId: ME,
+          actorName: 'Mia Tech',
           occurredAt: '2026-10-06T01:00:00Z',
           detail: body?.detail ?? body?.resolutionNote ?? null,
         },
@@ -123,6 +130,38 @@ function detail(initial = item()) {
   return { requests, reads: () => ({ caseReads, historyReads }) };
 }
 describe('UC04 maintenance workspace', () => {
+  it('reports equipment selected in the catalogue and clears the selection after success', async () => {
+    let body: unknown;
+    server.use(
+      http.post(ROOT + '/cases', async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json(item('OPEN', null), { status: 201 });
+      }),
+    );
+    mount(['BORROWER'], '/maintenance?equipmentId=' + EQUIPMENT);
+    expect(await screen.findByLabelText('Equipment ID', { exact: true })).toHaveValue(EQUIPMENT);
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText('Fault description'), 'Selected camera fault');
+    await user.click(screen.getByRole('button', { name: 'Submit fault report' }));
+    await screen.findByText(/Fault reported successfully/);
+    expect(body).toEqual({
+      equipmentId: EQUIPMENT,
+      faultDescription: 'Selected camera fault',
+      faultCategory: 'OTHER',
+      priority: 'MEDIUM',
+    });
+    expect(screen.getByLabelText('Equipment ID', { exact: true })).toHaveValue('');
+  });
+  it('ignores an invalid catalogue equipment parameter', async () => {
+    mount(['BORROWER'], '/maintenance?equipmentId=invalid');
+    expect(await screen.findByLabelText('Equipment ID', { exact: true })).toHaveValue('');
+  });
+  it('accepts the existing PostgreSQL demo UUID format', async () => {
+    mount(['BORROWER'], '/maintenance?equipmentId=20000000-0000-0000-0000-000000000008');
+    expect(await screen.findByLabelText('Equipment ID', { exact: true })).toHaveValue(
+      '20000000-0000-0000-0000-000000000008',
+    );
+  });
   it.each(['BORROWER', 'CUSTODIAN', 'MAINTAINER', 'ADMIN'])(
     'shows Maintenance navigation to %s',
     async (role) => {
@@ -153,12 +192,75 @@ describe('UC04 maintenance workspace', () => {
     await user.type(screen.getByLabelText('Fault description'), ' Lens jammed ');
     await user.click(screen.getByRole('button', { name: 'Submit fault report' }));
     expect(await screen.findByText(/Fault reported successfully/)).toBeVisible();
-    expect(body).toEqual({ equipmentId: EQUIPMENT, faultDescription: 'Lens jammed' });
+    expect(body).toEqual({
+      equipmentId: EQUIPMENT,
+      faultDescription: 'Lens jammed',
+      faultCategory: 'OTHER',
+      priority: 'MEDIUM',
+    });
     expect(screen.getByLabelText('Equipment ID', { exact: true })).toHaveValue('');
     expect(screen.queryByText('Open maintenance queue')).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'View case' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Maintenance report' })).not.toBeInTheDocument();
     expect(screen.queryByText('Maintenance actions')).not.toBeInTheDocument();
+  });
+  it('reports the chosen fault category and priority and resets them after success', async () => {
+    let body: unknown;
+    server.use(
+      http.post(ROOT + '/cases', async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json(
+          { ...item('OPEN', null), faultCategory: 'ELECTRICAL', priority: 'URGENT' },
+          { status: 201 },
+        );
+      }),
+    );
+    mount(['BORROWER'], '/maintenance?equipmentId=' + EQUIPMENT);
+    const user = userEvent.setup();
+    await user.selectOptions(await screen.findByLabelText('Fault category'), 'ELECTRICAL');
+    await user.selectOptions(screen.getByLabelText('Priority'), 'URGENT');
+    await user.type(screen.getByLabelText('Fault description'), 'Charger sparks');
+    await user.click(screen.getByRole('button', { name: 'Submit fault report' }));
+    await screen.findByText(/Fault reported successfully/);
+    expect(body).toMatchObject({ faultCategory: 'ELECTRICAL', priority: 'URGENT' });
+    expect(screen.getByLabelText('Fault category')).toHaveValue('OTHER');
+    expect(screen.getByLabelText('Priority')).toHaveValue('MEDIUM');
+  });
+  it('filters the open queue by priority and sorts it highest first', async () => {
+    lists([
+      {
+        ...item('OPEN', null),
+        maintenanceCaseId: CASE,
+        faultDescription: 'Old low',
+        priority: 'LOW',
+      },
+      {
+        ...item('OPEN', null),
+        maintenanceCaseId: OTHER,
+        faultDescription: 'Newer urgent',
+        priority: 'URGENT',
+        faultCategory: 'ELECTRICAL',
+      },
+    ]);
+    mount(['CUSTODIAN']);
+    const user = userEvent.setup();
+    const titles = () =>
+      screen.getAllByRole('link', { name: /Old low|Newer urgent/ }).map((a) => a.textContent);
+    expect(await screen.findByRole('link', { name: 'Old low' })).toBeVisible();
+    expect(titles()).toEqual(['Old low', 'Newer urgent']);
+    expect(screen.getByText('Electrical', { selector: 'dd' })).toBeVisible();
+    await user.selectOptions(screen.getByLabelText('Sort'), 'priority');
+    expect(titles()).toEqual(['Newer urgent', 'Old low']);
+    await user.selectOptions(
+      screen.getByLabelText('Priority', { selector: '#queue-priority' }),
+      'HIGH',
+    );
+    expect(screen.getByText('No open cases with this priority.')).toBeVisible();
+    await user.selectOptions(
+      screen.getByLabelText('Priority', { selector: '#queue-priority' }),
+      'LOW',
+    );
+    expect(titles()).toEqual(['Old low']);
   });
   it('validates UUID, optional loan UUID and required description without submitting', async () => {
     mount(['BORROWER']);
@@ -217,6 +319,9 @@ describe('UC04 maintenance workspace', () => {
     mount(['ADMIN']);
     expect(await screen.findByText('No active technicians available.')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Assign technician' })).toBeDisabled();
+    expect(screen.getByText('Field Camera (CAM-001)')).toBeVisible();
+    expect(screen.getByText('Omar Reporter')).toBeVisible();
+    expect(screen.queryByText('Technician', { selector: 'dt' })).not.toBeInTheDocument();
   });
   it('admin sees queue and report, but does not inherit fault reporting', async () => {
     lists();
@@ -270,6 +375,25 @@ describe('UC04 maintenance workspace', () => {
     expect(state.reads().caseReads).toBeGreaterThan(1);
     expect(state.reads().historyReads).toBeGreaterThan(1);
     expect(screen.getByText('06 Oct 2026, 08:00 SGT')).toBeVisible();
+    expect(screen.getByText('Field Camera (CAM-001)')).toBeVisible();
+    expect(screen.getByText('Omar Reporter')).toBeVisible();
+    expect(screen.getByText('Mia Tech')).toBeVisible();
+    expect(await screen.findByText(/· By Mia Tech$/)).toBeVisible();
+    expect(screen.queryByText(EQUIPMENT)).not.toBeInTheDocument();
+    expect(screen.queryByText(OTHER)).not.toBeInTheDocument();
+    expect(screen.queryByText(/· By 12345678-/)).not.toBeInTheDocument();
+  });
+  it('falls back to identifiers when the server cannot read a name', async () => {
+    detail({
+      ...item('ASSIGNED', OTHER),
+      equipmentName: null,
+      equipmentAssetTag: null,
+      reportedByName: null,
+      assignedToName: null,
+    });
+    mount(['CUSTODIAN'], '/maintenance/cases/' + CASE);
+    expect(await screen.findByText(EQUIPMENT)).toBeVisible();
+    expect(screen.getAllByText(OTHER)).toHaveLength(2);
   });
   it.each([
     ['diagnosis', 'Record Diagnosis', 'Record Diagnosis — details'],
@@ -381,7 +505,70 @@ describe('UC04 maintenance workspace', () => {
     await user.type(screen.getByLabelText('Equipment ID for history'), EQUIPMENT);
     await user.click(screen.getByRole('button', { name: 'Look up maintenance' }));
     expect(await screen.findByRole('link', { name: 'Camera lens jammed' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Field Camera (CAM-001)' })).toBeVisible();
     expect(await screen.findByText('No maintenance history yet.')).toBeVisible();
+  });
+  it('operator opens equipment history from a case and the lookup covers that item', async () => {
+    lists();
+    detail(item('IN_PROGRESS'));
+    server.use(
+      http.get(ROOT + '/equipment/' + EQUIPMENT + '/cases', () =>
+        HttpResponse.json([item('IN_PROGRESS')]),
+      ),
+      http.get(ROOT + '/equipment/' + EQUIPMENT + '/history', () => HttpResponse.json([])),
+    );
+    mount(['CUSTODIAN'], '/maintenance/cases/' + CASE);
+    await userEvent
+      .setup()
+      .click(
+        await screen.findByRole('link', { name: 'Maintenance history for Field Camera (CAM-001)' }),
+      );
+    const lookup = await screen.findByRole('region', { name: 'Equipment maintenance lookup' });
+    expect(within(lookup).getByLabelText('Equipment ID for history')).toHaveValue(EQUIPMENT);
+    expect(
+      await within(lookup).findByRole('heading', { name: 'Field Camera (CAM-001)' }),
+    ).toBeVisible();
+    expect(within(lookup).getByRole('link', { name: 'Camera lens jammed' })).toBeVisible();
+    // Cards in the lookup already show this item, so their equipment is not linked again.
+    expect(
+      within(lookup).queryByRole('link', { name: /^Maintenance history for/ }),
+    ).not.toBeInTheDocument();
+  });
+  it('links equipment history from the operator queue but not from maintainer views', async () => {
+    lists([item('OPEN', null)]);
+    mount(['CUSTODIAN']);
+    expect(
+      await screen.findByRole('link', { name: 'Maintenance history for Field Camera (CAM-001)' }),
+    ).toHaveAttribute('href', '/maintenance?history=' + EQUIPMENT);
+  });
+  it('maintainer sees equipment names without history links', async () => {
+    lists([], [item()]);
+    detail(item());
+    mount(['MAINTAINER']);
+    expect(await screen.findByText('Field Camera (CAM-001)')).toBeVisible();
+    expect(
+      screen.queryByRole('link', { name: /^Maintenance history for/ }),
+    ).not.toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole('link', { name: 'Camera lens jammed' }));
+    expect(await screen.findByRole('heading', { name: 'Case details' })).toBeVisible();
+    expect(screen.getByText('Field Camera (CAM-001)')).toBeVisible();
+    expect(
+      screen.queryByRole('link', { name: /^Maintenance history for/ }),
+    ).not.toBeInTheDocument();
+  });
+  it('ignores an invalid history parameter without looking anything up', async () => {
+    let lookups = 0;
+    lists();
+    server.use(
+      http.get(ROOT + '/equipment/:id/cases', () => {
+        lookups++;
+        return HttpResponse.json([]);
+      }),
+    );
+    mount(['CUSTODIAN'], '/maintenance?history=not-a-uuid');
+    expect(await screen.findByLabelText('Equipment ID for history')).toHaveValue('');
+    expect(await screen.findByText('No open maintenance cases.')).toBeVisible();
+    expect(lookups).toBe(0);
   });
   it('admin report has no default period, converts SGT bounds and renders five status counts', async () => {
     let requestUrl = '';

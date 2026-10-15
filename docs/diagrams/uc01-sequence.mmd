@@ -1,39 +1,39 @@
-%% UC01 提交预约 — 时序图
+%% UC01 Reservation Submission — Sequence Diagram
 sequenceDiagram
   autonumber
-  actor B as 借用人
-  participant W as React 预约页
+  actor B as Borrower
+  participant W as React reservation page
   participant C as ReservationController
   participant S as ReservationService
   participant P as ReservationRules (Strategy)
   participant R as ReservationRepository
   participant D as PostgreSQL 18
-  participant E as 事件监听 (通知 / 审计)
-  B->>W: 填写时间段并提交
-  W->>W: Zod 校验（结束>开始、时长、开始未过）
+  participant E as Event listeners (notification / audit)
+  B->>W: Enter interval and submit
+  W->>W: Zod validation (end>start, duration, future start)
   W->>C: POST /api/v1/reservations + X-XSRF-TOKEN
-  C->>S: submit(userId 来自 Session, request)
-  Note over S: @PreAuthorize BORROWER 且 userId == 登录身份
+  C->>S: submit(userId from Session, request)
+  Note over S: @PreAuthorize BORROWER and userId == authenticated identity
   S->>R: lockEquipment (FOR UPDATE)
   R->>D: SELECT … FROM equipment FOR UPDATE
   S->>R: lockRequesterAccountStatus (FOR UPDATE)
   S->>R: countOpen(requester, now)
   S->>P: evaluate(context)
-  P-->>S: 违反项列表
-  alt 有违反项
+  P-->>S: Violations
+  alt Violations
     S-->>C: RulesBroken → 422 + violations
-  else 时段已占用
+  else Slot occupied
     S-->>C: SlotTaken → 409
-  else 通过
-    S->>R: insert(…, CONFIRMED 或 PENDING_APPROVAL)
-    R->>D: INSERT（触发器 + 排他约束兜底）
-    alt 并发冲突 23P01
+  else Valid
+    S->>R: insert(…, CONFIRMED or PENDING_APPROVAL)
+    R->>D: INSERT (triggers + exclusion constraint)
+    alt Concurrent conflict 23P01
       D-->>S: exclusion violation
       S-->>C: SlotTaken → 409
-    else 成功
-      S->>E: publish ReservationSubmitted（同一事务）
+    else Success
+      S->>E: publish ReservationSubmitted (same transaction)
       S-->>C: Reservation
       C-->>W: 201 Created + ReservationView
-      W-->>B: 跳到我的预约，显示结果
+      W-->>B: My reservations, show result
     end
   end

@@ -1,0 +1,44 @@
+name: SERMS Development Task
+description: Define the scope, owner, dependencies, and acceptance for a use case or shared delivery.
+title: "[task] "
+body:
+  - type: input
+    id: owner
+    attributes:
+      label: Use case / requirement and primary human owner
+      description: Follow existing ownership; provide a GitHub account when known and list collaborators separately.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Objective and acceptance criteria
+      description: Observable outcomes, normal and major exception flows; distinguish pre-merge and post-deployment acceptance.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and exclusions
+      description: Modules / paths, shared-file impact, and work excluded from this task.
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies, contracts, and collaboration order
+      description: Related cards / PRs, interface versions, providers, consumers, permitted mock scope, or explicitly no dependencies.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Test bench, verification, and evidence
+      description: Backend / frontend / real PostgreSQL / E2E plan, required environment, and acceptance owners.
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risks, recovery, and pending decisions
+      description: Cite both sources for rule conflicts; suggestions must not be recorded as confirmed decisions.

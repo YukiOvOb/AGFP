@@ -4,7 +4,10 @@ import java.util.UUID;
 import java.util.List;
 
 public interface TechnicianDirectoryPort {
-  /** A future Identity adapter verifies an existing ACTIVE user with the MAINTAINER role. */
+  /**
+   * Throws {@link InvalidMaintenanceTechnicianException} unless the user exists, is ACTIVE and
+   * holds the MAINTAINER role.
+   */
   void ensureTechnician(UUID userId);
 
   /** ACTIVE MAINTAINER users, ordered by display name and user ID. */

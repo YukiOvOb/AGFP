@@ -2,7 +2,7 @@
 
 Alignment target: [feature/wang-yuanmeng-sprint1-notifications](https://github.com/YukiOvOb/AGFP/tree/feature/wang-yuanmeng-sprint1-notifications), pinned verification commit `01b50778701ed8a729039790238581bb59e929b5`.
 
-Add this module as a dependency of that branch's Spring Boot application. It preserves the signatures of `NotificationRequest`, `LoanReminderGuard.check(long,...)` and `NotificationRequestStore.requestOnce(...)` while adapting this repository's PostgreSQL/UUID data model. The notification branch was not merged in full, and its standalone MySQL/H2 operation is unchanged. Select the `serms-postgres` profile to use the shared database.
+Add this module as a dependency of that branch's Spring Boot application. It preserves the signatures of `NotificationRequest`, `LoanReminderGuard.check(long,...)` and `NotificationRequestStore.requestOnce(...)` while adapting this repository's PostgreSQL/UUID data model. The current application defaults to PostgreSQL 18. This module remains a compatibility test harness for the pinned notification contract; production migrations live only in app/src/main/resources/db/migration.
 
 ## Interface Alignment
 
@@ -13,7 +13,7 @@ Add this module as a dependency of that branch's Spring Boot application. It pre
 | MySQL ON DUPLICATE KEY | Primary PostgresNotificationRequestStore uses ON CONFLICT DO NOTHING, preserving the first content and ID |
 | LoanReminderGuard lacks a real implementation | Locks Equipment then Loan in the same transaction; rechecks return state, ownership, dueAt and ReminderPolicy windows |
 | Legacy notification versus request/delivery model | V003 creates notification_request and notification_attempt, using upstream PENDING/RETRY/DELIVERED/CANCELLED/FAILED states |
-| Standalone Flyway V1/V2 conflicts with shared V001/V002 | Profile scans only db/serms-shared and db/serms-notification and uses public.serms_flyway_history |
+| Standalone Flyway V1/V2 conflicts with shared V001/V002 | Runtime scans only db/migration and uses public.serms_flyway_history; historical notification DDL is test-only |
 | Atomicity of successful business transactions and notifications | Retains synchronous NotificationRequested events; JdbcTemplate and JPA share a DataSource and transaction manager |
 
 The default advance reminder window is PT24H, configurable through `serms.notifications.due-soon-lead`. This is an integration default, not a team-approved business policy. When dueAt equals now, the type is DUE_SOON; only now > dueAt is OVERDUE, matching upstream ReminderPolicy. Equipment under maintenance or retired may still have an ACTIVE Loan and must not be assumed returned.

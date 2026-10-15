@@ -31,7 +31,13 @@ public class EquipmentController {
       @Schema(
               nullable = true,
               description = "Whether the requested window can be reserved; null without a window")
-          Boolean availableInWindow) {
+          Boolean availableInWindow,
+      @Schema(requiredMode = RequiredMode.REQUIRED, nullable = true,
+              description = "Free-text description; null when none is recorded")
+          String description,
+      @Schema(requiredMode = RequiredMode.REQUIRED, nullable = true, type = "string", format = "duration",
+              description = "ISO-8601 maximum borrowing duration for this item; null when the global limit applies")
+          String maxBorrowDuration) {
     static EquipmentView of(EquipmentSummary s) {
       return new EquipmentView(
           s.equipmentId(),
@@ -41,7 +47,9 @@ public class EquipmentController {
           s.location(),
           s.status(),
           s.requiresApproval(),
-          s.availableInWindow());
+          s.availableInWindow(),
+          s.description(),
+          s.maxBorrowDuration() == null ? null : s.maxBorrowDuration().toString());
     }
   }
 

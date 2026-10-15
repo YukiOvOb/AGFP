@@ -1,62 +1,103 @@
-# Sprint 状态与风险
+# Sprint Status and Risks
 
-由 Member 1 在每周例会后更新。每次更新保留旧快照（新的写在最上面），作为 Sprint 证据。
+Member 1 updates after weekly meetings. Preserve snapshots, newest first, as Sprint evidence.
 
 ---
 
-## 快照：2026-10-05（Sprint 2 进行中）
+## Integration Update 2026-10-14
 
-### 1. 各用例进度
+`main` is `b3def12`. The integration line is merged: [#11](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/11) local demo (merge `f077ce7`); [#13](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/13) Spring Boot 4, `web` + `app` + `db` packaging and gated deployment, merged into the branch of #14 (`db376ab`); and [#14](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/14) UC01/UC04 acceptance fixes, which carried both into `main` (merge `b3def12`). The content of `main` equals the release-preparation head `15ec983`; all twelve hosted checks passed on `db376ab` before the merge. The `Deploy` run after each merge failed without reaching the server: the repository has no deployment secrets, and since #13 the release gate stops while `SERMS_PRODUCTION_READY` is unset.
 
-| 用例 | 负责 | 后端 | 前端 | 测试台 | 位置 |
+A read-only review against the Project Proposal on the same day found the five use-case flows implemented, and user/role administration, equipment and category management, most reports and the audit viewer missing; see the [review entry](../devlog/2026-10-14-project-review-and-completion-plan.md). The owner confirmed task ownership, the state models, a scope freeze, the schedule to the 2026-10-26 presentation and a development log ([D-007](../collaboration/decisions.md#d-007-completion-task-ownership) to [D-011](../collaboration/decisions.md#d-011-development-log)). Tasks, owners and dates are tracked on [Issue #27](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/issues/27) (#15-#26, with #6-#10 retained).
+
+Not yet established: member acceptance of #6-#9; the overdue scanner on `main` (draft #12 predates this baseline); a local demo smoke run on `b3def12`; any cloud deployment. The 2026-10-13 snapshot below is kept as written.
+
+## Current Local Progress 2026-10-13
+
+Verified baseline: GitHub main `940bf42`, local-demo delivery `d42e0a6` in [Draft PR #11](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/pull/11). This snapshot supersedes earlier progress claims; historical snapshots below remain unchanged.
+
+The complete React/Spring Boot/PostgreSQL 18 local demo runs on loopback. The real backend and frontend-proxied health checks returned `UP` during the repository review. Local-demo files matched the delivered Git blobs. All nine PR #11 checks passed, including the eight required GitHub Actions checks; PR #11 remains draft and unmerged. Agent verification does not establish member acceptance or team Done.
+
+| Work | Implementation/evidence | Remaining acceptance |
+| --- | --- | --- |
+| UC01 / Liu Tongyao takeover; original owner Shi Wenqi | Main: search, availability, reservation/cancellation, overlap protection; real normal-flow API checks | Complete exception/browser/member acceptance in Issue #9 |
+| UC02 / Zhang Hanming | Main: secured API, approval pages, real database adapter; separate-approver API flow passed | Complete role/browser/member acceptance in Issue #8 |
+| UC03 / Zhou Fanhao | Main: checkout/return, damage-to-maintenance, V004; 20 real PostgreSQL integration cases passed | Database/data/upgrade review in Issue #6 and cross-module member acceptance |
+| UC04 / Liu Tongyao | Main: API/pages, assignment, diagnosis, repair, history/report reads; real normal-flow repair passed | Full fault/loan/technician/retirement exceptions in Issue #9; dedicated PostgreSQL profile is separate from regular CI |
+| UC05 / Wang Yuanmeng | Main: inbox, request deduplication/retry, delivery and PostgreSQL reminder guard | Issue #7: overdue scanner/producer and full reminder/read/unread/return suppression acceptance; existing delivery worker only processes queued requests |
+| Shared runtime / Liu Tongyao | Issue #5 local checks satisfied: native startup/shutdown, six explicit accounts, real APIs, idempotent data, restart | PR/member integration; no cloud acceptance implied |
+
+Existing local evidence: database 27, app regression 536, UC03 integration 20; zero failures/errors/skips. Frontend 79 components and 12 mocked browser cases passed. Real API smoke passed 28 checks, data guards 3 and real browser 6. Local service/domain coverage was 97.04% (1115 covered/34 missed); an automatic ≥ 70% CI gate is still pending. See [local verification](../evidence/local-demo/verification.md) and [testing](../testing.md). The six real-browser checks exercise borrower login/navigation/history and viewport/error checks, not every role's complete workflow. Notification smoke asserts a populated inbox, not completion of overdue generation.
+
+Current execution assignments: Liu Tongyao (`cpg25ncu`) #5/#9/#10; Zhou Fanhao (`zfh-usedname`) #6; Wang Yuanmeng (`ezmoneysniper0701`) #7; Zhang Hanming (`Hanming1008`) #8. Original team membership/contribution attribution remains intact; see [D-004](../collaboration/decisions.md#d-004-local-first-integration-and-wenqi-task-execution).
+
+User-confirmed order: finish local repository housekeeping, complete basic local functionality and member acceptance, implement the user's later changes when specified, then cloud publication. Issue #10 is deferred; later feature scope is not yet defined. See [D-005](../collaboration/decisions.md#d-005-local-closeout-and-cloud-last).
+
+Local housekeeping is on `codex/local-repository-closeout` based on `d42e0a6`: original 11 changes and UC04 history preserved, local main updated to `940bf42`, backup exclusions and current documents reconciled. Independent acceptance/release worktrees, archives and running demo data are retained. [Closeout handover](../local-repository-closeout.md) records recovery and boundaries.
+
+GitHub main's last deployment failed with `missing server host`, and root Docker/Compose still packages the static welcome page. PR #3 remains open/conflicted; its older Wenqi handover text needs reconciliation with D-004/D-005. This local closeout prepares that content without changing remote PRs or production. No meetings, hours or human sign-offs are inferred.
+
+## Local Delivery Update 2026-10-07
+
+Database default configuration finalized: normal/local startup uses PostgreSQL 18, production migrations are in app's Flyway directory, approval is enabled; MySQL/H2 removed from production. Clean builds/default-runtime integration passed, pending team review and web/app/db deployment.
+
+Zhou Fanhao implemented UC03 backend/React pages, State delegation, shared PostgreSQL profile, V004 decision/version alignment, ApprovalDecisionPort, and test scripts. See [Verification](../zhoufanhao-validation.md). Shared migrations and real Identity schema mapping address local gaps in snapshot risks 1–3.
+
+The remote repository was suspended; this work changed only the backup and saved local Git. Review, hosted CI, security, web/app/db test deployment, Smoke Test, and Sprint Review remain team work. UC03 stays locally implemented, pending Review/Testing, not full Done. See [Member checklist](../zhoufanhao-handoffs.md). Long-term duties follow the provided plan; historical snapshots are retained.
+
+## Snapshot: 2026-10-05 (Sprint 2 in Progress)
+
+### 1. Use-case Progress
+
+| Use case | Owner | Backend | Frontend | Test bench | Location |
 | --- | --- | --- | --- | --- | --- |
-| UC01 搜索和预约 | Member 1 | ✅ | ✅ | ✅ 后端 69 + 前端 15 + E2E | UC01 分支（本 PR） |
-| UC02 审批 | Member 2 | 🔶 领域 + 服务，无 REST | ⬜ | 🔶 单元测试 | [Draft PR #8](https://github.com/YukiOvOb/AGFP/pull/8) |
-| UC03 领用归还 | Member 3 | ⬜（表结构和约束已在 main） | ⬜ | 🔶 数据库测试（PR #10） | main `database/` |
-| UC04 维修 | Member 4 | 🔶 领域、服务、JDBC、报表读模型 | ⬜ | 🔶 含 PostgreSQL 集成测试 | [Draft PR #9](https://github.com/YukiOvOb/AGFP/pull/9) |
-| UC05 逾期和通知 | Member 5 | 🔶 通知已在 main；REST 在分支 | 🔶 收件箱在分支 | 🔶 | main + `feature/wang-yuanmeng-platform-rest-react` |
-| 平台：登录 / 模板 / React 脚手架 | Member 2 / 5 | 🔶 | 🔶 | 🔶 | `feature/wang-yuanmeng-platform-rest-react`（未开 PR） |
+| UC01 Search/reservation | Member 1 | ✅ | ✅ | ✅ Backend 69 + frontend 15 + E2E | UC01 branch (this PR) |
+| UC02 Approval | Member 2 | 🔶 Domain/service, no REST | ⬜ | 🔶 Unit tests | [Draft PR #8](https://github.com/YukiOvOb/AGFP/pull/8) |
+| UC03 Checkout/return | Member 3 | ⬜ (schema/constraints on main) | ⬜ | 🔶 Database tests (PR #10) | main `database/` |
+| UC04 Maintenance | Member 4 | 🔶 Domain/service/JDBC/report reads | ⬜ | 🔶 PostgreSQL integration | [Draft PR #9](https://github.com/YukiOvOb/AGFP/pull/9) |
+| UC05 Overdue/notifications | Member 5 | 🔶 Notifications main; REST branch | 🔶 Inbox branch | 🔶 | main + `feature/wang-yuanmeng-platform-rest-react` |
+| Platform: authentication/templates/React | Member 2 / 5 | 🔶 | 🔶 | 🔶 | `feature/wang-yuanmeng-platform-rest-react` (no PR) |
 
-### 2. 分支依赖
+### 2. Branch Dependencies
 
 ```mermaid
 flowchart LR
-  main[main<br/>V002 · 通知基础 · CI]
-  pr8["PR #8 UC02 审批基础"]
-  plat[platform-rest-react<br/>登录 · REST · React]
-  uc01[UC01 本分支]
-  pr9["PR #9 UC04 维修"]
+  main[main<br/>V002 · Notification foundation · CI]
+  pr8["PR #8 UC02 foundation"]
+  plat[platform-rest-react<br/>Authentication · REST · React]
+  uc01[UC01 this branch]
+  pr9["PR #9 UC04 maintenance"]
   main --> pr8 --> plat --> uc01
   main --> uc01
   main --> pr9
 ```
 
-建议合并顺序：**PR #8 → platform-rest-react → UC01**。platform 分支基于较早的 main，合并最新 main 时 `README.md` 和 `.gitignore` 有两处小冲突，UC01 分支里已经解决，可直接参照；UC01 分支在最新 main 上通过全部测试。PR #9 与它们改动的业务文件不重叠，但 `app/pom.xml` 双方都改了（都加了同版本的 PostgreSQL 驱动），合并时手工保留一份。
+Suggested merge order: **PR #8 → platform-rest-react → UC01**. The platform branch's older main causes two small conflicts in `README.md` / `.gitignore`, already resolved in UC01 as a reference; UC01 passes all tests against latest main. PR #9 business files do not overlap, but both change `app/pom.xml` (same PostgreSQL driver version); retain one declaration manually.
 
-### 3. 整合风险（需要全组决定）
+### 3. Integration Risks (Team Decisions Required)
 
-| # | 问题 | 影响 | 建议 | 负责 |
+| # | Problem | Impact | Suggestion | Owner |
 | --- | --- | --- | --- | --- |
-| 1 | `app/` 的数据源仍是 H2 / MySQL，PostgreSQL 迁移在独立的 `database/` 模块 | UC01–UC04 的接口只能在测试里连真实数据库，部署后无法真正使用 | 按 tech-stack §7 把 V001、V002 移入 `app` 的 Flyway 序列，`app` 改用 PostgreSQL 18，删除 `db/mysql` | Member 3 |
-| 2 | 登录查询 `public.app_user` 和 `notification_principal` 列；V002 的表在 `serms` schema，没有该列 | 真实账号无法登录 | 统一用 `serms` schema；通知收件人直接用 `user_id` | Member 3 + Member 5 |
-| 3 | V002 审批结果是 `APPROVE` / `REJECT`，合同要求 `APPROVED` / `REJECTED`；`version` 为 `integer`，合同要求 `bigint` | UC02 写审批记录会被 `CHECK` 约束拒绝 | 新增 V003 迁移修改（V002 已合并，不能再改） | Member 3 + Member 2 |
-| 4 | `Dockerfile` / `compose.yaml` 仍只部署 welcome 静态页 | 线上看不到系统 | 改为 `web` + `app` + `db` 三个服务（tech-stack §7） | Member 5 |
-| 5 | 公共 Testcontainers 基类尚未提交 | 各模块各写一套测试基础设施（UC01 `testsupport/SermsPostgres`，UC04 `Uc04PostgresTestSupport`） | 以 `SermsPostgres` 为起点合并成一个公共基类，迁移进 `app` 后改用 Flyway | Member 4 |
-| 6 | 预约规则数值（30 分钟 / 7 天 / 90 天 / 3 个）是暂定值 | 演示和报告需要一致的数字 | Sprint 2 评审确认，只改配置 | 全组 |
-| 7 | 设备状态四种 vs 五种、维修状态五种 vs 六种（UC02 合同 §9） | 报告与实现不一致 | 按 V002 为准，并在报告中说明 | Member 3 + Member 4 |
+| 1 | `app/` uses H2/MySQL; PostgreSQL migrations in separate `database/` | UC01–UC04 connect to real DB only in tests; deployed APIs unusable | Move V001/V002 into app Flyway, use PostgreSQL 18, remove `db/mysql` (technology stack §7) | Member 3 |
+| 2 | Login queries `public.app_user` / `notification_principal`; V002 uses `serms` without column | Real login fails | Unify `serms`; recipients use `user_id` | Member 3 + Member 5 |
+| 3 | V002 APPROVE/REJECT and integer versions differ from APPROVED/REJECTED and bigint contract | UC02 decision inserts fail CHECK | Add V003 (merged V002 cannot be edited) | Member 3 + Member 2 |
+| 4 | Root Docker/Compose only deploy welcome page | Site lacks system | `web` + `app` + `db` (technology stack §7) | Member 5 |
+| 5 | Shared Testcontainers base missing | UC01 `testsupport/SermsPostgres` and UC04 `Uc04PostgresTestSupport` duplicate facilities | Consolidate from `SermsPostgres`; use Flyway after migrations into app | Member 4 |
+| 6 | 30 minutes / 7 days / 90 days / 3 reservations are provisional | Demo/report need consistent values | Sprint 2 review, configuration only | Team |
+| 7 | Equipment four/five, maintenance five/six states (UC02 §9) | Report/implementation mismatch | Use V002 and explain in report | Member 3 + Member 4 |
 
-### 4. 下一步（Sprint 2 剩余）
+### 4. Next Steps (Remaining Sprint 2)
 
-1. Member 2：PR #8 补上 REST 与审批页，使用本分支的 `ReservationApprovalService`（已按合同实现并测试）。
-2. Member 3：迁移整合（风险 1–3），开始 UC03。
-3. Member 5：platform 分支开 PR；部署改为三容器（风险 4）。
-4. Member 4：PR #9 转为正式 PR；整合公共测试基类（风险 5）。
-5. Member 1：UC01 开 PR 并请一名组员评审；风险 1 完成后在真实数据库上跑一遍演示脚本。
+1. Member 2: add REST/approval pages to PR #8 using this branch's tested `ReservationApprovalService`.
+2. Member 3: integrate migrations (risks 1–3), start UC03.
+3. Member 5: open platform PR; deploy three containers (risk 4).
+4. Member 4: mark PR #9 ready; consolidate test base (risk 5).
+5. Member 1: open UC01 PR and request member review; run real-DB demo after risk 1 is resolved.
 
-### 5. 回顾
+### 5. Retrospective
 
-会议记录在例会后补充，格式：
+Add meeting notes afterward:
 
-| 做得好的 | 需要改进的 | 行动项（负责人、截止日期） |
+| What worked | Improvements | Actions (owner, deadline) |
 | --- | --- | --- |
 | | | |

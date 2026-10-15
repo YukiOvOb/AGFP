@@ -3,12 +3,12 @@ package sg.edu.nus.serms.maintenance.api;
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import java.util.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -80,6 +80,14 @@ class MaintenanceOpenApiTest {
     }
     assertThat(schemas.path("MaintenanceCaseResponse").path("properties").has("version")).isTrue();
     assertThat(schemas.path("MaintenanceHistoryResponse").path("properties").has("actorId")).isTrue();
+    var caseResponse = schemas.path("MaintenanceCaseResponse");
+    var historyResponse = schemas.path("MaintenanceHistoryResponse");
+    for (String name : List.of("equipmentName", "equipmentAssetTag", "reportedByName", "assignedToName")) {
+      assertThat(caseResponse.path("properties").path(name).path("type").toString()).as(name).contains("string");
+      assertThat(caseResponse.path("required").toString()).as(name).contains("\"" + name + "\"");
+    }
+    assertThat(historyResponse.path("properties").path("actorName").path("type").toString()).contains("string");
+    assertThat(historyResponse.path("required").toString()).contains("\"actorName\"");
     assertThat(schemas.path("MaintenanceReportResponse").path("properties").has("averageCompletionDuration")).isTrue();
     JsonNode created = paths.path("/api/v1/maintenance/cases").path("post").path("responses").path("201");
     assertThat(created.path("content").path("application/json").path("schema").path("$ref").asText())

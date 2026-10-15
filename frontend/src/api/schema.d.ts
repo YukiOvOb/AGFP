@@ -177,6 +177,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/loans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listLoans"];
+        put?: never;
+        post: operations["checkoutEquipment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/loans/{loanId}/return": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["receiveLoanReturn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/logout": {
         parameters: {
             query?: never;
@@ -209,6 +241,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/approvals/{reservationId}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["decideReservation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reservations/{id}": {
         parameters: {
             query?: never;
@@ -235,6 +283,39 @@ export interface paths {
         };
         /** The signed-in borrower's reservations */
         get: operations["myReservations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reservations, utilisation, overdue and maintenance figures for one period */
+        get: operations["getOperationsReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/overdue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listOverdueLoans"];
         put?: never;
         post?: never;
         delete?: never;
@@ -403,6 +484,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/loans/{loanId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getLoan"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/loans/checkouts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listCheckoutQueue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/equipment": {
         parameters: {
             query?: never;
@@ -486,6 +599,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/approvals/{reservationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getApprovalReservation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/approvals/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listPendingApprovals"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -526,28 +671,50 @@ export interface components {
             /** Format: uuid */
             loanId?: string | null;
             faultDescription: string;
+            /**
+             * @description Defaults to OTHER
+             * @enum {string|null}
+             */
+            faultCategory?: "MECHANICAL" | "ELECTRICAL" | "SOFTWARE" | "PHYSICAL_DAMAGE" | "MISSING_PART" | "OTHER" | null;
+            /**
+             * @description Defaults to MEDIUM
+             * @enum {string|null}
+             */
+            priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT" | null;
         };
         MaintenanceCaseResponse: {
             /** Format: uuid */
             maintenanceCaseId: string;
             /** Format: uuid */
             equipmentId: string;
+            /** @description Null only when the equipment record cannot be read */
+            equipmentName: string | null;
+            /** @description Null only when the equipment record cannot be read */
+            equipmentAssetTag: string | null;
             /** Format: uuid */
             reportedBy: string;
+            /** @description Reporter display name; null only when the user cannot be read */
+            reportedByName: string | null;
             /** Format: uuid */
             assignedTo: string | null;
+            /** @description Technician display name; null when unassigned */
+            assignedToName: string | null;
             /** Format: uuid */
             loanId: string | null;
             /** @enum {string} */
             status: "OPEN" | "ASSIGNED" | "IN_PROGRESS" | "RESOLVED" | "UNREPAIRABLE";
             faultDescription: string;
+            /** @enum {string} */
+            faultCategory: "MECHANICAL" | "ELECTRICAL" | "SOFTWARE" | "PHYSICAL_DAMAGE" | "MISSING_PART" | "OTHER";
+            /** @enum {string} */
+            priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
             resolutionNote: string | null;
             /** Format: date-time */
             reportedAt: string;
             /** Format: date-time */
             resolvedAt: string | null;
             /**
-             * Format: int32
+             * Format: int64
              * @description Server-side version; mutations do not support If-Match or expectedVersion
              */
             version: number;
@@ -562,6 +729,49 @@ export interface components {
             /** Format: uuid */
             technicianId: string;
         };
+        CheckoutRequest: {
+            /** Format: uuid */
+            reservationId: string;
+            /** Format: uuid */
+            borrowerId: string;
+            /** Format: int64 */
+            expectedVersion: number;
+            identityConfirmed?: boolean;
+        };
+        LoanView: {
+            /** Format: uuid */
+            loanId?: string;
+            /** Format: uuid */
+            reservationId?: string;
+            /** Format: uuid */
+            equipmentId?: string;
+            equipmentName?: string;
+            /** Format: uuid */
+            borrowerId?: string;
+            borrowerName?: string;
+            /** Format: uuid */
+            checkoutBy?: string;
+            /** Format: uuid */
+            returnBy?: string;
+            /** Format: date-time */
+            checkedOutAt?: string;
+            /** Format: date-time */
+            dueAt?: string;
+            /** Format: date-time */
+            returnedAt?: string;
+            status?: string;
+            returnCondition?: string;
+            returnNote?: string;
+            /** Format: int64 */
+            version?: number;
+            overdue?: boolean;
+        };
+        ReturnRequest: {
+            /** Format: int64 */
+            expectedVersion: number;
+            condition: string;
+            note?: string;
+        };
         LoginRequest: {
             /** Format: email */
             email: string;
@@ -574,6 +784,56 @@ export interface components {
             displayName: string;
             roles: string[];
         };
+        DecisionRequest: {
+            /** @enum {string} */
+            decision: "APPROVED" | "REJECTED";
+            comment?: string;
+            /** Format: int64 */
+            expectedVersion: number;
+        };
+        ApprovalReservationSnapshot: {
+            /** Format: uuid */
+            reservationId?: string;
+            /** Format: uuid */
+            requesterId?: string;
+            requesterName?: string;
+            equipment?: components["schemas"]["EquipmentSummary"];
+            /** Format: date-time */
+            startAt?: string;
+            /** Format: date-time */
+            endAt?: string;
+            purpose?: string;
+            status?: string;
+            /** Format: int64 */
+            version?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            expired?: boolean;
+        };
+        DecisionOutcomeResponse: {
+            reservation?: components["schemas"]["ApprovalReservationSnapshot"];
+            decision?: components["schemas"]["DecisionResponse"];
+        };
+        DecisionResponse: {
+            /** Format: uuid */
+            approvalId?: string;
+            /** Format: uuid */
+            reservationId?: string;
+            /** Format: uuid */
+            approverId?: string;
+            /** @enum {string} */
+            decision?: "APPROVED" | "REJECTED";
+            comment?: string;
+            /** Format: date-time */
+            decidedAt?: string;
+        };
+        EquipmentSummary: {
+            /** Format: uuid */
+            equipmentId?: string;
+            assetTag?: string;
+            name?: string;
+            category?: string;
+        };
         ReservationPage: {
             content: components["schemas"]["ReservationView"][];
             /** Format: int32 */
@@ -584,6 +844,138 @@ export interface components {
             totalElements: number;
             /** Format: int32 */
             totalPages: number;
+        };
+        CategoryOverdueView: {
+            category: string;
+            /** Format: int64 */
+            loansDue: number;
+            /** Format: int64 */
+            returnedLate: number;
+            /** Format: int64 */
+            stillOverdue: number;
+        };
+        CategoryReservationsView: {
+            category: string;
+            /** Format: int64 */
+            total: number;
+            /** Format: int64 */
+            pendingApproval: number;
+            /** Format: int64 */
+            confirmed: number;
+            /** Format: int64 */
+            fulfilled: number;
+            /** Format: int64 */
+            rejected: number;
+            /** Format: int64 */
+            cancelled: number;
+        };
+        CategoryUtilisationView: {
+            category: string;
+            /** Format: int32 */
+            equipment: number;
+            /** Format: double */
+            loanedHours: number;
+            /**
+             * Format: double
+             * @description 0 to 1
+             */
+            utilisation: number;
+        };
+        EquipmentMaintenanceView: {
+            /** Format: uuid */
+            equipmentId: string;
+            assetTag: string;
+            name: string;
+            category: string;
+            /** Format: int64 */
+            cases: number;
+        };
+        EquipmentUtilisationView: {
+            /** Format: uuid */
+            equipmentId: string;
+            assetTag: string;
+            name: string;
+            category: string;
+            status: string;
+            /** Format: int64 */
+            loans: number;
+            /** Format: double */
+            loanedHours: number;
+            /**
+             * Format: double
+             * @description 0 to 1
+             */
+            utilisation: number;
+        };
+        MaintenanceView: {
+            /** @description Current cases by stored status */
+            casesByStatus: {
+                [key: string]: number;
+            };
+            /** Format: int64 */
+            reportedInPeriod: number;
+            /** Format: int64 */
+            completedInPeriod: number;
+            /**
+             * Format: double
+             * @description Absent when no case was completed in the period
+             */
+            averageCompletionHours?: number;
+        };
+        OverdueLoanView: {
+            /** Format: uuid */
+            loanId: string;
+            /** Format: uuid */
+            equipmentId: string;
+            assetTag: string;
+            equipmentName: string;
+            category: string;
+            borrowerName: string;
+            /** Format: date-time */
+            dueAt: string;
+            /** Format: double */
+            overdueHours: number;
+        };
+        ReportView: {
+            /** Format: date-time */
+            from: string;
+            /** Format: date-time */
+            to: string;
+            /**
+             * Format: date-time
+             * @description Utilisation and overdue frequency are measured up to this time
+             */
+            measuredUntil: string;
+            /** Format: date-time */
+            generatedAt: string;
+            reservationsByCategory: components["schemas"]["CategoryReservationsView"][];
+            equipmentUtilisation: components["schemas"]["EquipmentUtilisationView"][];
+            utilisationByCategory: components["schemas"]["CategoryUtilisationView"][];
+            overdueNow: components["schemas"]["OverdueLoanView"][];
+            overdueByCategory: components["schemas"]["CategoryOverdueView"][];
+            maintenance: components["schemas"]["MaintenanceView"];
+            maintenanceByEquipment: components["schemas"]["EquipmentMaintenanceView"][];
+        };
+        OverdueLoan: {
+            /** Format: uuid */
+            loanId?: string;
+            /** Format: uuid */
+            reservationId?: string;
+            borrowerName?: string;
+            equipmentName?: string;
+            /** Format: date-time */
+            dueAt?: string;
+            /** Format: int64 */
+            overdueSeconds?: number;
+        };
+        OverduePage: {
+            content?: components["schemas"]["OverdueLoan"][];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
         };
         NotificationPage: {
             content: components["schemas"]["NotificationView"][];
@@ -647,9 +1039,27 @@ export interface components {
             toStatus: "OPEN" | "ASSIGNED" | "IN_PROGRESS" | "RESOLVED" | "UNREPAIRABLE";
             /** Format: uuid */
             actorId: string;
+            /** @description Actor display name; null only when the user cannot be read */
+            actorName: string | null;
             /** Format: date-time */
             occurredAt: string;
             detail: string | null;
+        };
+        CheckoutCandidate: {
+            /** Format: uuid */
+            reservationId?: string;
+            /** Format: uuid */
+            equipmentId?: string;
+            equipmentName?: string;
+            /** Format: uuid */
+            borrowerId?: string;
+            borrowerName?: string;
+            /** Format: date-time */
+            startAt?: string;
+            /** Format: date-time */
+            endAt?: string;
+            /** Format: int64 */
+            version?: number;
         };
         EquipmentPage: {
             content: components["schemas"]["EquipmentView"][];
@@ -674,6 +1084,13 @@ export interface components {
             requiresApproval: boolean;
             /** @description Whether the requested window can be reserved; null without a window */
             availableInWindow?: boolean | null;
+            /** @description Free-text description; null when none is recorded */
+            description: string | null;
+            /**
+             * Format: duration
+             * @description ISO-8601 maximum borrowing duration for this item; null when the global limit applies
+             */
+            maxBorrowDuration: string | null;
         };
         AvailabilityView: {
             equipment: components["schemas"]["EquipmentView"];
@@ -696,6 +1113,37 @@ export interface components {
         FilterOptionsView: {
             categories: string[];
             locations: string[];
+        };
+        DetailResponse: {
+            /** Format: uuid */
+            reservationId?: string;
+            /** Format: uuid */
+            requesterId?: string;
+            requesterName?: string;
+            equipment?: components["schemas"]["EquipmentSummary"];
+            /** Format: date-time */
+            startAt?: string;
+            /** Format: date-time */
+            endAt?: string;
+            purpose?: string;
+            status?: string;
+            /** Format: int64 */
+            version?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            expired?: boolean;
+            decision?: components["schemas"]["DecisionResponse"];
+        };
+        PendingPageResponse: {
+            content?: components["schemas"]["ApprovalReservationSnapshot"][];
+            /** Format: int32 */
+            number?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
         };
     };
     responses: never;
@@ -974,6 +1422,80 @@ export interface operations {
             };
         };
     };
+    listLoans: {
+        parameters: {
+            query?: {
+                activeOnly?: boolean;
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LoanView"][];
+                };
+            };
+        };
+    };
+    checkoutEquipment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckoutRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LoanView"];
+                };
+            };
+        };
+    };
+    receiveLoanReturn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                loanId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReturnRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LoanView"];
+                };
+            };
+        };
+    };
     logout: {
         parameters: {
             query?: never;
@@ -1012,6 +1534,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CurrentUser"];
+                };
+            };
+        };
+    };
+    decideReservation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reservationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionOutcomeResponse"];
                 };
             };
         };
@@ -1058,6 +1606,53 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReservationPage"];
+                };
+            };
+        };
+    };
+    getOperationsReport: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportView"];
+                };
+            };
+        };
+    };
+    listOverdueLoans: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+                order?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OverduePage"];
                 };
             };
         };
@@ -1277,6 +1872,51 @@ export interface operations {
             };
         };
     };
+    getLoan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                loanId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LoanView"];
+                };
+            };
+        };
+    };
+    listCheckoutQueue: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CheckoutCandidate"][];
+                };
+            };
+        };
+    };
     searchEquipment: {
         parameters: {
             query?: {
@@ -1386,6 +2026,52 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    getApprovalReservation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reservationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetailResponse"];
+                };
+            };
+        };
+    };
+    listPendingApprovals: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PendingPageResponse"];
+                };
             };
         };
     };

@@ -64,6 +64,11 @@ class ReservationRepositoryTest {
     void state(String expected, org.junit.jupiter.api.function.Executable operation) {
         assertEquals(expected, assertThrows(SQLException.class, operation).getSQLState());
     }
+    void restrictedDelete(org.junit.jupiter.api.function.Executable operation) {
+        String code = assertThrows(SQLException.class, operation).getSQLState();
+        // PostgreSQL 18 reports RESTRICT deletes as 23001; PostgreSQL 17 uses 23503.
+        assertTrue(java.util.Set.of("23503", "23001").contains(code), "Expected referential deletion restriction, got " + code);
+    }
     boolean available() throws SQLException {
         return repository.findAvailable(equipment.toString(), start, end).stream().anyMatch(e -> e.equipmentId().equals(equipment));
     }
@@ -171,8 +176,8 @@ class ReservationRepositoryTest {
 
     @Test void referentialAndIdentityConstraintsProtectHistory() throws Exception {
         repository.book(user, equipment, start, end);
-        state("23503", () -> execute("DELETE FROM serms.app_user WHERE user_id=?", user));
-        state("23503", () -> execute("DELETE FROM serms.equipment WHERE equipment_id=?", equipment));
+        restrictedDelete(() -> execute("DELETE FROM serms.app_user WHERE user_id=?", user));
+        restrictedDelete(() -> execute("DELETE FROM serms.equipment WHERE equipment_id=?", equipment));
         state("23505", () -> execute(
             "INSERT INTO serms.equipment(equipment_id,asset_tag,name,category,location) VALUES (?,?,'Other','Camera','Lab')",
             UUID.randomUUID(), equipment.toString()));

@@ -1,0 +1,38 @@
+name: SERMS Design / Rule Decision
+description: Present concrete options for conflicts with existing rules and await a human decision.
+title: "[design] "
+body:
+  - type: textarea
+    id: conflict
+    attributes:
+      label: Problem and both rule sources
+      description: File / contract locations, current behavior, conflict impact, and independent work that can continue.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Options, tradeoffs, and explicit scope
+      description: Impact, files to change, exclusions, and compatibility strategy for each option.
+    validations:
+      required: true
+  - type: input
+    id: stakeholders
+    attributes:
+      label: Primary human owner and affected owners
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Acceptance, risks, and recovery
+      description: Verification after implementing the decision; dependencies, data or production impact, and recovery.
+    validations:
+      required: true
+  - type: textarea
+    id: decision
+    attributes:
+      label: Decision status and confirmation scope
+      description: Mark unconfirmed decisions pending; record scope/version of actual human decisions. Agent suggestions are not approval.
+    validations:
+      required: true

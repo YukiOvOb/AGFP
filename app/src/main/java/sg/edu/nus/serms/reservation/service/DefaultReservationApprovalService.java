@@ -62,7 +62,7 @@ public class DefaultReservationApprovalService implements ReservationApprovalSer
     var equipment = repository.lockEquipment(equipmentId).orElseThrow(ReservationNotFoundException::new);
     var current = repository.findByIdForUpdate(id).orElseThrow(ReservationNotFoundException::new);
     if (current.version() != expectedVersion) {
-      throw new ReservationVersionConflictException(id, current.version());
+      throw new ReservationVersionConflictException(id, current.status(), current.version());
     }
     if (current.status() != ReservationStatus.PENDING_APPROVAL) {
       throw new ReservationStateConflictException(
@@ -70,7 +70,9 @@ public class DefaultReservationApprovalService implements ReservationApprovalSer
     }
     if (target == ReservationStatus.CONFIRMED) {
       // The trigger only blocks confirming once the END has passed; the START is checked here.
-      if (!now.isBefore(current.startAt())) throw new ReservationExpiredException(id);
+      if (!now.isBefore(current.startAt())) {
+        throw new ReservationExpiredException(id, current.status(), current.version());
+      }
       boolean usable = "AVAILABLE".equals(equipment.status()) || "ON_LOAN".equals(equipment.status());
       if (!usable || repository.hasOpenMaintenance(equipmentId)) {
         throw new ReservationStateConflictException(
@@ -91,7 +93,9 @@ public class DefaultReservationApprovalService implements ReservationApprovalSer
       }
       throw e;
     }
-    if (!changed) throw new ReservationVersionConflictException(id, current.version());
+    if (!changed) {
+      throw new ReservationVersionConflictException(id, current.status(), current.version());
+    }
     return repository.findPendingView(id, now).orElseThrow(ReservationNotFoundException::new);
   }
 }

@@ -1,4 +1,4 @@
-name: Notification foundation tests
+name: Notification and default PostgreSQL tests
 on:
   pull_request:
   push:
@@ -8,19 +8,6 @@ permissions:
 jobs:
   java-tests:
     runs-on: ubuntu-latest
-    services:
-      mysql:
-        image: mysql:8.4
-        env:
-          MYSQL_DATABASE: serms_test
-          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -28,19 +15,16 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
-      - name: Fast local tests
-        run: mvn -B -f app/pom.xml verify
-      - name: MySQL transaction and concurrency tests
-        run: >-
-          mvn -B -f app/pom.xml verify
-          -Dspring.datasource.url='jdbc:mysql://127.0.0.1:3306/serms_test?connectionTimeZone=UTC'
-          -Dspring.datasource.username=root
-          -Dspring.datasource.password=
-          -Dspring.flyway.locations=classpath:db/migration,classpath:db/mysql
+      - name: Prepare PostgreSQL 18 image for Testcontainers
+        run: docker pull postgres:18-alpine
+        timeout-minutes: 10
+      - name: Regression and default PostgreSQL 18 application integration
+        run: mvn -B -f app/pom.xml -Puc03-postgres-it clean verify
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: notification-test-evidence
           path: |
             app/target/surefire-reports/
+            app/target/failsafe-reports/
             app/target/site/jacoco/

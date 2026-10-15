@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 public record Reservation(UUID reservationId, UUID requesterId, UUID equipmentId,
-                          Instant startAt, Instant endAt, Status status, String purpose, int version) {
+                          Instant startAt, Instant endAt, Status status, String purpose, long version) {
     public Reservation {
         Objects.requireNonNull(reservationId);
         Objects.requireNonNull(requesterId);

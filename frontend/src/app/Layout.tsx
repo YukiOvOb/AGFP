@@ -1,16 +1,21 @@
-import { Bell, Boxes, CalendarCheck, ChevronRight, LogOut, Search, Wrench } from 'lucide-react';
-import { hasAnyRole, workspaceRoles } from '@/features/maintenance/format';
-import { NavLink, Outlet } from 'react-router';
+import { Boxes, ChevronRight, LogOut } from 'lucide-react';
+import { Link, NavLink, Outlet } from 'react-router';
 import { useState } from 'react';
 import { useAuth } from './AuthProvider';
+import { visibleNavigation, type NavItem } from './navigation';
 import { useUnread } from '@/features/notification/queries';
 import { Button } from '@/components/ui/button';
 import { message } from '@/api/client';
+import { roleLabels } from '@/lib/roles';
 export function Layout() {
   const { user, logout } = useAuth();
   const unread = useUnread();
   const [error, setError] = useState('');
   const [leaving, setLeaving] = useState(false);
+  const items = visibleNavigation(user?.roles);
+  const workspace = items.filter((item) => item.group === 'workspace');
+  const manage = items.filter((item) => item.group === 'manage');
+  const unreadCount = unread.data?.count ?? 0;
   async function leave() {
     setLeaving(true);
     try {
@@ -21,45 +26,36 @@ export function Layout() {
       setLeaving(false);
     }
   }
+  const link = (item: NavItem) => (
+    <NavLink key={item.to} to={item.to} end={item.end}>
+      <item.icon size={19} />
+      {item.label}
+      {item.to === '/notifications' && unreadCount > 0 && (
+        <span className="nav-count" aria-label={`${unreadCount} unread notifications`}>
+          {unreadCount}
+        </span>
+      )}
+    </NavLink>
+  );
   return (
     <div className="shell">
       <aside className="sidebar">
-        <a className="brand" href="/">
+        <Link className="brand" to="/">
           <span className="brand-mark">
             <Boxes size={23} />
           </span>
           <span>
             SERMS<small>Equipment workspace</small>
           </span>
-        </a>
+        </Link>
         <span className="nav-label">WORKSPACE</span>
-        <nav aria-label="Main navigation">
-          <NavLink to="/equipment" end={false}>
-            <Search size={19} />
-            Find equipment
-          </NavLink>
-          {user?.roles?.includes('BORROWER') && (
-            <NavLink to="/reservations">
-              <CalendarCheck size={19} />
-              My reservations
-            </NavLink>
-          )}
-          {hasAnyRole(user?.roles, ...workspaceRoles) && (
-            <NavLink to="/maintenance">
-              <Wrench size={19} />
-              Maintenance
-            </NavLink>
-          )}
-          <NavLink to="/notifications">
-            <Bell size={19} />
-            Notifications
-            {unread.data && (unread.data.count ?? 0) > 0 && (
-              <span className="nav-count" aria-label={`${unread.data.count} unread notifications`}>
-                {unread.data.count}
-              </span>
-            )}
-          </NavLink>
-        </nav>
+        <nav aria-label="Main navigation">{workspace.map(link)}</nav>
+        {manage.length > 0 && (
+          <>
+            <span className="nav-label nav-label-next">MANAGE</span>
+            <nav aria-label="Management">{manage.map(link)}</nav>
+          </>
+        )}
         <div className="sidebar-note">
           <span className="status-dot" />
           Shared equipment.
@@ -69,7 +65,7 @@ export function Layout() {
           <div className="avatar">{user?.displayName?.slice(0, 1).toUpperCase()}</div>
           <div>
             <strong>{user?.displayName}</strong>
-            <small>{user?.roles?.join(' · ')}</small>
+            <small>{roleLabels(user?.roles).join(' · ')}</small>
           </div>
         </div>
       </aside>

@@ -1,0 +1,37 @@
+name: SERMS Bug
+description: Record a reproducible problem using actual environment and evidence.
+title: "[bug] "
+body:
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps, expected and actual results
+      description: Inputs, roles, operation order, errors, and user or data impact.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Versions, environment, and evidence
+      description: HEAD / base, OS, Java / Node / PostgreSQL, relevant logs or reports; remove credentials and personal data.
+    validations:
+      required: true
+  - type: input
+    id: ownership
+    attributes:
+      label: Affected use case / module and primary owner
+      description: Mark unknown ownership pending confirmation; do not automatically change existing assignments.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Contracts, dependencies, and repair constraints
+      description: Existing behavior to preserve, related tasks, and scope excluded from incidental changes.
+  - type: textarea
+    id: verification
+    attributes:
+      label: Regression verification and recovery plan
+      description: Behavior tests proving the repair and preventing recurrence; possible data / deployment recovery impact.
+    validations:
+      required: true

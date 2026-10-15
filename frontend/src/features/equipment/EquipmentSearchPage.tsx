@@ -66,6 +66,7 @@ export function EquipmentSearchPage() {
   const [params, setParams] = useSearchParams();
   const { user } = useAuth();
   const isBorrower = !!user?.roles?.includes('BORROWER');
+  const canReportFault = !!user?.roles?.some((role) => ['BORROWER', 'CUSTODIAN'].includes(role));
   const current: SearchForm = {
     q: params.get('q') ?? '',
     category: params.get('category') ?? '',
@@ -155,18 +156,29 @@ export function EquipmentSearchPage() {
           const canTry =
             isBorrower && e.status !== 'UNDER_MAINTENANCE' && e.availableInWindow !== false;
           return (
-            <Link
-              className={canTry ? 'button button-primary' : 'button button-outline'}
-              to={`/equipment/${e.equipmentId}/reserve${windowQuery}`}
-              aria-label={`${canTry ? 'Reserve' : 'View availability of'} ${e.name}`}
-            >
-              {canTry ? 'Reserve' : 'Availability'}
-            </Link>
+            <div className="actions">
+              <Link
+                className={canTry ? 'button button-primary' : 'button button-outline'}
+                to={`/equipment/${e.equipmentId}/reserve${windowQuery}`}
+                aria-label={`${canTry ? 'Reserve' : 'View availability of'} ${e.name}`}
+              >
+                {canTry ? 'Reserve' : 'Availability'}
+              </Link>
+              {canReportFault && (
+                <Link
+                  className="button button-outline"
+                  to={`/maintenance?equipmentId=${e.equipmentId}`}
+                  aria-label={`Report a fault for ${e.name}`}
+                >
+                  Report fault
+                </Link>
+              )}
+            </div>
           );
         },
       }),
     ],
-    [isBorrower, windowQuery],
+    [isBorrower, canReportFault, windowQuery],
   );
   const table = useReactTable({
     data: results.data?.content ?? [],

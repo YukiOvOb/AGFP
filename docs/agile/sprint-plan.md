@@ -1,105 +1,106 @@
-# Sprint 计划
+# Sprint Plan
 
-基本原则（团队分工说明）：每人负责一条业务功能并承担一项公共职责；**先统一规则，再分别开发，完成后互相检查，最后一起整合、测试和演示**。
+Core principle (team ownership description): each member owns one business feature and one shared responsibility; **agree rules first, develop separately, cross-check completed work, then integrate, test, and demonstrate together**.
 
-## 1. 节奏与仪式
+## 1. Cadence and Ceremonies
 
-| 活动 | 时间 | 主持 | 产出 |
+| Activity | Timing | Chair | Output |
 | --- | --- | --- | --- |
-| Sprint 计划会 | 每个 Sprint 第一天 | Member 1 | Sprint 目标；看板上的任务、负责人、完成标准 |
-| 周例会（站会） | 每周一次 | Member 1 | 每人说明：已完成、下一步、遇到的问题；Member 1 更新 [sprint-status.md](sprint-status.md) |
-| PR 评审 | 随时 | PR 作者指定 | 每个 PR 至少一名组员检查；CI 全绿才能合并 |
-| Sprint 评审 | 每个 Sprint 最后一天 | Member 1 | 演示本 Sprint 完成的功能；截图、测试报告存入 `docs/evidence/` |
-| 回顾 | 评审之后 | Member 1 | 做得好的 / 要改进的 / 下个 Sprint 的行动项，记录在 sprint-status.md |
+| Sprint planning | First day of each Sprint | Member 1 | Sprint goal, board tasks, owners, completion criteria |
+| Weekly meeting / stand-up | Weekly | Member 1 | Each member reports completed work, next steps, problems; Member 1 updates [sprint-status.md](sprint-status.md) |
+| PR review / team check | As needed | Designated by PR author | At least one member check before task Done; Write collaborators may self-merge after green CI, without a new mandatory GitHub approval gate |
+| Sprint Review | Last day of each Sprint | Member 1 | Demonstrate completed features; save screenshots/reports in `docs/evidence/` |
+| Retrospective | After review | Member 1 | What worked, improvements, next-Sprint actions in sprint-status.md |
 
-看板：GitHub Projects，列为 To Do → In Progress → Review → Testing → Done。每张卡片写明需求编号（见 [backlog.md](backlog.md)）、负责人和完成标准；PR 描述里引用卡片。
+GitHub Projects columns: To Do → In Progress → Review → Testing → Done. Each card records requirement ID ([backlog.md](backlog.md)), owner, and completion criteria; PR descriptions reference cards.
 
-## 2. 完成标准（Definition of Done）
+## 2. Definition of Done
 
-一个任务只有同时满足以下各项才能移到 Done：
+A task moves to Done only when all items are satisfied:
 
-1. 代码在 Feature Branch 上开发，通过 Pull Request 合并，至少一名组员检查过。
-2. CI 全绿：编译、全部前后端测试、service + domain 覆盖率 ≥ 70%、gitleaks、Trivy、依赖审查（以及落地后的 CodeQL、Spotless、ESLint）。
-3. 测试台随代码一起提交，覆盖用例的正常流程和所有主要异常流程（tech-stack §5）。
-4. 后端接口改动后重新生成前端 API 类型并一起提交（`pnpm check:api` 通过）。
-5. 模块之间的接口有合同（`docs/contracts/`），改合同经受影响的负责人确认。
-6. 设计图、截图、测试结果随开发保存，不留到最后补。
-7. 合并后自动部署成功，部署后检查通过。
+1. Developed on a Feature Branch and merged through a PR, with at least one member check before team Done; this is not a new mandatory GitHub merge approval.
+2. Green CI: compilation, all frontend/backend tests, service + domain coverage ≥ 70%, gitleaks, Trivy, Dependency Review (and CodeQL, Spotless, ESLint once implemented).
+3. Test bench submitted with code, covering normal and major exception flows (technology stack §5).
+4. Backend API changes include regenerated frontend types (`pnpm check:api` passes).
+5. Cross-module interfaces have contracts (`docs/contracts/`); affected owners confirm changes.
+6. Save diagrams, screenshots, and test results during development, not at the end.
+7. Successful automatic deployment after merging and passed post-deployment checks.
 
-## 3. 各 Sprint 目标与配合
+## 3. Sprint Goals and Coordination
 
-### Sprint 0 — 搭架子和定规则
+### Sprint 0 — Foundations and Rules
 
-**目标**：需求、技术栈、数据库、测试和流水线规则全部定下来，每人能说清自己用例的流程。
+**Goal**: agree requirements, stack, database, testing, and pipeline rules; each member can explain their use case.
 
-| 成员 | 任务 |
+| Member | Task |
 | --- | --- |
-| Member 1 | 整理需求和任务清单；说明搜索和预约怎样操作 |
-| Member 2 | 确定系统分层、前端页面结构和统一样式；说明预约审批流程 |
-| Member 3 | 设计数据库、主要业务对象和状态变化；说明领用与归还流程 |
-| Member 4 | 制定测试方法、安全规则和质量标准；说明故障与维修流程 |
-| Member 5 | 建立仓库、分支规则、自动构建和部署；说明逾期通知流程 |
+| Member 1 | Organize requirements/tasks; explain search/reservation |
+| Member 2 | Define layering, frontend structure, styling; explain approval |
+| Member 3 | Design database, business objects, states; explain checkout/return |
+| Member 4 | Define testing, security, quality; explain faults/maintenance |
+| Member 5 | Establish repository, branches, builds/deployment; explain overdue notifications |
 
-配合：全组先一起确认需求；每人画出自己用例的流程，Member 2 检查是否符合整体架构，Member 3 检查数据库是否支持所有功能。
+Coordination: agree requirements as a team; each member diagrams their flow, Member 2 checks architecture, Member 3 checks database support.
 
-### Sprint 1 — 完成预约主流程
+### Sprint 1 — Reservation Main Flow
 
-**目标**：借用人可以登录、搜索设备、提交预约，CI 能自动构建和测试。
+**Goal**: borrowers can log in, search, and reserve; CI builds and tests automatically.
 
-| 成员 | 任务 |
+| Member | Task |
 | --- | --- |
-| Member 1 | 设备搜索、查看可用时间、提交预约 |
-| Member 2 | 登录、权限控制、公共页面模板 |
-| Member 3 | 用户、设备、预约等数据库表及数据访问 |
-| Member 4 | 登录、搜索、权限、预约冲突测试 |
-| Member 5 | 提交后的自动构建、测试、安全检查、部署 |
+| Member 1 | Search equipment, view availability, submit reservations |
+| Member 2 | Authentication, authorization, shared page templates |
+| Member 3 | User/equipment/reservation tables and data access |
+| Member 4 | Login, search, authorization, reservation conflict tests |
+| Member 5 | Automatic builds, tests, security, deployment after submission |
 
-配合：Member 2 先提供统一页面模板，Member 3 提供数据库结构，Member 1 把预约流程连起来；Member 4 测试，Member 5 保证自动构建和部署。
+Coordination: Member 2 provides shared templates, Member 3 schema, Member 1 connects reservations, Member 4 tests, Member 5 ensures build/deployment.
 
-### Sprint 2 — 完成其他核心功能
+### Sprint 2 — Other Core Features
 
-**目标**：审批、领用归还、维修、逾期通知都能单独运行，并与预约连通。
+**Goal**: approval, checkout/return, maintenance, and overdue notifications run independently and connect to reservations.
 
-| 成员 | 任务 |
+| Member | Task |
 | --- | --- |
-| Member 1 | 完善预约规则，协助整合主要业务流程 |
-| Member 2 | 预约批准和拒绝 |
-| Member 3 | 设备领用和归还 |
-| Member 4 | 故障报告和维修处理 |
-| Member 5 | 逾期检查和应用内通知 |
+| Member 1 | Refine reservation rules; integrate main flows |
+| Member 2 | Approve/reject reservations |
+| Member 3 | Equipment checkout/return |
+| Member 4 | Fault reports/maintenance |
+| Member 5 | Overdue detection/in-app notifications |
 
-配合：使用相同的架构、数据库规则、前端模板和代码规范；每完成一个功能就提 PR，至少一名组员检查后合并；全部完成后全组测试完整业务流程（预约 → 审批 → 领用 → 归还 / 逾期 → 通知，损坏 → 维修）。
+Coordination: shared architecture, database rules, templates, and standards. Open PRs per feature; Write collaborators self-merge after green CI, retaining member-check evidence for team acceptance. Then test the full flow together (reservation → approval → checkout → return / overdue → notification; damage → maintenance).
 
-### Sprint 3 — 整合测试和优化
+### Sprint 3 — Integration Testing and Refinement
 
-**目标**：不加新功能；打通完整流程，收集截图和测试证据，练习演示。
+**Goal**: add no features; complete flows, gather screenshots/evidence, rehearse.
 
-| 成员 | 任务 |
+| Member | Task |
 | --- | --- |
-| 全员 | 修复自己功能的问题，补齐测试、图表和设计模式说明 |
-| Member 1 | 整理任务完成情况和演示流程 |
-| Member 2 | 统一检查所有页面的布局、样式和操作方式 |
-| Member 3 | 检查数据库关系、业务数据和状态变化 |
-| Member 4 | 完整功能测试、安全测试（ZAP）、压测（k6）、质量检查 |
-| Member 5 | 最终部署、发布版本、备用演示环境 |
+| Everyone | Fix their features; complete tests, diagrams, pattern explanations |
+| Member 1 | Organize completion status/demo |
+| Member 2 | Check all layouts, styles, interactions |
+| Member 3 | Check relationships, business data, states |
+| Member 4 | Full functionality/security (ZAP), load (k6), quality checks |
+| Member 5 | Final deployment, release, fallback demo environment |
 
-### Sprint 4 — 报告和提交
+### Sprint 4 — Report and Submission
 
-| 成员 | 任务 |
+| Member | Task |
 | --- | --- |
-| 每人 | 自己的 Use Case、设计图、代码、测试结果、个人贡献记录 |
-| Member 1 | 汇总任务、Sprint 和敏捷开发证据 |
-| Member 2 | 汇总系统架构、设计转换和 UI 证据 |
-| Member 3 | 汇总数据库、领域模型和状态设计 |
-| Member 4 | 汇总测试、安全和质量结果 |
-| Member 5 | 汇总 CI/CD、部署、发布和运行证据 |
+| Each member | Own use case, diagrams, code, tests, contribution record |
+| Member 1 | Consolidate tasks, Sprints, agile evidence |
+| Member 2 | Consolidate architecture, design transformations, UI evidence |
+| Member 3 | Consolidate database, domain model, state design |
+| Member 4 | Consolidate testing, security, quality |
+| Member 5 | Consolidate CI/CD, deployment, releases, operation |
 
-配合：每人先完成自己的部分，再全组交叉检查；最后统一术语、图片编号、数据和格式，确保报告与实际系统一致。
+Coordination: finish individual sections, then cross-check; unify terminology, figure numbering, data, and formatting so the report matches the system.
 
-## 4. 日常协作规则
+## 4. Daily Collaboration Rules
 
-- 每人主要负责自己的功能，但不能完全独立开发；公共架构、数据库、页面模板和接口提前商量好。
-- 每项任务都有明确负责人和完成标准。
-- 代码通过 Feature Branch 开发、Pull Request 合并；每个 PR 至少一名组员检查。
-- 每周说明已完成事项、下一步计划和遇到的问题。
-- 开发的同时保存设计图、测试结果、截图和部署记录。
+- Own your feature while coordinating architecture, database, templates, and interfaces in advance.
+- Every task has an explicit owner and completion criteria.
+- Develop on Feature Branches and merge PRs; green CI permits Write collaborators to self-merge, while team Done requires at least one member check.
+- See [Decision D-001](../collaboration/decisions.md#d-001-merge-permissions-and-member-checks) for merge/acceptance clarification; other DoD conditions remain.
+- Report completed work, next plans, and problems weekly.
+- Save diagrams, results, screenshots, and deployment records during development.

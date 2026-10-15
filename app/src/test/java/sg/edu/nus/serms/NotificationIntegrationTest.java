@@ -11,7 +11,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -24,7 +24,8 @@ import sg.edu.nus.serms.notification.domain.*;
 import sg.edu.nus.serms.notification.repository.*;
 import sg.edu.nus.serms.notification.service.*;
 
-@SpringBootTest
+// Export the complete API contract for the frontend even while real approval adapters are pending.
+@SpringBootTest(properties = "serms.approval.enabled=true")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class NotificationIntegrationTest {
@@ -38,6 +39,8 @@ class NotificationIntegrationTest {
   @Autowired JdbcTemplate jdbc;
   @MockitoBean Clock clock;
   @MockitoBean LoanReminderGuard guard;
+  @MockitoBean sg.edu.nus.serms.approval.service.ReservationApprovalPort approvalReservations;
+  @MockitoBean sg.edu.nus.serms.approval.service.ApprovalDecisionPort approvalDecisions;
   static final String ALICE = "00000000-0000-0000-0000-000000000001";
   static final String BOB = "00000000-0000-0000-0000-000000000002";
 
@@ -332,6 +335,11 @@ class NotificationIntegrationTest {
         mvc.perform(get("/api/v1/openapi.json"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.paths['/api/v1/notifications']").exists())
+            .andExpect(jsonPath("$.paths['/api/v1/approvals/pending']").exists())
+            .andExpect(jsonPath("$.components.schemas.DecisionRequest.properties.expectedVersion.type")
+                .value("integer"))
+            .andExpect(jsonPath("$.components.schemas.DecisionRequest.properties.expectedVersion.format")
+                .value("int64"))
             .andExpect(jsonPath("$.paths['/api/v1/auth/csrf'].get.parameters").doesNotExist())
             .andReturn()
             .getResponse()
