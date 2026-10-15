@@ -37,9 +37,12 @@ Owner: Member 1. API details: [Equipment search/reservation contract](contracts/
 | A9 | Disabled account | 403 | `#disabledAccountsCannotReserve` |
 | A10 | No BORROWER / act for another | Service `@PreAuthorize`, 403 | `ReservationServiceSecurityTest` |
 | A11 | Approval required | `PENDING_APPROVAL`, UC02 | `#equipmentThatNeedsApprovalStartsPending`; all `ApprovalContract` tests |
+| A12 | Borrower holds an overdue `ACTIVE` loan (rule 11, #22) | 422 `overdue-loan`, reported with the other violations; allowed again after the return | `ReservationPolicyTest#borrowerWithOverdueEquipmentIsRefused`, `#theOverdueRuleCanBeSwitchedOff`; `ReservationServiceTest#borrowerWithAnOverdueLoanIsRefusedWithoutWriting`; `ReservationPostgresTest#borrowerWithAnOverdueLoanCannotReserveUntilItIsReturned` |
+| A13 | Longer than the item's own `max_borrow_duration` (V005, #44) | 422 `too-long` naming the item limit; the page states the limit and refuses before calling the server | `ReservationPolicyTest#anItemsOwnMaximumReplacesTheGlobalMaximum`; `ReservationPostgresTest#anItemsMaximumBorrowingDurationIsEnforced`; `reservation.test.tsx` › applies an item's own maximum and states it before submitting |
 | C1 | Cancel pending/confirmed | `CANCELLED`, release slot, event | `Cancel#cancellingReleasesTheSlot`, `#pendingReservationCanBeCancelled`; `reservation.test.tsx` › cancels after confirmation |
 | C2 | Cancel checked-out | 409, return rather than cancel; no Cancel button | `Cancel#checkedOutReservationCannotBeCancelled` |
 | C3 | Cancel another user's | 404, no existence disclosure | `Cancel#anotherBorrowersReservationLooksMissing` |
+| AU1 | Submit or cancel succeeds (Proposal 5.7, rule 9) | One `serms.audit_log` row (`RESERVATION_SUBMIT` / `RESERVATION_CANCEL`) in the same transaction, borrower as actor; a refused booking writes none | `ReservationPostgresTest#submitAndCancelAreAuditedWithTheBorrowerAsActor`, `#aRefusedBookingLeavesNoAuditRecord` |
 
 ## 2. Activity Diagram
 
@@ -89,11 +92,12 @@ sequenceDiagram
   W->>C: POST /api/v1/reservations + X-XSRF-TOKEN
   C->>S: submit(userId from Session, request)
   Note over S: @PreAuthorize BORROWER and userId == authenticated identity
-  S->>R: lockEquipment (FOR UPDATE)
+  S->>R: lockEquipment (FOR UPDATE: status, approval, max_borrow_duration)
   R->>D: SELECT … FROM equipment FOR UPDATE
   S->>R: lockRequesterAccountStatus (FOR UPDATE)
   S->>R: countOpen(requester, now)
-  S->>P: evaluate(context)
+  S->>R: hasOverdueLoan(requester, now)
+  S->>P: evaluate(context): 5 policies
   P-->>S: Violations
   alt Violations
     S-->>C: RulesBroken → 422 + violations
@@ -106,6 +110,7 @@ sequenceDiagram
       D-->>S: exclusion violation
       S-->>C: SlotTaken → 409
     else Success
+      S->>R: audit(RESERVATION_SUBMIT, actor = borrower)
       S->>E: publish ReservationSubmitted (same transaction)
       S-->>C: Reservation
       C-->>W: 201 Created + ReservationView
@@ -151,9 +156,9 @@ JdbcTemplate is used because queries depend on PostgreSQL ranges, exclusions, an
 
 | Pattern | Location | Purpose |
 | --- | --- | --- |
-| Strategy | `ReservationPolicy` + 4 implementations, composed by `ReservationRules` | Independent rules; no service changes to add/remove policies |
+| Strategy | `ReservationPolicy` + 5 implementations (`StartInFuturePolicy`, `DurationPolicy`, `BookingHorizonPolicy`, `OpenReservationQuotaPolicy`, `OverdueLoanPolicy`), composed by `ReservationRules` | Independent rules; adding the overdue rule (#22) and the per-item limit (#44) needed no service-flow change |
 | State | `ReservationStatus.isOpen / isCancellable` + triggers | Central transitions, database enforcement |
-| Observer | `ReservationSubmitted`, `ReservationCancelled` | Notification/audit subscribers without module coupling |
+| Observer | `ReservationSubmitted`, `ReservationCancelled` → `notification.service.ReservationNotificationListener` (UC05) | Notifications without module coupling. Audit rows are written by `ReservationRepository.audit` in the booking transaction, like loans, approvals and maintenance (design note in [#22](devlog/issue-22-uc01-rules-audit.md)) |
 | Adapter | `ReservationApprovalAdapter` | Connect UC02 port to public reservation service |
 
 ### 5.3 Consistency and Concurrency
@@ -166,10 +171,11 @@ JdbcTemplate is used because queries depend on PostgreSQL ranges, exclusions, an
 
 | Layer | Files | Count |
 | --- | --- | --- |
-| Backend unit | `reservation/domain/ReservationPolicyTest`, `equipment/domain/EquipmentSearchCriteriaTest`, `reservation/service/ReservationServiceTest` | 23 |
-| Backend integration (PostgreSQL 18, Testcontainers, V001 + V002) | `reservation/ReservationPostgresTest` | 29 |
+| Backend unit | `reservation/domain/ReservationPolicyTest`, `equipment/domain/EquipmentSearchCriteriaTest`, `reservation/service/ReservationServiceTest` | 29 |
+| Backend integration (PostgreSQL 18, Testcontainers, V001–V006) | `reservation/ReservationPostgresTest` | 34 |
 | Backend authorization/API | `reservation/service/ReservationServiceSecurityTest`, `reservation/api/ReservationApiTest` | 17 |
-| Frontend components (Vitest + MSW) | `features/equipment/search.test.tsx`, `features/reservation/reservation.test.tsx` | 15 |
+| UC02 port adapter | `reservation/service/ReservationApprovalAdapterTest` | 6 |
+| Frontend components (Vitest + MSW) | `features/equipment/search.test.tsx`, `features/reservation/reservation.test.tsx` | 22 |
 | E2E (Playwright desktop/mobile) | `e2e/reservation.spec.ts` | 1 flow × 2 viewports |
 
 ```sh
@@ -180,10 +186,13 @@ pnpm lint && pnpm typecheck && pnpm test && pnpm build
 pnpm test:e2e
 ```
 
-Latest local result (2026-10-05): all 125 backend tests, UC01 service + domain line coverage 96.2%; all 20 component tests and 4 Playwright cases (2 flows × 2 viewports) passed. Screenshots: [`docs/evidence/uc01/`](evidence/uc01/).
+Latest UC01 run (2026-10-15, main `0345a50`, Linux, Java 21, Node 22, PostgreSQL 18 Testcontainers): `./mvnw test -Dtest='Reservation*Test,Equipment*Test'` ran the 86 UC01 backend tests above (plus 7 tests of other modules matched by the pattern) with 0 failures, errors or skips; `vitest run src/features/equipment src/features/reservation` passed 22 of 22. The Playwright flow was not run locally (the machine's browser build did not match the pinned Playwright); it runs in the hosted `frontend` check. Earlier result (2026-10-05): 125 backend tests, UC01 service + domain line coverage 96.2%. Screenshots: [`docs/evidence/uc01/`](evidence/uc01/).
 
 ## 7. Known Limitations and Dependencies
 
-- Runtime: `app/` still uses notification H2/MySQL; UC01 **runs against real PostgreSQL only in tests** until migrations enter app. Member 3 owns integration (technology stack §7).
-- Authentication: `UserAccountRepository` queries `public.app_user` / `notification_principal`; V002 uses `serms` without that column. Unify during integration ([Sprint risks](agile/sprint-status.md)).
-- Based on `feature/wang-yuanmeng-platform-rest-react` (REST/login/React); after it and Draft PR #8 merge, this PR contains UC01 only.
+The three 2026-10-05 limitations are resolved on `main`: Flyway migrations V001–V006 live in `app/src/main/resources/db/migration` and run against PostgreSQL 18; the identity schema is configurable (`serms.identity.schema`) and the `notification_principal` column exists in the `serms` model; the platform and UC02 branches are merged, so the UC01 code stands alone.
+
+- Automatic cancellation of expired pending reservations (R1.11) is out of scope for this delivery ([D-009](collaboration/decisions.md#d-009-scope-freeze)). Expired requests show an "Expired" badge to approvers and can only be rejected ([UC02 contract](contracts/auth-and-approval.md)).
+- Item limits (`max_borrow_duration`) are set in the demo data until the equipment management page (#17) edits them.
+- The overdue rule is checked with a shifted clock in tests; in the running demo a loan only becomes overdue as real time passes ([#22](devlog/issue-22-uc01-rules-audit.md)).
+- Member acceptance in a real browser across roles is tracked on the team's Issue #9 and #24; agent-run checks are not member acceptance.

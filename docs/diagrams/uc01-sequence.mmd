@@ -14,11 +14,12 @@ sequenceDiagram
   W->>C: POST /api/v1/reservations + X-XSRF-TOKEN
   C->>S: submit(userId from Session, request)
   Note over S: @PreAuthorize BORROWER and userId == authenticated identity
-  S->>R: lockEquipment (FOR UPDATE)
+  S->>R: lockEquipment (FOR UPDATE: status, approval, max_borrow_duration)
   R->>D: SELECT … FROM equipment FOR UPDATE
   S->>R: lockRequesterAccountStatus (FOR UPDATE)
   S->>R: countOpen(requester, now)
-  S->>P: evaluate(context)
+  S->>R: hasOverdueLoan(requester, now)
+  S->>P: evaluate(context): 5 policies
   P-->>S: Violations
   alt Violations
     S-->>C: RulesBroken → 422 + violations
@@ -31,6 +32,7 @@ sequenceDiagram
       D-->>S: exclusion violation
       S-->>C: SlotTaken → 409
     else Success
+      S->>R: audit(RESERVATION_SUBMIT, actor = borrower)
       S->>E: publish ReservationSubmitted (same transaction)
       S-->>C: Reservation
       C-->>W: 201 Created + ReservationView
