@@ -28,8 +28,14 @@ function Seed([string]$database, [string]$name, [int]$expected) {
   if ($exitCode -ne $expected) { throw "Unexpected seed exit code ($exitCode) for $name; inspect $log" }
   return Get-Content -LiteralPath $log -Raw
 }
-$snapshot = "SELECT json_build_object('users',(SELECT count(*) FROM serms.app_user),'equipment',(SELECT count(*) FROM serms.equipment),'reservations',(SELECT count(*) FROM serms.reservation),'loans',(SELECT count(*) FROM serms.loan),'cases',(SELECT count(*) FROM serms.maintenance_case),'passwordFingerprint',(SELECT md5(string_agg(password_hash,',' ORDER BY user_id)) FROM serms.app_user))::text"
+$snapshot = "SELECT json_build_object('users',(SELECT count(*) FROM serms.app_user),'roles',(SELECT json_agg(json_build_object('email',u.email,'role',r.code) ORDER BY u.email) FROM serms.app_user u JOIN serms.user_role ur USING(user_id) JOIN serms.role r USING(role_id)),'equipment',(SELECT json_agg(to_jsonb(e) ORDER BY e.equipment_id) FROM serms.equipment e),'categories',(SELECT json_agg(to_jsonb(c) ORDER BY c.name) FROM serms.equipment_category c),'reservations',(SELECT count(*) FROM serms.reservation),'loans',(SELECT count(*) FROM serms.loan),'cases',(SELECT count(*) FROM serms.maintenance_case),'passwordFingerprint',(SELECT md5(string_agg(password_hash,',' ORDER BY user_id)) FROM serms.app_user))::text"
 try {
+  $roles = Query "SELECT string_agg(u.email || ':' || r.code, ',' ORDER BY u.email) FROM serms.app_user u JOIN serms.user_role ur USING(user_id) JOIN serms.role r USING(role_id)"
+  $expectedRoles = 'admin@example.test:ADMIN,approver@example.test:APPROVER,borrower2@example.test:BORROWER,borrower@example.test:BORROWER,custodian@example.test:CUSTODIAN,maintainer@example.test:MAINTAINER'
+  if ($roles -ne $expectedRoles) { throw 'Demo account roles differ from the Identity contract' }
+  $equipment = Query "SELECT count(*) || ':' || count(DISTINCT serial_number) || ':' || count(*) FILTER (WHERE status='RETIRED' AND condition='POOR') FROM serms.equipment"
+  if ($equipment -ne '8:8:1') { throw 'Demo equipment differs from the V005 master-data contract' }
+  Write-Output 'PASS six Identity accounts, assigned roles and eight V005 equipment records'
   $before = Query $snapshot
   Seed 'serms_local_demo' 'repeat-seed' 0 | Out-Null
   if ((Query $snapshot) -ne $before) { throw 'Repeated seeding changed data or passwords' }
@@ -45,7 +51,7 @@ try {
   $inserted = $false
   if ((Query $snapshot) -ne $before) { throw 'Guard verification changed existing demo records' }
   Write-Output 'PASS unrelated-data provisioning rejected with existing data preserved'
-  [ordered]@{status='passed'; checks=3; checkedAt=[DateTime]::UtcNow.ToString('o'); scenarios=@('idempotent seed/password preservation','wrong database rejected','unrelated data rejected/transaction preservation')} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtime 'data-check-summary.json') -Encoding utf8
+  [ordered]@{status='passed'; checks=4; checkedAt=[DateTime]::UtcNow.ToString('o'); scenarios=@('Identity roles and V005 equipment records','idempotent seed including versions and nullable fields','wrong database rejected','unrelated data rejected/transaction preservation')} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtime 'data-check-summary.json') -Encoding utf8
 } finally {
   if ($inserted) { Query "DELETE FROM serms.app_user WHERE user_id='$marker' AND account_status='DISABLED' AND display_name='Disabled isolation-test marker'" | Out-Null }
   $env:PGPASSWORD = $previousPassword

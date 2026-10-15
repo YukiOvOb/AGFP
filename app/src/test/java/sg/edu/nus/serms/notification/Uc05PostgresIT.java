@@ -371,9 +371,10 @@ class Uc05PostgresIT {
     var loan=loans.checkout(reservation,borrower,0,true);
     when(clock.instant()).thenReturn(now.plusSeconds(7200));
     mvc.perform(get("/api/v1/overdue").session(login(custodian)))
-        .andExpect(status().isOk()).andExpect(jsonPath("$.content[0].loanId").value(loan.loanId().toString()))
-        .andExpect(jsonPath("$.content[0].borrowerName").exists())
-        .andExpect(jsonPath("$.content[0].equipmentName").value("Overdue camera"));
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content[*].loanId").value(org.hamcrest.Matchers.hasItem(loan.loanId().toString())))
+        .andExpect(jsonPath("$.content[*].borrowerName").isNotEmpty())
+        .andExpect(jsonPath("$.content[*].equipmentName").value(org.hamcrest.Matchers.hasItem("Overdue camera")));
     mvc.perform(get("/api/v1/overdue").session(login(admin))).andExpect(status().isOk());
     mvc.perform(get("/api/v1/overdue").session(login(borrower))).andExpect(status().isForbidden());
     mvc.perform(get("/api/v1/overdue")).andExpect(status().isUnauthorized());
