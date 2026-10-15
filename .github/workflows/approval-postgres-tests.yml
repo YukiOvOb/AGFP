@@ -1,0 +1,34 @@
+name: Approval PostgreSQL acceptance
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  approval-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Verify regression and UC02 with isolated PostgreSQL 18 databases
+        shell: pwsh
+        run: ./scripts/test-uc02.ps1 -IncludeLoanIntegration
+      - name: Prove zero coverage fails the unchanged 70 percent business gate
+        shell: pwsh
+        run: ./scripts/check-coverage-gate.ps1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: approval-postgres-evidence
+          path: |
+            app/target/surefire-reports/
+            app/target/failsafe-reports/
+            app/target/site/jacoco/
+            app/target/site/jacoco-business/
+            .cache/coverage-gate/negative.log

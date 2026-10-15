@@ -1,7 +1,9 @@
 package sg.edu.nus.serms.approval.repository;
 
 import java.util.*;
+import org.postgresql.util.PSQLException;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.*;
@@ -24,8 +26,20 @@ public class JdbcApprovalDecisionRepository implements ApprovalDecisionPort {
         """,actorId);
     if (active.isEmpty()) throw new org.springframework.security.access.AccessDeniedException("Active approver required");
     UUID id=UUID.randomUUID();
-    jdbc.update("INSERT INTO serms.approval_decision(approval_id,reservation_id,approver_id,decision,comment) VALUES (?,?,?,?,?)",
-        id,reservationId,actorId,decision.name(),comment);
+    try {
+      jdbc.update("INSERT INTO serms.approval_decision(approval_id,reservation_id,approver_id,decision,comment) VALUES (?,?,?,?,?)",
+          id,reservationId,actorId,decision.name(),comment);
+    } catch (DuplicateKeyException error) {
+      // Do not turn unrelated integrity failures into a business conflict or query an aborted TX.
+      for (Throwable cause = error.getCause(); cause != null; cause = cause.getCause()) {
+        if (cause instanceof PSQLException postgres && "23505".equals(postgres.getSQLState())
+            && postgres.getServerErrorMessage() != null
+            && "approval_decision_reservation_id_key".equals(postgres.getServerErrorMessage().getConstraint())) {
+          throw new ApprovalDecisionAlreadyRecordedException(reservationId, error);
+        }
+      }
+      throw error;
+    }
     var result=findByReservationId(reservationId).orElseThrow();
     jdbc.update("""
         INSERT INTO serms.audit_log(audit_id,actor_id,action,entity_type,entity_id,outcome,request_id,change_summary,occurred_at)

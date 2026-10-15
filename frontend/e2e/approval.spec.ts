@@ -95,6 +95,11 @@ async function workspace(page: Page, context: BrowserContext, conflict = false) 
   await page.getByLabel('Email address').fill(user.email);
   await page.getByLabel('Password').fill('test-password');
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  // Navigate explicitly: login may land on Overview rather than preserving the guarded URL.
+  await page
+    .getByRole('navigation', { name: 'Main navigation' })
+    .getByRole('link', { name: 'Approvals', exact: true })
+    .click();
   await expect(page.getByText('Sony Camera')).toBeVisible();
   return writes;
 }
