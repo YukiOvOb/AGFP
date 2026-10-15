@@ -32,7 +32,7 @@ public class LoanService {
   private final MaintenanceService maintenance;
   private final ApplicationEventPublisher events;
   private static final String VIEW = """
-      SELECT l.*, r.equipment_id, r.requester_id, e.name AS equipment_name,
+      SELECT l.*, r.equipment_id, r.requester_id, e.name AS equipment_name, e.asset_tag,
              u.display_name AS borrower_name
       FROM serms.loan l JOIN serms.reservation r USING(reservation_id)
       JOIN serms.equipment e USING(equipment_id)
@@ -132,17 +132,25 @@ public class LoanService {
 
   @Transactional(readOnly = true)
   @PreAuthorize("hasAnyRole('BORROWER','CUSTODIAN')")
-  public List<LoanView> list(boolean activeOnly, int page, int size) {
+  public List<LoanView> list(boolean activeOnly, int page, int size, String q) {
     if (page < 0 || page > 100000 || size < 1 || size > 100) throw new IllegalArgumentException("Invalid page");
     UUID actor = requireReader();
     boolean custodian = activeRole(actor, "CUSTODIAN");
     String where = " WHERE (?=false OR l.status='ACTIVE')";
     if (!custodian) where += " AND r.requester_id=?";
+    if (searchPattern(q) != null) where += " AND (r.reservation_id::text ILIKE ? ESCAPE '\\' OR u.display_name ILIKE ? ESCAPE '\\' OR u.email ILIKE ? ESCAPE '\\' OR e.asset_tag ILIKE ? ESCAPE '\\')";
     String sql = VIEW + where + " ORDER BY l.checked_out_at DESC,l.loan_id LIMIT ? OFFSET ?";
     Instant now = now();
-    return jdbc.query(sql, (r, n) -> map(r, now), custodian
-        ? new Object[]{activeOnly, size, page * size}
-        : new Object[]{activeOnly, actor, size, page * size});
+    var args = new java.util.ArrayList<Object>();
+    args.add(activeOnly);
+    if (!custodian) args.add(actor);
+    if (searchPattern(q) != null) for (int i = 0; i < 4; i++) args.add(searchPattern(q));
+    args.add(size); args.add(page * size);
+    return jdbc.query(sql, (r, n) -> map(r, now), args.toArray());
+  }
+
+  public List<LoanView> list(boolean activeOnly, int page, int size) {
+    return list(activeOnly, page, size, null);
   }
 
   private LoanView load(UUID id, Instant now) {
@@ -152,20 +160,39 @@ public class LoanService {
 
   @Transactional(readOnly = true)
   @PreAuthorize("hasRole('CUSTODIAN')")
-  public List<CheckoutCandidate> checkoutQueue(int page, int size) {
+  public List<CheckoutCandidate> checkoutQueue(int page, int size, String q) {
     if (page < 0 || page > 100000 || size < 1 || size > 100) throw new IllegalArgumentException("Invalid page");
     UUID actor = requireReader();
     if (!activeRole(actor, "CUSTODIAN")) throw new AccessDeniedException("Active custodian required");
-    return jdbc.query("""
-        SELECT r.*,e.name,u.display_name FROM serms.reservation r
+    String sql = """
+        SELECT r.*,e.name,e.asset_tag,u.display_name FROM serms.reservation r
         JOIN serms.equipment e USING(equipment_id)
         JOIN serms.app_user u ON u.user_id=r.requester_id
         WHERE r.status='CONFIRMED' AND r.end_at>?
-        ORDER BY r.start_at,r.reservation_id LIMIT ? OFFSET ?
-        """, (r,n) -> new CheckoutCandidate(r.getObject("reservation_id",UUID.class),
-        r.getObject("equipment_id",UUID.class),r.getString("name"),r.getObject("requester_id",UUID.class),
+        """;
+    var args = new java.util.ArrayList<Object>();
+    args.add(Timestamp.from(now()));
+    if (searchPattern(q) != null) {
+      sql += " AND (r.reservation_id::text ILIKE ? ESCAPE '\\' OR u.display_name ILIKE ? ESCAPE '\\' OR u.email ILIKE ? ESCAPE '\\' OR e.asset_tag ILIKE ? ESCAPE '\\')";
+      for (int i = 0; i < 4; i++) args.add(searchPattern(q));
+    }
+    sql += " ORDER BY r.start_at,r.reservation_id LIMIT ? OFFSET ?";
+    args.add(size); args.add(page * size);
+    return jdbc.query(sql, (r,n) -> new CheckoutCandidate(r.getObject("reservation_id",UUID.class),
+        r.getObject("equipment_id",UUID.class),r.getString("name"),r.getString("asset_tag"),r.getObject("requester_id",UUID.class),
         r.getString("display_name"),r.getTimestamp("start_at").toInstant(),r.getTimestamp("end_at").toInstant(),
-        r.getLong("version")),Timestamp.from(now()),size,page*size);
+        r.getLong("version")),args.toArray());
+  }
+
+  public List<CheckoutCandidate> checkoutQueue(int page, int size) {
+    return checkoutQueue(page, size, null);
+  }
+
+  private static String searchPattern(String q) {
+    if (q == null || q.isBlank()) return null;
+    String trimmed = q.strip();
+    if (trimmed.length() > 100) throw new IllegalArgumentException("Search must have at most 100 characters");
+    return "%" + trimmed.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
   }
 
   @Transactional(readOnly = true)
@@ -182,7 +209,7 @@ public class LoanService {
     var returned = r.getTimestamp("returned_at");
     Instant due = r.getTimestamp("due_at").toInstant();
     return new LoanView(r.getObject("loan_id",UUID.class), r.getObject("reservation_id",UUID.class),
-        r.getObject("equipment_id",UUID.class), r.getString("equipment_name"),
+        r.getObject("equipment_id",UUID.class), r.getString("equipment_name"), r.getString("asset_tag"),
         r.getObject("requester_id",UUID.class), r.getString("borrower_name"),
         r.getObject("checkout_by",UUID.class), r.getObject("return_by",UUID.class),
         r.getTimestamp("checked_out_at").toInstant(), due, returned == null ? null : returned.toInstant(),

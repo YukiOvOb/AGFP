@@ -28,8 +28,9 @@ public class LoanController {
   @GetMapping
   @Operation(operationId="listLoans")
   public List<LoanView> list(@RequestParam(defaultValue="true") boolean activeOnly,
-      @RequestParam(defaultValue="0") int page, @RequestParam(defaultValue="20") int size) {
-    return service.list(activeOnly,page,size);
+      @RequestParam(defaultValue="0") int page, @RequestParam(defaultValue="20") int size,
+      @RequestParam(required=false) String q) {
+    return service.list(activeOnly,page,size,q);
   }
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
@@ -41,8 +42,8 @@ public class LoanController {
   @GetMapping("/checkouts")
   @Operation(operationId="listCheckoutQueue")
   public List<CheckoutCandidate> checkoutQueue(@RequestParam(defaultValue="0") int page,
-      @RequestParam(defaultValue="20") int size) {
-    return service.checkoutQueue(page,size);
+      @RequestParam(defaultValue="20") int size, @RequestParam(required=false) String q) {
+    return service.checkoutQueue(page,size,q);
   }
   @PostMapping("/{loanId}/return")
   @Operation(operationId="receiveLoanReturn")

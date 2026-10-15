@@ -20,8 +20,10 @@ export function LoanPage() {
   const [page, setPage] = useState(0);
   const [queuePage, setQueuePage] = useState(0);
   const [activeOnly, setActiveOnly] = useState(true);
-  const loans = useLoans(activeOnly, page);
-  const checkouts = useCheckouts(custodian, queuePage);
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
+  const loans = useLoans(activeOnly, page, custodian ? search : '');
+  const checkouts = useCheckouts(custodian, queuePage, search);
   const client = useQueryClient();
   const [checkout, setCheckout] = useState<Checkout>();
   const [returning, setReturning] = useState<Loan>();
@@ -72,14 +74,31 @@ export function LoanPage() {
       )}
       {success && <p role="status">{success}</p>}
       {custodian && (
+        <form onSubmit={(event) => {
+          event.preventDefault();
+          setSearch(searchInput.trim());
+          setPage(0);
+          setQueuePage(0);
+        }}>
+          <label htmlFor="loan-search">Find reservation, borrower or equipment code</label>
+          <input id="loan-search" value={searchInput} maxLength={100}
+            onChange={(event) => setSearchInput(event.target.value)} />
+          <Button type="submit">Search</Button>
+          {search && <Button type="button" variant="ghost" onClick={() => {
+            setSearchInput(''); setSearch(''); setPage(0); setQueuePage(0);
+          }}>Clear search</Button>}
+        </form>
+      )}
+      {custodian && (
         <section aria-label="Checkout queue">
           <h2>Confirmed reservations</h2>
           {checkouts.isPending && <p>Loading reservations…</p>}
           {checkouts.error && <p role="alert">{message(checkouts.error)}</p>}
-          {checkouts.data?.length === 0 && <p>No confirmed reservations awaiting checkout.</p>}
+          {checkouts.data?.length === 0 && <p>{search ? 'No reservations match your search.' : 'No confirmed reservations awaiting checkout.'}</p>}
           {checkouts.data?.map((item) => (
             <article key={item.reservationId}>
-              <strong>{item.equipmentName}</strong>
+              <strong>{item.equipmentName} ({item.assetTag})</strong>
+              <p>Reservation {item.reservationId}</p>
               <p>
                 {item.borrowerName} · {item.borrowerId}
               </p>
@@ -187,10 +206,11 @@ export function LoanPage() {
         </label>
         {loans.isPending && <p>Loading loans…</p>}
         {loans.error && <p role="alert">{message(loans.error)}</p>}
-        {loans.data?.length === 0 && <p>No loans found.</p>}
+        {loans.data?.length === 0 && <p>{search ? 'No loans match your search.' : 'No loans found.'}</p>}
         {loans.data?.map((item) => (
           <article key={item.loanId}>
-            <strong>{item.equipmentName}</strong>
+            <strong>{item.equipmentName} ({item.assetTag})</strong>
+            <p>Reservation {item.reservationId}</p>
             <p>
               {item.borrowerName} · {item.status}
               {item.overdue ? ' · Overdue / late return' : ''}

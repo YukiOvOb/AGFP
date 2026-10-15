@@ -22,24 +22,24 @@ export async function receiveReturn(item: Loan, condition: string, note: string)
     body: { expectedVersion: item.version, condition, note: note.trim() || undefined },
   });
 }
-export function useLoans(activeOnly: boolean, page: number) {
+export function useLoans(activeOnly: boolean, page: number, q = '') {
   return useQuery({
-    queryKey: ['loans', activeOnly, page],
+    queryKey: ['loans', activeOnly, page, q],
     queryFn: async () => {
       const { data } = await api.GET('/api/v1/loans', {
-        params: { query: { activeOnly, page, size: 20 } },
+        params: { query: { activeOnly, page, size: 20, q: q || undefined } },
       });
       return data! as Loan[];
     },
   });
 }
-export function useCheckouts(enabled: boolean, page: number) {
+export function useCheckouts(enabled: boolean, page: number, q = '') {
   return useQuery({
-    queryKey: ['checkouts', page],
+    queryKey: ['checkouts', page, q],
     enabled,
     queryFn: async () => {
       const { data } = await api.GET('/api/v1/loans/checkouts', {
-        params: { query: { page, size: 20 } },
+        params: { query: { page, size: 20, q: q || undefined } },
       });
       return data! as Checkout[];
     },

@@ -12,6 +12,7 @@ const item = {
   reservationId: 'reservation-1',
   equipmentId: 'equipment-1',
   equipmentName: 'UC03 camera',
+  assetTag: 'CAM-001',
   borrowerId: 'borrower-1',
   borrowerName: 'Borrower',
   startAt: '2020-01-01T00:00:00Z',
@@ -63,7 +64,7 @@ describe('UC03 handover', () => {
   it('allows an explicitly assigned borrower role alongside ADMIN', async () => {
     mount(['ADMIN', 'BORROWER']);
     expect(await screen.findByRole('heading', { name: 'My loans' })).toBeInTheDocument();
-    expect(await screen.findByText('UC03 camera')).toBeInTheDocument();
+    expect(await screen.findByText('UC03 camera (CAM-001)')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Receive return' })).not.toBeInTheDocument();
   });
   it('requires physical identity confirmation and sends server version', async () => {
@@ -87,6 +88,31 @@ describe('UC03 handover', () => {
       expectedVersion: 4,
       identityConfirmed: true,
     });
+  });
+  it('searches checkout candidates and active loans and shows the equipment code', async () => {
+    const queries: string[] = [];
+    mount();
+    server.use(
+      http.get('/api/v1/loans/checkouts', ({ request }) => {
+        const q = new URL(request.url).searchParams.get('q');
+        if (q) queries.push(q);
+        return HttpResponse.json(q ? [] : [item]);
+      }),
+      http.get('/api/v1/loans', ({ request }) => {
+        const q = new URL(request.url).searchParams.get('q');
+        if (q) queries.push(q);
+        return HttpResponse.json(q ? [] : [loan]);
+      }),
+    );
+    expect(await screen.findAllByText(/CAM-001/)).toHaveLength(2);
+    const user = userEvent.setup();
+    await user.type(screen.getByRole('textbox', { name: 'Find reservation, borrower or equipment code' }), ' CAM-001 ');
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+    expect(await screen.findByText('No reservations match your search.')).toBeInTheDocument();
+    expect(await screen.findByText('No loans match your search.')).toBeInTheDocument();
+    expect(queries).toContain('CAM-001');
+    await user.click(screen.getByRole('button', { name: 'Clear search' }));
+    expect(await screen.findAllByText(/CAM-001/)).toHaveLength(2);
   });
   it('requires damage details and preserves late-return notice', async () => {
     let submitted: unknown;
@@ -127,7 +153,7 @@ describe('UC03 handover', () => {
   it('borrowers have a read-only own-loan view', async () => {
     mount(['BORROWER']);
     await screen.findByRole('heading', { name: 'My loans' });
-    await screen.findByText('UC03 camera');
+    await screen.findByText('UC03 camera (CAM-001)');
     expect(screen.queryByRole('button', { name: 'Receive return' })).not.toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Confirmed reservations' }),

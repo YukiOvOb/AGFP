@@ -4,13 +4,15 @@ Owner: Zhou Fanhao. Implementation: `app/.../loan` and `frontend/src/features/lo
 
 | Method and path | Purpose | Role |
 | --- | --- | --- |
-| GET `/api/v1/loans/checkouts?page=0&size=20` | Unended CONFIRMED reservations, ordered by start | CUSTODIAN |
+| GET `/api/v1/loans/checkouts?page=0&size=20&q=...` | Unended CONFIRMED reservations, ordered by start | CUSTODIAN |
 | POST `/api/v1/loans` | Actual checkout; 201 and Location | CUSTODIAN |
 | POST `/api/v1/loans/{loanId}/return` | Receive physical return; 200 | CUSTODIAN |
-| GET `/api/v1/loans?activeOnly=true&page=0&size=20` | All records for custodians, own records for borrowers; latest checkout first | CUSTODIAN / BORROWER |
+| GET `/api/v1/loans?activeOnly=true&page=0&size=20&q=...` | All records for custodians, own records for borrowers; latest checkout first | CUSTODIAN / BORROWER |
 | GET `/api/v1/loans/{loanId}` | Details; another user's record returns 404 to ordinary borrowers | CUSTODIAN / BORROWER |
 
 Pagination returns arrays; `size` 1–100, `page` 0–100000. No total count; stop after a short page. Queues include future reservations and do not establish checkout eligibility; the service revalidates under locks.
+
+The optional `q` filters both lists by reservation ID, borrower display name or email, or equipment asset tag. Matching is case-insensitive and partial; `%`, `_` and backslash are literal characters. Leading and trailing whitespace is ignored; a blank value leaves the list unfiltered. The maximum non-blank query length is 100 characters. Borrowers remain limited to their own loans, and only custodians may read the checkout queue. The asset tag is included in every `CheckoutCandidate` and `LoanView` so the storekeeper can identify the physical equipment.
 
 Checkout request:
 
