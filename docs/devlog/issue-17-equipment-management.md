@@ -22,6 +22,7 @@ The API uses the existing V005 equipment columns and category table, with no mig
 | One MockMvc test returned 400 rather than the expected 403. | The forbidden POST sent an invalid body, so request validation ran before method authorization. | Send a valid body to test the authorization boundary. | All six `EquipmentManagementPostgresIT` cases passed. |
 | Navigation tests expected management to remain unavailable. | The feature enables its route and menu item. | Update the reserved-page and ADMIN menu assertions. | Full frontend suite passed 140 tests. |
 | The complete UC03/UC05 run failed in an overdue assertion. | The shared integration database had more than one overdue loan, so the test's first-row assumption was false. | Match the loan in the response without assuming its position. | Complete UC03/UC05 rerun passed 30 integration cases. |
+| The first hosted frontend check failed its route inventory. | The independent role-access matrix still classified `/manage/equipment` as future work. | Add the implemented page, menu position, management reads and denied registration write to the explicit matrix. | `node --test scripts/role-access.test.mjs`: eight passed; latest-HEAD CI must rerun. |
 
 ### Verification
 

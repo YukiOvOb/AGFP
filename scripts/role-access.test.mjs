@@ -27,6 +27,13 @@ test('overdue is implemented for operators only, not a future or implicitly inhe
   assert.deepEqual(reads.find(p => p.id === 'overdue projection').roles, ['CUSTODIAN', 'ADMIN']);
   assert.ok(!unavailablePages.some(p => p.route === '/overdue'));
 });
+
+test('equipment management is implemented for custodians and admins only', () => {
+  assert.deepEqual(pages.find(p => p.route === '/manage/equipment').roles, ['CUSTODIAN', 'ADMIN']);
+  assert.deepEqual(reads.find(p => p.id === 'managed equipment').roles, ['CUSTODIAN', 'ADMIN']);
+  assert.deepEqual(reads.find(p => p.id === 'equipment categories').roles, ['CUSTODIAN', 'ADMIN']);
+  assert.ok(!unavailablePages.some(p => p.route === '/manage/equipment'));
+});
 test('all dynamic API/page paths resolve with explicit real-fixture inputs', () => {
   const fixture = { equipmentId: 'equipment', reservationId: 'reservation', loanId: 'loan', caseId: 'case' };
   for (const spec of [...pages, ...reads]) assert.ok(!resolveRoute(spec.route, fixture, 'from=a&to=b').includes(':'));
@@ -34,8 +41,8 @@ test('all dynamic API/page paths resolve with explicit real-fixture inputs', () 
 });
 test('denied-write matrix includes every existing business mutation family', () => {
   const specs = deniedWrites({ equipmentId: 'e', reservationId: 'r', borrowerId: 'b', loanId: 'l', caseId: 'c', reservationVersion: 1, loanVersion: 1 });
-  assert.equal(specs.length, 13);
-  assert.equal(new Set(specs.map(s => s.route)).size, 13);
+  assert.equal(specs.length, 14);
+  assert.equal(new Set(specs.map(s => s.route)).size, 14);
   for (const spec of specs) assert.ok(Object.values(accounts).some(role => !spec.roles.includes(role)));
   assert.equal(specs.find(s => s.id === 'approval decision').body.decision, 'REJECTED');
 });
