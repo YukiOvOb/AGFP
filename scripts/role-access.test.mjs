@@ -34,12 +34,16 @@ test('all dynamic API/page paths resolve with explicit real-fixture inputs', () 
 });
 test('denied-write matrix includes every existing business mutation family', () => {
   const specs = deniedWrites({ equipmentId: 'e', reservationId: 'r', borrowerId: 'b', loanId: 'l', caseId: 'c', reservationVersion: 1, loanVersion: 1 });
-  assert.equal(specs.length, 13);
-  assert.equal(new Set(specs.map(s => s.route)).size, 13);
+  assert.equal(specs.length, 14);
+  assert.equal(new Set(specs.map(s => s.route)).size, 14);
   for (const spec of specs) assert.ok(Object.values(accounts).some(role => !spec.roles.includes(role)));
   assert.equal(specs.find(s => s.id === 'approval decision').body.decision, 'REJECTED');
 });
-test('unimplemented pages stay explicit dependencies, including Hanming’s own admin work', () => {
-  assert.deepEqual(unavailablePages.filter(p => p.issue === 18).map(p => p.owner), ['Zhang Hanming', 'Zhang Hanming']);
+test('admin pages and APIs are explicit ADMIN-only entries; unimplemented dependencies stay visible', () => {
+  for (const route of ['/admin/users', '/admin/audit']) {
+    assert.deepEqual(pages.find(p => p.route === route).roles, ['ADMIN']);
+    assert.deepEqual(reads.find(p => p.route === '/api/v1' + route).roles, ['ADMIN']);
+  }
+  assert.ok(!unavailablePages.some(p => p.issue === 18));
   for (const pending of unavailablePages) assert.ok(!pages.some(p => p.route === pending.route));
 });

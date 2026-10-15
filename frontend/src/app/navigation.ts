@@ -128,11 +128,11 @@ export const navigation: NavItem[] = [
   {
     to: '/admin/users',
     label: 'Users and roles',
-    description: 'Create accounts, activate or deactivate them, assign roles.',
+    description: 'Create accounts with initial roles and search existing users.',
     icon: UserCog,
     roles: ['ADMIN'],
     group: 'manage',
-    available: false,
+    available: true,
   },
   // Reserved for Issue #18.
   {
@@ -142,7 +142,7 @@ export const navigation: NavItem[] = [
     icon: ScrollText,
     roles: ['ADMIN'],
     group: 'manage',
-    available: false,
+    available: true,
   },
 ];
 /** Entries the signed-in account should see, in menu order. */

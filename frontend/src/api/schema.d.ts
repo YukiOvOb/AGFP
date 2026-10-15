@@ -257,6 +257,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["adminListUsers"];
+        put?: never;
+        post: operations["adminCreateUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reservations/{id}": {
         parameters: {
             query?: never;
@@ -631,6 +647,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["adminListAudit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -833,6 +865,21 @@ export interface components {
             assetTag?: string;
             name?: string;
             category?: string;
+        };
+        CreateUserRequest: {
+            /** Format: email */
+            email: string;
+            displayName: string;
+            initialPassword: string;
+            roles: ("BORROWER" | "APPROVER" | "CUSTODIAN" | "MAINTAINER" | "ADMIN")[];
+        };
+        AdminUser: {
+            /** Format: uuid */
+            userId: string;
+            email: string;
+            displayName: string;
+            accountStatus: string;
+            roles: ("BORROWER" | "APPROVER" | "CUSTODIAN" | "MAINTAINER" | "ADMIN")[];
         };
         ReservationPage: {
             content: components["schemas"]["ReservationView"][];
@@ -1144,6 +1191,39 @@ export interface components {
             totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+        };
+        AdminUserPage: {
+            content: components["schemas"]["AdminUser"][];
+            /** Format: int64 */
+            totalElements: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            size: number;
+        };
+        AuditEntry: {
+            /** Format: uuid */
+            auditId: string;
+            /** Format: uuid */
+            actorId?: string;
+            actorName?: string;
+            action: string;
+            entityType: string;
+            /** Format: uuid */
+            entityId: string;
+            outcome: string;
+            changeSummary?: string;
+            /** Format: date-time */
+            occurredAt: string;
+        };
+        AuditEntryPage: {
+            content: components["schemas"]["AuditEntry"][];
+            /** Format: int64 */
+            totalElements: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            size: number;
         };
     };
     responses: never;
@@ -1560,6 +1640,54 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DecisionOutcomeResponse"];
+                };
+            };
+        };
+    };
+    adminListUsers: {
+        parameters: {
+            query?: {
+                search?: string;
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUserPage"];
+                };
+            };
+        };
+    };
+    adminCreateUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateUserRequest"];
+            };
+        };
+        responses: {
+            /** @description Account created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUser"];
                 };
             };
         };
@@ -2071,6 +2199,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PendingPageResponse"];
+                };
+            };
+        };
+    };
+    adminListAudit: {
+        parameters: {
+            query?: {
+                actorId?: string;
+                action?: string;
+                entityType?: string;
+                from?: string;
+                to?: string;
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditEntryPage"];
                 };
             };
         };

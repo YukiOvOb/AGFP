@@ -16,6 +16,8 @@ import { MaintenanceCasePage } from '@/features/maintenance/MaintenanceCasePage'
 import { MaintenanceReportPage } from '@/features/maintenance/MaintenanceReportPage';
 import { ApprovalListPage } from '@/features/approval/ApprovalListPage';
 import { ApprovalDetailPage } from '@/features/approval/ApprovalDetailPage';
+import { UsersPage } from '@/features/admin/UsersPage';
+import { AuditPage } from '@/features/admin/AuditPage';
 // Component gallery for developers; the import is dropped from production builds.
 const Gallery = import.meta.env.DEV ? lazy(() => import('@/components/ui/Gallery')) : null;
 // The chart library loads only for administrators who open the reports.
@@ -47,6 +49,8 @@ export function App() {
           <Route path="/maintenance/cases/:caseId" element={<MaintenanceCasePage />} />
           <Route path="/maintenance/report" element={<MaintenanceReportPage />} />
           <Route element={<RequireRole role="ADMIN" />}>
+            <Route path="/admin/users" element={<UsersPage />} />
+            <Route path="/admin/audit" element={<AuditPage />} />
             <Route
               path="/reports"
               element={

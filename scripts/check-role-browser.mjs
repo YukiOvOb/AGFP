@@ -13,7 +13,7 @@ const require = createRequire(path.join(repo, 'frontend/package.json'));
 const { chromium, expect } = require('@playwright/test');
 const evidence = path.join(runtime, 'role-browser-' + Date.now());
 fs.mkdirSync(evidence, { recursive: true });
-const publicDir = path.join(repo, 'docs/evidence/role-access-uc05-sync-20261015');
+const publicDir = path.join(repo, 'docs/evidence/role-access-admin-foundation-20261015');
 const publish = process.argv.includes('--publishable-evidence');
 if (publish) fs.mkdirSync(publicDir, { recursive: true });
 const inputs = ['scripts/check-role-browser.mjs', 'scripts/lib/role-access.mjs',
@@ -23,7 +23,11 @@ const inputs = ['scripts/check-role-browser.mjs', 'scripts/lib/role-access.mjs',
   'frontend/src/styles/shared.css',
   'frontend/src/features/overdue/OverduePage.tsx',
   'app/src/main/java/sg/edu/nus/serms/notification/api/OverdueController.java',
-  'app/src/main/java/sg/edu/nus/serms/notification/service/OverdueLoanService.java'];
+  'app/src/main/java/sg/edu/nus/serms/notification/service/OverdueLoanService.java',
+  'frontend/src/features/admin/UsersPage.tsx', 'frontend/src/features/admin/AuditPage.tsx',
+  'app/src/main/java/sg/edu/nus/serms/identity/service/AdminUserService.java',
+  'app/src/main/java/sg/edu/nus/serms/identity/service/AdminAccess.java',
+  'app/src/main/java/sg/edu/nus/serms/audit/service/AuditQueryService.java'];
 const summary = {
   status: 'running', mocked: false, startedAt: new Date().toISOString(), checks: [],
   pages: [], apiReads: [], deniedWrites: [], ownership: [], overdueChecks: [],
