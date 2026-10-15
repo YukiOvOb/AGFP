@@ -22,8 +22,8 @@ try {
  await page.getByLabel('Email address').fill('borrower@example.test');
  await page.getByLabel('Password',{exact:true}).fill(access.demoPassword);
  await page.getByRole('button',{name:'Sign in',exact:true}).click();
- await page.waitForURL('**/notifications');
- await page.getByRole('link',{name:'Find equipment'}).click();
+ await page.getByRole('heading',{level:1,name:/^Welcome/}).waitFor();
+ await page.getByRole('link',{name:'Find equipment',exact:true}).click();
  await page.waitForURL('**/equipment');
  await page.getByText('Sony mirrorless camera',{exact:true}).waitFor();
  await page.screenshot({path:path.join(evidence,'01-equipment-desktop.png'),fullPage:true});

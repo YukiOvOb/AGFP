@@ -50,7 +50,8 @@ describe('session and inbox', () => {
     await user.type(screen.getByLabelText('Email address'), 'wang@example.com');
     await user.type(screen.getByLabelText('Password'), 'test-password');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
-    expect(await screen.findByText('You’re all caught up')).toBeInTheDocument();
+    // Without a page to return to, signing in lands on the overview.
+    expect(await screen.findByRole('heading', { level: 1, name: /Welcome/ })).toBeInTheDocument();
     expect(submitted).toBe(true);
     expect(localStorage.length).toBe(0);
   });

@@ -38,10 +38,10 @@ class ReservationServiceTest {
         new ReservationService(
             repository,
             ReservationConfiguration.rulesFor(
-                new ReservationLimits(Duration.ofMinutes(30), Duration.ofDays(7), Duration.ofDays(90), 3)),
+                new ReservationLimits(Duration.ofMinutes(30), Duration.ofDays(7), Duration.ofDays(90), 3, true)),
             events,
             Clock.fixed(NOW, ZoneOffset.UTC));
-    when(repository.lockEquipment(item)).thenReturn(Optional.of(new LockedEquipment(item, "AVAILABLE", false)));
+    when(repository.lockEquipment(item)).thenReturn(Optional.of(new LockedEquipment(item, "AVAILABLE", false, null)));
     when(repository.lockRequesterAccountStatus(me)).thenReturn(Optional.of("ACTIVE"));
     when(repository.equipmentCanBeReserved(eq(item), any())).thenReturn(true);
   }
@@ -95,11 +95,42 @@ class ReservationServiceTest {
 
   @Test
   void publishesTheSubmittedEventWithTheStoredStatus() {
-    when(repository.lockEquipment(item)).thenReturn(Optional.of(new LockedEquipment(item, "AVAILABLE", true)));
+    when(repository.lockEquipment(item)).thenReturn(Optional.of(new LockedEquipment(item, "AVAILABLE", true, null)));
     when(repository.findById(any())).thenAnswer(a -> Optional.of(stored(a.getArgument(0), ReservationStatus.PENDING_APPROVAL, false)));
     var r = service.submit(me, request());
     verify(repository).insert(eq(r.reservationId()), eq(me), eq(item), any(), any(), eq(ReservationStatus.PENDING_APPROVAL), isNull());
     verify(events).publishEvent(argThat((Object e) -> e instanceof ReservationSubmitted s && s.status() == ReservationStatus.PENDING_APPROVAL));
+  }
+
+  @Test
+  void borrowerWithAnOverdueLoanIsRefusedWithoutWriting() {
+    when(repository.hasOverdueLoan(me, NOW)).thenReturn(true);
+    assertThatThrownBy(() -> service.submit(me, request()))
+        .isInstanceOfSatisfying(
+            ReservationException.RulesBroken.class,
+            e -> assertThat(e.violations()).extracting(v -> v.code()).containsExactly("overdue-loan"));
+    verify(repository, never()).insert(any(), any(), any(), any(), any(), any(), any());
+    verify(repository, never()).audit(any(), any(), any(), any(), any());
+    verifyNoInteractions(events);
+  }
+
+  @Test
+  void submitRecordsWhoBookedWhatAndWhen() {
+    when(repository.findById(any())).thenAnswer(a -> Optional.of(stored(a.getArgument(0), ReservationStatus.CONFIRMED, false)));
+    var r = service.submit(me, request());
+    verify(repository).audit(eq(me), eq("RESERVATION_SUBMIT"), eq(r.reservationId()),
+        argThat(s -> s.contains("status=CONFIRMED") && s.contains(item.toString())), eq(NOW));
+  }
+
+  @Test
+  void cancelRecordsThePreviousStatus() {
+    UUID id = UUID.randomUUID();
+    when(repository.findByIdForUpdate(id)).thenReturn(Optional.of(stored(id, ReservationStatus.PENDING_APPROVAL, false)));
+    when(repository.changeStatus(id, ReservationStatus.PENDING_APPROVAL, ReservationStatus.CANCELLED, 0L)).thenReturn(true);
+    when(repository.findById(id)).thenReturn(Optional.of(stored(id, ReservationStatus.CANCELLED, false)));
+    service.cancel(me, id);
+    verify(repository).audit(eq(me), eq("RESERVATION_CANCEL"), eq(id),
+        argThat(s -> s.startsWith("from=PENDING_APPROVAL")), eq(NOW));
   }
 
   @Test
@@ -108,6 +139,7 @@ class ReservationServiceTest {
     when(repository.findByIdForUpdate(id)).thenReturn(Optional.of(stored(id, ReservationStatus.CONFIRMED, false)));
     when(repository.changeStatus(id, ReservationStatus.CONFIRMED, ReservationStatus.CANCELLED, 0L)).thenReturn(false);
     assertThatThrownBy(() -> service.cancel(me, id)).isInstanceOf(ReservationException.StaleVersion.class);
+    verify(repository, never()).audit(any(), any(), any(), any(), any());
   }
 
   @Test

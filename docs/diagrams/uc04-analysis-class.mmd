@@ -1,0 +1,94 @@
+classDiagram
+  class MaintenanceWorkspace {
+    <<boundary>>
+    reportFault()
+    showOpenQueue()
+    selectTechnician()
+  }
+  class MaintenanceCasePage {
+    <<boundary>>
+    showAssignedCase()
+    recordWork()
+    showHistory()
+  }
+  class MaintenanceReportPage {
+    <<boundary>>
+    selectPeriod()
+    showStatistics()
+  }
+  class MaintenanceControl {
+    <<control>>
+    validateReporterAndEquipment()
+    reportFault()
+    assignTechnician()
+    startMaintenance()
+    recordWork()
+    completeMaintenance()
+    recomputeEquipment()
+  }
+  class MaintenanceReportControl {
+    <<control>>
+    aggregateStatusCounts()
+    aggregatePeriodStatistics()
+  }
+  class User {
+    <<entity>>
+    userId
+    displayName
+    accountStatus
+  }
+  class Role {
+    <<entity>>
+    code
+  }
+  class Equipment {
+    <<entity>>
+    equipmentId
+    status
+  }
+  class Reservation {
+    <<entity>>
+    reservationId
+    equipmentId
+  }
+  class Loan {
+    <<entity>>
+    loanId
+    reservationId
+    status
+  }
+  class MaintenanceCase {
+    <<entity>>
+    maintenanceCaseId
+    faultDescription
+    status
+    reportedAt
+    resolutionNote
+    resolvedAt
+  }
+  class AuditRecord {
+    <<entity>>
+    action
+    actorId
+    occurredAt
+    detail
+  }
+  MaintenanceWorkspace --> MaintenanceControl
+  MaintenanceCasePage --> MaintenanceControl
+  MaintenanceReportPage --> MaintenanceReportControl
+  MaintenanceControl --> User : verify actor and technician
+  MaintenanceControl --> Equipment : block and recompute
+  MaintenanceControl --> Loan : validate optional link
+  MaintenanceControl --> MaintenanceCase : lifecycle
+  MaintenanceControl --> AuditRecord : append history
+  MaintenanceReportControl --> MaintenanceCase : read statistics
+  User "0..*" -- "0..*" Role
+  Equipment "1" -- "0..*" Reservation
+  Reservation "1" -- "0..1" Loan
+  Equipment "1" -- "0..*" MaintenanceCase
+  Loan "0..1" -- "0..*" MaintenanceCase : linked return or fault
+  User "1" -- "0..*" MaintenanceCase : reporter
+  User "0..1" -- "0..*" MaintenanceCase : assigned technician
+  MaintenanceCase "1" -- "1..*" AuditRecord : successful activity
+  User "1" -- "0..*" AuditRecord : acting user
+  %% Fault report data belongs to MaintenanceCase on main; no separate FaultReport table.

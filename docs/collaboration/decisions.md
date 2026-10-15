@@ -148,8 +148,37 @@ Status: the presentation date **2026-10-26** was stated by the user on 2026-10-1
 
 Cloud deployment stays the last engineering step, as in [D-005](#d-005-local-closeout-and-cloud-last).
 
+The intermediate dates in this table were replaced on 2026-10-14 by [D-012](#d-012-24-hour-completion-rule). The presentation date and the Thu 2026-10-22 latest deployment and code freeze still apply.
+
 ## D-011 Development Log
 
 Status: **Requested by the user on 2026-10-14 (Asia/Singapore)**: record the development process and the problems met in detail, as documents, to support the later project report.
 
 Decision: every completion task adds or updates its entry under [docs/devlog](../devlog/README.md) in the same PR; cross-cutting events (reviews, re-planning, integration, incidents, deployment) get dated entries. The template, naming and rules are in that README. The log records facts and does not replace this decision record, the contracts or the evidence folder.
+
+## D-012 24-Hour Completion Rule
+
+Status: **Confirmed by the user (repository owner Liu Tongyao) in conversation on 2026-10-14 at 23:34 (Asia/Singapore)**, after a progress review of main `bd6709d`. Replaces the intermediate dates of [D-010](#d-010-delivery-schedule).
+
+Context: #17, #18, #20 and #24 had no branch, PR or Issue comment since they were assigned on 2026-10-14 at 00:34 SGT, and their assignees' latest commits in the repository date from 2026-10-07. The owner considered taking these tasks over and decided against it; the owners in [D-007](#d-007-completion-task-ownership) stay as they are.
+
+Decision:
+
+- Every task is completed within 24 hours of its assignment.
+- For tasks already assigned when the rule was adopted, the 24 hours count from 2026-10-14 23:34 SGT, so unblocked work is due **Thu 2026-10-15 23:00 SGT**.
+- Work that depends on another task is due 24 hours after that task merges (for example the #21 and #22 remainders after #17, the #24 final pass after #17, #18 and #19, deployment after #18's first-admin bootstrap and the server access).
+- Each Issue states its deadline in its body; [the plan Issue](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/issues/27) holds the full list. Each owner was notified by an agent-labelled comment on the Issue.
+
+Unchanged: the presentation on Mon 2026-10-26, deployment and code freeze on Thu 2026-10-22 at the latest, report and rehearsal days from Fri 2026-10-23 to Sun 2026-10-25, cloud deployment last ([D-005](#d-005-local-closeout-and-cloud-last)), and task ownership ([D-007](#d-007-completion-task-ownership)).
+
+Limits: a deadline does not change contracts, merge permissions, checks, test benches or the Definition of Done, and a missed deadline does not move a task to someone else automatically; re-splits are recorded on the plan Issue as D-007 describes. The owner set this rule; other members' acceptance is shown by their own activity on the Issues and is not assumed here.
+
+## UC05 Projection Contract Confirmation (2026-10-15)
+
+Status: **Directly authorized by repository owner Liu Tongyao in conversation on 2026-10-15 (Asia/Singapore)**. The owner instructed Codex to complete Wang Yuanmeng's PR #12/#39 closeout and send the necessary comments on the owner's behalf, then explicitly transferred the pending UC05 overdue-projection contract-confirmation task from Zhou Fanhao to Liu Tongyao for delegated completion.
+
+Source: [checkout-and-return contract](../contracts/checkout-and-return.md#uc05-overdue-projection) was a proposal awaiting the UC03 owner's confirmation. The owner's current instruction reassigns this specific confirmation task; it is not a takeover of UC03 implementation or other Issues. Wang Yuanmeng retains UC05 and DevSecOps ownership.
+
+Confirmed scope: UC05 owns GET /api/v1/overdue; ACTIVE CUSTODIAN/ADMIN operators may read its global Loan/Reservation/User/Equipment projection, while other roles cannot. Membership is ACTIVE with persisted due_at strictly before the server Instant, excluding returned loans and equality. Rows contain loanId, reservationId, borrowerName, equipmentName, dueAt (UTC Instant) and overdueSeconds (whole seconds). Defaults are page 0, size 20 and duration order desc; page is 0-100000, size 1-100, asc reverses duration order, and loanId is the stable ascending tie-breaker. The response is content/totalElements/page/size; the UI displays Singapore time. Existing UC03 endpoints, Loan states, migrations, events and write/reminder lock semantics remain as contracted.
+
+Codex performs and records the technical contract review under this delegation, and comments identify that agency. No Zhou Fanhao sign-off, personally executed human test, new mandatory approval gate, deployment or team Done is implied. Local checks, CI, delegated owner acceptance and member/deployment evidence remain separate.

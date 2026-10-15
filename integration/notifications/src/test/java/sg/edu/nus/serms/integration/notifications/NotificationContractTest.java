@@ -261,7 +261,7 @@ class NotificationContractTest {
             .defaultSchema("public").table("serms_flyway_history").baselineVersion("2")
             .locations("classpath:db/migration").load();
         flyway.baseline(); flyway.migrate(); flyway.validate();
-        assertEquals(4,upgrade.queryForObject("SELECT max(version) FROM serms.schema_version",Integer.class));
+        assertEquals(6,upgrade.queryForObject("SELECT max(version) FROM serms.schema_version",Integer.class));
         assertEquals(3,upgrade.queryForObject("SELECT count(*) FROM serms.notification_legacy_v2",Integer.class));
         assertEquals(3,upgrade.queryForObject("SELECT count(*) FROM serms.notification_request",Integer.class));
         assertEquals("DELIVERED",upgrade.queryForObject("""

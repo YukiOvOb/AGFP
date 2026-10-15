@@ -25,7 +25,7 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<Form>({ resolver: zodResolver(schema) });
   if (auth.loading) return <LoadingState />;
-  if (auth.user) return <Navigate to="/notifications" replace />;
+  if (auth.user) return <Navigate to="/" replace />;
   async function submit(values: Form) {
     setFailure('');
     try {
@@ -37,7 +37,7 @@ export function LoginPage() {
           !from.startsWith('//') &&
           !from.startsWith('/login')
           ? from
-          : '/notifications',
+          : '/',
         { replace: true },
       );
     } catch (e) {

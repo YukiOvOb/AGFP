@@ -2,10 +2,11 @@ import { Link, useParams } from 'react-router';
 import { useAuth } from '@/app/AuthProvider';
 import { ErrorState, LoadingState } from '@/components/Feedback';
 import { message } from '@/api/client';
-import { hasAnyRole, singaporeDate, statusLabel, uuid } from './format';
+import { enumLabel, hasAnyRole, personLabel, singaporeDate, statusLabel, uuid } from './format';
 import { useCase, useHistory } from './queries';
 import { MaintenanceHistory } from './MaintenanceHistory';
 import { MaintenanceActions } from './MaintenanceActions';
+import { EquipmentName } from './EquipmentName';
 function CaseDetail({ id }: { id: string }) {
   const { user } = useAuth();
   const query = useCase(id);
@@ -31,12 +32,20 @@ function CaseDetail({ id }: { id: string }) {
         <dl className="maintenance-meta">
           <dt>Case ID</dt>
           <dd>{item.maintenanceCaseId}</dd>
-          <dt>Equipment ID</dt>
-          <dd>{item.equipmentId}</dd>
+          <dt>Equipment</dt>
+          <dd>
+            <EquipmentName item={item} linked={hasAnyRole(user?.roles, 'CUSTODIAN', 'ADMIN')} />
+          </dd>
+          <dt>Fault category</dt>
+          <dd>{enumLabel(item.faultCategory)}</dd>
+          <dt>Priority</dt>
+          <dd>{enumLabel(item.priority)}</dd>
           <dt>Reporter</dt>
-          <dd>{item.reportedBy}</dd>
+          <dd>{personLabel(item.reportedByName, item.reportedBy)}</dd>
           <dt>Assigned technician</dt>
-          <dd>{item.assignedTo ?? 'Not assigned'}</dd>
+          <dd>
+            {item.assignedTo ? personLabel(item.assignedToName, item.assignedTo) : 'Not assigned'}
+          </dd>
           <dt>Reported time</dt>
           <dd>{singaporeDate(item.reportedAt)}</dd>
           {item.loanId && (

@@ -291,6 +291,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reservations, utilisation, overdue and maintenance figures for one period */
+        get: operations["getOperationsReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/overdue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listOverdueLoans"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/notifications": {
         parameters: {
             query?: never;
@@ -638,21 +671,43 @@ export interface components {
             /** Format: uuid */
             loanId?: string | null;
             faultDescription: string;
+            /**
+             * @description Defaults to OTHER
+             * @enum {string|null}
+             */
+            faultCategory?: "MECHANICAL" | "ELECTRICAL" | "SOFTWARE" | "PHYSICAL_DAMAGE" | "MISSING_PART" | "OTHER" | null;
+            /**
+             * @description Defaults to MEDIUM
+             * @enum {string|null}
+             */
+            priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT" | null;
         };
         MaintenanceCaseResponse: {
             /** Format: uuid */
             maintenanceCaseId: string;
             /** Format: uuid */
             equipmentId: string;
+            /** @description Null only when the equipment record cannot be read */
+            equipmentName: string | null;
+            /** @description Null only when the equipment record cannot be read */
+            equipmentAssetTag: string | null;
             /** Format: uuid */
             reportedBy: string;
+            /** @description Reporter display name; null only when the user cannot be read */
+            reportedByName: string | null;
             /** Format: uuid */
             assignedTo: string | null;
+            /** @description Technician display name; null when unassigned */
+            assignedToName: string | null;
             /** Format: uuid */
             loanId: string | null;
             /** @enum {string} */
             status: "OPEN" | "ASSIGNED" | "IN_PROGRESS" | "RESOLVED" | "UNREPAIRABLE";
             faultDescription: string;
+            /** @enum {string} */
+            faultCategory: "MECHANICAL" | "ELECTRICAL" | "SOFTWARE" | "PHYSICAL_DAMAGE" | "MISSING_PART" | "OTHER";
+            /** @enum {string} */
+            priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
             resolutionNote: string | null;
             /** Format: date-time */
             reportedAt: string;
@@ -790,6 +845,138 @@ export interface components {
             /** Format: int32 */
             totalPages: number;
         };
+        CategoryOverdueView: {
+            category: string;
+            /** Format: int64 */
+            loansDue: number;
+            /** Format: int64 */
+            returnedLate: number;
+            /** Format: int64 */
+            stillOverdue: number;
+        };
+        CategoryReservationsView: {
+            category: string;
+            /** Format: int64 */
+            total: number;
+            /** Format: int64 */
+            pendingApproval: number;
+            /** Format: int64 */
+            confirmed: number;
+            /** Format: int64 */
+            fulfilled: number;
+            /** Format: int64 */
+            rejected: number;
+            /** Format: int64 */
+            cancelled: number;
+        };
+        CategoryUtilisationView: {
+            category: string;
+            /** Format: int32 */
+            equipment: number;
+            /** Format: double */
+            loanedHours: number;
+            /**
+             * Format: double
+             * @description 0 to 1
+             */
+            utilisation: number;
+        };
+        EquipmentMaintenanceView: {
+            /** Format: uuid */
+            equipmentId: string;
+            assetTag: string;
+            name: string;
+            category: string;
+            /** Format: int64 */
+            cases: number;
+        };
+        EquipmentUtilisationView: {
+            /** Format: uuid */
+            equipmentId: string;
+            assetTag: string;
+            name: string;
+            category: string;
+            status: string;
+            /** Format: int64 */
+            loans: number;
+            /** Format: double */
+            loanedHours: number;
+            /**
+             * Format: double
+             * @description 0 to 1
+             */
+            utilisation: number;
+        };
+        MaintenanceView: {
+            /** @description Current cases by stored status */
+            casesByStatus: {
+                [key: string]: number;
+            };
+            /** Format: int64 */
+            reportedInPeriod: number;
+            /** Format: int64 */
+            completedInPeriod: number;
+            /**
+             * Format: double
+             * @description Absent when no case was completed in the period
+             */
+            averageCompletionHours?: number;
+        };
+        OverdueLoanView: {
+            /** Format: uuid */
+            loanId: string;
+            /** Format: uuid */
+            equipmentId: string;
+            assetTag: string;
+            equipmentName: string;
+            category: string;
+            borrowerName: string;
+            /** Format: date-time */
+            dueAt: string;
+            /** Format: double */
+            overdueHours: number;
+        };
+        ReportView: {
+            /** Format: date-time */
+            from: string;
+            /** Format: date-time */
+            to: string;
+            /**
+             * Format: date-time
+             * @description Utilisation and overdue frequency are measured up to this time
+             */
+            measuredUntil: string;
+            /** Format: date-time */
+            generatedAt: string;
+            reservationsByCategory: components["schemas"]["CategoryReservationsView"][];
+            equipmentUtilisation: components["schemas"]["EquipmentUtilisationView"][];
+            utilisationByCategory: components["schemas"]["CategoryUtilisationView"][];
+            overdueNow: components["schemas"]["OverdueLoanView"][];
+            overdueByCategory: components["schemas"]["CategoryOverdueView"][];
+            maintenance: components["schemas"]["MaintenanceView"];
+            maintenanceByEquipment: components["schemas"]["EquipmentMaintenanceView"][];
+        };
+        OverdueLoan: {
+            /** Format: uuid */
+            loanId?: string;
+            /** Format: uuid */
+            reservationId?: string;
+            borrowerName?: string;
+            equipmentName?: string;
+            /** Format: date-time */
+            dueAt?: string;
+            /** Format: int64 */
+            overdueSeconds?: number;
+        };
+        OverduePage: {
+            content?: components["schemas"]["OverdueLoan"][];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+        };
         NotificationPage: {
             content: components["schemas"]["NotificationView"][];
             /** Format: int32 */
@@ -852,6 +1039,8 @@ export interface components {
             toStatus: "OPEN" | "ASSIGNED" | "IN_PROGRESS" | "RESOLVED" | "UNREPAIRABLE";
             /** Format: uuid */
             actorId: string;
+            /** @description Actor display name; null only when the user cannot be read */
+            actorName: string | null;
             /** Format: date-time */
             occurredAt: string;
             detail: string | null;
@@ -895,6 +1084,13 @@ export interface components {
             requiresApproval: boolean;
             /** @description Whether the requested window can be reserved; null without a window */
             availableInWindow?: boolean | null;
+            /** @description Free-text description; null when none is recorded */
+            description: string | null;
+            /**
+             * Format: duration
+             * @description ISO-8601 maximum borrowing duration for this item; null when the global limit applies
+             */
+            maxBorrowDuration: string | null;
         };
         AvailabilityView: {
             equipment: components["schemas"]["EquipmentView"];
@@ -1410,6 +1606,53 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReservationPage"];
+                };
+            };
+        };
+    };
+    getOperationsReport: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportView"];
+                };
+            };
+        };
+    };
+    listOverdueLoans: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+                order?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OverduePage"];
                 };
             };
         };

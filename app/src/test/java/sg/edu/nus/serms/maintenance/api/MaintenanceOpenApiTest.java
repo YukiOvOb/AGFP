@@ -80,6 +80,14 @@ class MaintenanceOpenApiTest {
     }
     assertThat(schemas.path("MaintenanceCaseResponse").path("properties").has("version")).isTrue();
     assertThat(schemas.path("MaintenanceHistoryResponse").path("properties").has("actorId")).isTrue();
+    var caseResponse = schemas.path("MaintenanceCaseResponse");
+    var historyResponse = schemas.path("MaintenanceHistoryResponse");
+    for (String name : List.of("equipmentName", "equipmentAssetTag", "reportedByName", "assignedToName")) {
+      assertThat(caseResponse.path("properties").path(name).path("type").toString()).as(name).contains("string");
+      assertThat(caseResponse.path("required").toString()).as(name).contains("\"" + name + "\"");
+    }
+    assertThat(historyResponse.path("properties").path("actorName").path("type").toString()).contains("string");
+    assertThat(historyResponse.path("required").toString()).contains("\"actorName\"");
     assertThat(schemas.path("MaintenanceReportResponse").path("properties").has("averageCompletionDuration")).isTrue();
     JsonNode created = paths.path("/api/v1/maintenance/cases").path("post").path("responses").path("201");
     assertThat(created.path("content").path("application/json").path("schema").path("$ref").asText())

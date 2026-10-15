@@ -1,10 +1,37 @@
 import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
 import { z } from 'zod';
-import type { Status } from './queries';
+import type { FaultCategory, Priority, Status } from './queries';
 export const statuses: Status[] = ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'UNREPAIRABLE'];
 export const statusLabel = (status: Status) => status.replaceAll('_', ' ');
-export const hasAnyRole = (roles: readonly string[] | undefined, ...allowed: string[]) =>
-  allowed.some((role) => roles?.includes(role));
+export const faultCategories: FaultCategory[] = [
+  'MECHANICAL',
+  'ELECTRICAL',
+  'SOFTWARE',
+  'PHYSICAL_DAMAGE',
+  'MISSING_PART',
+  'OTHER',
+];
+/** Highest first, the order the queue uses when sorting by priority. */
+export const priorities: Priority[] = ['URGENT', 'HIGH', 'MEDIUM', 'LOW'];
+/** `PHYSICAL_DAMAGE` becomes `Physical damage`. */
+export const enumLabel = (value: string) =>
+  value.charAt(0) + value.slice(1).toLowerCase().replaceAll('_', ' ');
+// The server sends null names only when a record cannot be read; fall back to the identifier.
+export function equipmentLabel(item: {
+  equipmentId: string;
+  equipmentName: string | null;
+  equipmentAssetTag: string | null;
+}) {
+  if (!item.equipmentName) return item.equipmentId;
+  return item.equipmentAssetTag
+    ? `${item.equipmentName} (${item.equipmentAssetTag})`
+    : item.equipmentName;
+}
+export const personLabel = (name: string | null, id: string) => name ?? id;
+// Opens the operator lookup for one item; it also covers retired equipment, which the catalogue hides.
+export const equipmentHistoryPath = (equipmentId: string) =>
+  '/maintenance?history=' + encodeURIComponent(equipmentId);
+export { hasAnyRole } from '@/lib/roles';
 export const workspaceRoles = ['BORROWER', 'CUSTODIAN', 'MAINTAINER', 'ADMIN'];
 export function singaporeDate(value: string | null) {
   if (!value) return '—';
@@ -34,6 +61,15 @@ export const faultSchema = z.object({
   equipmentId: uuid,
   loanId: z.union([uuid, z.literal('')]),
   faultDescription: nonBlank,
+  faultCategory: z.enum([
+    'MECHANICAL',
+    'ELECTRICAL',
+    'SOFTWARE',
+    'PHYSICAL_DAMAGE',
+    'MISSING_PART',
+    'OTHER',
+  ]),
+  priority: z.enum(['URGENT', 'HIGH', 'MEDIUM', 'LOW']),
 });
 export const periodSchema = z
   .object({ from: nonBlank, to: nonBlank })

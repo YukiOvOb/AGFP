@@ -19,7 +19,7 @@ async function signIn(page, email) {
   await page.getByLabel('Email address').fill(email);
   await page.getByLabel('Password', {exact:true}).fill(demoPassword);
   await page.getByRole('button', {name:'Sign in',exact:true}).click();
-  await page.waitForURL('**/notifications');
+  await page.getByRole('heading', {level:1,name:/^Welcome/}).waitFor();
 }
 try {
   for (const [name, viewport] of [['desktop',{width:1440,height:1000}], ['mobile',{width:390,height:844}]]) {

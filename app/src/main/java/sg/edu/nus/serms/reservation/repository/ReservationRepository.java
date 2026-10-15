@@ -2,6 +2,7 @@ package sg.edu.nus.serms.reservation.repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -24,7 +25,9 @@ import sg.edu.nus.serms.reservation.domain.ReservationStatus;
 public class ReservationRepository {
 
   /** Equipment facts read under {@code FOR UPDATE} at the start of a booking. */
-  public record LockedEquipment(UUID equipmentId, String status, boolean requiresApproval) {}
+  /** {@code maxBorrowDuration} is null when the global reservation limit applies (V005). */
+  public record LockedEquipment(
+      UUID equipmentId, String status, boolean requiresApproval, Duration maxBorrowDuration) {}
 
   public record Page(List<Reservation> items, long totalElements) {}
 
@@ -43,17 +46,23 @@ public class ReservationRepository {
     this.jdbc = jdbc;
   }
 
+  private static Duration seconds(long value, boolean isNull) {
+    return isNull ? null : Duration.ofSeconds(value);
+  }
+
   public Optional<LockedEquipment> lockEquipment(UUID equipmentId) {
     return jdbc
         .query(
-            "SELECT equipment_id, status, requires_approval FROM serms.equipment"
-                + " WHERE equipment_id = :id FOR UPDATE",
+            "SELECT equipment_id, status, requires_approval,"
+                + " EXTRACT(EPOCH FROM max_borrow_duration)::bigint AS max_borrow_seconds"
+                + " FROM serms.equipment WHERE equipment_id = :id FOR UPDATE",
             new MapSqlParameterSource("id", equipmentId),
             (rs, row) ->
                 new LockedEquipment(
                     rs.getObject("equipment_id", UUID.class),
                     rs.getString("status"),
-                    rs.getBoolean("requires_approval")))
+                    rs.getBoolean("requires_approval"),
+                    seconds(rs.getLong("max_borrow_seconds"), rs.wasNull())))
         .stream()
         .findFirst();
   }
@@ -111,6 +120,40 @@ public class ReservationRepository {
             new MapSqlParameterSource("id", requesterId).addValue("now", utc(now)),
             Integer.class);
     return n == null ? 0 : n;
+  }
+
+  /** True when the requester still holds equipment whose loan is past its due time. */
+  public boolean hasOverdueLoan(UUID requesterId, Instant now) {
+    return Boolean.TRUE.equals(
+        jdbc.queryForObject(
+            "SELECT EXISTS (SELECT 1 FROM serms.loan l"
+                + " JOIN serms.reservation r ON r.reservation_id = l.reservation_id"
+                + " WHERE r.requester_id = :id AND l.status = 'ACTIVE' AND l.due_at < :now)",
+            new MapSqlParameterSource("id", requesterId).addValue("now", utc(now)),
+            Boolean.class));
+  }
+
+  /**
+   * Appends an audit record (Proposal 5.7, business rule 9). Called inside the booking
+   * transaction, so a rolled-back booking leaves no record; {@code serms.audit_log} rejects
+   * updates and deletes.
+   */
+  public void audit(UUID actorId, String action, UUID reservationId, String summary, Instant at) {
+    UUID auditId = UUID.randomUUID();
+    jdbc.update(
+        """
+        INSERT INTO serms.audit_log
+          (audit_id, actor_id, action, entity_type, entity_id, outcome, request_id,
+           change_summary, occurred_at)
+        VALUES (:id, :actor, :action, 'Reservation', :entity, 'SUCCESS', :request, :summary, :at)
+        """,
+        new MapSqlParameterSource("id", auditId)
+            .addValue("actor", actorId)
+            .addValue("action", action)
+            .addValue("entity", reservationId)
+            .addValue("request", "reservation:" + auditId)
+            .addValue("summary", summary)
+            .addValue("at", utc(at)));
   }
 
   public void insert(

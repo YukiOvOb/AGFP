@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.IllegalTransactionStateException;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import sg.edu.nus.serms.maintenance.domain.*;
 import sg.edu.nus.serms.maintenance.repository.*;
 import sg.edu.nus.serms.maintenance.repository.jdbc.*;
@@ -24,6 +25,7 @@ class MaintenanceJdbcWiringTest {
   static class TransactionConfig {}
 
   private final JdbcOperations jdbc = mock(JdbcOperations.class);
+  private final NamedParameterJdbcOperations namedJdbc = mock(NamedParameterJdbcOperations.class);
 
   private AnnotationConfigApplicationContext context() {
     var context = new AnnotationConfigApplicationContext();
@@ -31,8 +33,10 @@ class MaintenanceJdbcWiringTest {
         MaintenanceReportService.class, JdbcMaintenanceReportRepository.class,
         SpringMaintenanceEventPublisher.class, JdbcMaintenanceCaseRepository.class,
         JdbcMaintenanceHistoryRepository.class, JdbcEquipmentMaintenanceAdapter.class,
-        JdbcTechnicianDirectoryAdapter.class, JdbcMaintenanceLoanAdapter.class);
+        JdbcTechnicianDirectoryAdapter.class, JdbcMaintenanceLoanAdapter.class,
+        JdbcMaintenanceNameDirectory.class);
     context.registerBean(JdbcOperations.class, () -> jdbc);
+    context.registerBean(NamedParameterJdbcOperations.class, () -> namedJdbc);
     context.registerBean("transactionManager", MaintenanceTransactionTest.RecordingTransactions.class,
         MaintenanceTransactionTest.RecordingTransactions::new);
     // Unrelated module beans deliberately coexist with the qualified UC04 dependencies.
@@ -53,6 +57,7 @@ class MaintenanceJdbcWiringTest {
       assertThat(context.getBean(EquipmentMaintenancePort.class)).isInstanceOf(JdbcEquipmentMaintenanceAdapter.class);
       assertThat(context.getBean(TechnicianDirectoryPort.class)).isInstanceOf(JdbcTechnicianDirectoryAdapter.class);
       assertThat(context.getBean(MaintenanceLoanPort.class)).isInstanceOf(JdbcMaintenanceLoanAdapter.class);
+      assertThat(context.getBean(MaintenanceNameDirectory.class)).isInstanceOf(JdbcMaintenanceNameDirectory.class);
       assertThat(context.getBean("maintenanceClock", Clock.class).getZone()).isEqualTo(java.time.ZoneOffset.UTC);
       assertThat(context.getBean("maintenanceIdentifiers", Supplier.class).get()).isInstanceOf(UUID.class);
       verifyNoInteractions(jdbc);

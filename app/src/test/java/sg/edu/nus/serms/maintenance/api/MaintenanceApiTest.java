@@ -70,6 +70,7 @@ class MaintenanceApiTest {
   @MockitoBean TechnicianDirectoryPort technicians;
   @MockitoBean MaintenanceLoanPort loans;
   @MockitoBean MaintenanceEventPublisher events;
+  @MockitoBean MaintenanceNameDirectory names;
 
   @TestConfiguration
   static class Beans {
@@ -84,6 +85,9 @@ class MaintenanceApiTest {
     when(cases.findById(CASE)).thenReturn(Optional.of(item(ME, MaintenanceStatus.IN_PROGRESS)));
     when(reports.countCasesByStatus()).thenReturn(Map.of(MaintenanceStatus.OPEN, 2L));
     when(reports.averageCompletionDurationBetween(any(), any())).thenReturn(Optional.empty());
+    when(names.findEquipmentLabels(any())).thenReturn(
+        Map.of(EQUIPMENT, new MaintenanceEquipmentLabel("Field Camera", "CAM-001")));
+    when(names.findUserDisplayNames(any())).thenReturn(Map.of(ME, "Mia Tech", OTHER, "Omar Reporter"));
   }
 
   MaintenanceCase item(UUID technician, MaintenanceStatus status) {
@@ -150,6 +154,29 @@ class MaintenanceApiTest {
   void reportingRequiresExplicitBorrowerOrCustodianRole(String role) throws Exception {
     mvc.perform(mutation("/cases", fault(), role)).andExpect(status().isForbidden());
     verifyNoInteractions(cases, equipment, history, events);
+  }
+
+  @Test
+  void reportAcceptsFaultCategoryAndPriorityAndDefaultsMissingOnes() throws Exception {
+    String body = fault().substring(0, fault().length() - 1)
+        + ",\"faultCategory\":\"ELECTRICAL\",\"priority\":\"URGENT\"}";
+    mvc.perform(mutation("/cases", body, "BORROWER")).andExpect(status().isCreated())
+        .andExpect(jsonPath("$.faultCategory").value("ELECTRICAL"))
+        .andExpect(jsonPath("$.priority").value("URGENT"));
+    verify(cases).insert(argThat(item -> item.faultCategory() == FaultCategory.ELECTRICAL
+        && item.priority() == MaintenancePriority.URGENT));
+    mvc.perform(mutation("/cases", fault(), "BORROWER")).andExpect(status().isCreated())
+        .andExpect(jsonPath("$.faultCategory").value("OTHER"))
+        .andExpect(jsonPath("$.priority").value("MEDIUM"));
+  }
+
+  @Test
+  void unknownFaultCategoryOrPriorityIsAValidationProblem() throws Exception {
+    for (String extra : new String[] {",\"faultCategory\":\"FIRE\"}", ",\"priority\":\"CRITICAL\"}"}) {
+      String body = fault().substring(0, fault().length() - 1) + extra;
+      mvc.perform(mutation("/cases", body, "BORROWER")).andExpect(status().isBadRequest());
+    }
+    verify(cases, never()).insert(any());
   }
 
   @Test
@@ -265,9 +292,46 @@ class MaintenanceApiTest {
         MaintenanceHistoryAction.START, MaintenanceStatus.ASSIGNED, MaintenanceStatus.IN_PROGRESS, ME, NOW, null)));
     mvc.perform(get(ROOT + "/cases/" + CASE).with(as(role))).andExpect(status().isOk())
         .andExpect(jsonPath("$.maintenanceCaseId").value(CASE.toString()))
+        .andExpect(jsonPath("$.equipmentId").value(EQUIPMENT.toString()))
+        .andExpect(jsonPath("$.equipmentName").value("Field Camera"))
+        .andExpect(jsonPath("$.equipmentAssetTag").value("CAM-001"))
+        .andExpect(jsonPath("$.reportedByName").value("Omar Reporter"))
+        .andExpect(jsonPath("$.assignedToName").value("Mia Tech"))
         .andExpect(jsonPath("$.version").value(0));
     mvc.perform(get(ROOT + "/cases/" + CASE + "/history").with(as(role))).andExpect(status().isOk())
-        .andExpect(jsonPath("$[0].actorId").value(ME.toString()));
+        .andExpect(jsonPath("$[0].actorId").value(ME.toString()))
+        .andExpect(jsonPath("$[0].actorName").value("Mia Tech"));
+  }
+
+  @Test
+  void listResolvesNamesInOneBatchPerKindAndLeavesUnknownOrUnassignedNamesNull() throws Exception {
+    UUID unknownEquipment = new UUID(0, 9);
+    var open = item(null, MaintenanceStatus.OPEN);
+    var other = new MaintenanceCase(new UUID(0, 8), unknownEquipment, ME, null, "Other fault", NOW);
+    when(cases.findOpenCases()).thenReturn(List.of(open, other));
+    mvc.perform(get(ROOT + "/cases/open").with(as("CUSTODIAN"))).andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].equipmentName").value("Field Camera"))
+        .andExpect(jsonPath("$[0].reportedByName").value("Omar Reporter"))
+        .andExpect(jsonPath("$[0].assignedTo").isEmpty())
+        .andExpect(jsonPath("$[0].assignedToName").isEmpty())
+        .andExpect(jsonPath("$[1].equipmentId").value(unknownEquipment.toString()))
+        .andExpect(jsonPath("$[1].equipmentName").isEmpty())
+        .andExpect(jsonPath("$[1].equipmentAssetTag").isEmpty())
+        .andExpect(jsonPath("$[1].reportedByName").value("Mia Tech"));
+    verify(names).findEquipmentLabels(Set.of(EQUIPMENT, unknownEquipment));
+    verify(names).findUserDisplayNames(Set.of(OTHER, ME));
+    verifyNoMoreInteractions(names);
+  }
+
+  @Test
+  void mutationResponseCarriesNamesForTheUpdatedCase() throws Exception {
+    when(cases.findById(CASE)).thenReturn(Optional.of(item(null, MaintenanceStatus.OPEN)));
+    when(names.findUserDisplayNames(any())).thenReturn(Map.of(OTHER, "Omar Reporter"));
+    mvc.perform(mutation("/cases/" + CASE + "/assignment", assignment(), "CUSTODIAN"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.assignedTo").value(OTHER.toString()))
+        .andExpect(jsonPath("$.assignedToName").value("Omar Reporter"))
+        .andExpect(jsonPath("$.equipmentName").value("Field Camera"));
   }
 
   @ParameterizedTest
@@ -277,7 +341,7 @@ class MaintenanceApiTest {
     String actual = role.equals("unrelated") ? "MAINTAINER" : role;
     mvc.perform(get(ROOT + "/cases/" + CASE).with(as(actual))).andExpect(status().isForbidden());
     mvc.perform(get(ROOT + "/cases/" + CASE + "/history").with(as(actual))).andExpect(status().isForbidden());
-    verifyNoInteractions(history);
+    verifyNoInteractions(history, names);
   }
 
   @ParameterizedTest
@@ -294,6 +358,7 @@ class MaintenanceApiTest {
     mvc.perform(get(ROOT + "/cases/open").with(as(role))).andExpect(status().isForbidden());
     mvc.perform(get(ROOT + "/equipment/" + EQUIPMENT + "/cases").with(as(role))).andExpect(status().isForbidden());
     mvc.perform(get(ROOT + "/equipment/" + EQUIPMENT + "/history").with(as(role))).andExpect(status().isForbidden());
+    verifyNoInteractions(names);
   }
 
   MockHttpServletRequestBuilder report(String role) {

@@ -7,7 +7,7 @@ import { http, HttpResponse } from 'msw';
 import { App } from '@/app/App';
 import { AuthProvider } from '@/app/AuthProvider';
 import { server, currentUser } from '@/test/server';
-import { reservationSchema } from './rules';
+import { durationMinutes, durationText, reservationSchema } from './rules';
 const ITEM = '00000000-0000-0000-0000-0000000000e1';
 const RES = '00000000-0000-0000-0000-0000000000c1';
 const equipment = {
@@ -19,6 +19,8 @@ const equipment = {
   status: 'AVAILABLE',
   requiresApproval: false,
   availableInWindow: true,
+  description: null,
+  maxBorrowDuration: null,
 };
 const reservation = {
   reservationId: RES,
@@ -174,6 +176,48 @@ describe('reserve equipment (UC01)', () => {
     await user.click(screen.getByRole('button', { name: 'Reserve' }));
     expect(await screen.findByText('The end must be after the start.')).toBeInTheDocument();
     expect(calls).toBe(0);
+  });
+  it("applies an item's own maximum and states it before submitting", async () => {
+    withAvailability({ maxBorrowDuration: 'PT2H' });
+    let calls = 0;
+    server.use(
+      http.post('/api/v1/reservations', () => {
+        calls++;
+        return HttpResponse.json(reservation, { status: 201 });
+      }),
+    );
+    mount(`/equipment/${ITEM}/reserve`);
+    const user = userEvent.setup();
+    expect(await screen.findByText('This item can be reserved for at most 2 hours.')).toBeVisible();
+    await user.type(screen.getByLabelText('Start (SGT)'), '2030-01-10T09:00');
+    await user.type(screen.getByLabelText('End (SGT)'), '2030-01-10T12:00');
+    await user.click(screen.getByRole('button', { name: 'Reserve' }));
+    expect(
+      await screen.findByText('This equipment may be reserved for at most 2 hours.'),
+    ).toBeInTheDocument();
+    expect(calls).toBe(0);
+  });
+  it('reads server durations and words them like the server', () => {
+    expect(durationMinutes('PT72H')).toBe(72 * 60);
+    expect(durationMinutes('PT2H30M')).toBe(150);
+    expect(durationMinutes('PT45M')).toBe(45);
+    expect(durationMinutes(null)).toBeNull();
+    expect(durationMinutes('P2D')).toBeNull();
+    expect(durationText(72 * 60)).toBe('3 days');
+    expect(durationText(24 * 60)).toBe('1 day');
+    expect(durationText(51 * 60)).toBe('51 hours');
+    expect(durationText(150)).toBe('150 minutes');
+    const now = Date.parse('2030-01-10T00:00:00Z');
+    const issues = (max: number | null, endAt: string) =>
+      reservationSchema(() => now, max)
+        .safeParse({ startAt: '2030-01-10T09:00', endAt, purpose: '' })
+        .error?.issues.map((i) => i.message) ?? [];
+    expect(issues(120, '2030-01-10T11:00')).toEqual([]);
+    expect(issues(120, '2030-01-10T11:01')).toEqual([
+      'This equipment may be reserved for at most 2 hours.',
+    ]);
+    // A longer item limit replaces the global seven days.
+    expect(issues(10 * 24 * 60, '2030-01-18T09:00')).toEqual([]);
   });
   it('mirrors the server rules for duration and past start', () => {
     const now = Date.parse('2030-01-10T00:00:00Z');

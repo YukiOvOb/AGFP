@@ -103,3 +103,30 @@ The planned order was #11, #14, #13. The actual order was #11, #13 into #14, the
 - Documentation pull request for this branch; close #3 once it is merged.
 - Announce `b3def12` as the baseline on #27 and tell the author of #12.
 - Local demo smoke on the new `main`.
+
+## 2026-10-14 Local demo smoke on the new main
+
+### What was done
+
+The owner installed Node.js 24, pnpm 11.19.0 and PostgreSQL 18. The local demo was started from `main` at `457a2a9` (the documentation merge on top of `b3def12`; same application code) and every local check ran against it before any other change:
+
+| Check | Result |
+| --- | --- |
+| `node scripts/smoke-local.mjs` | Passed, 28 checks |
+| `scripts/check-local-data.ps1` | Passed, 3 checks |
+| `node scripts/check-uc01-uc04.mjs` | Passed, 24 checks |
+| `node scripts/check-local-browser.mjs` | Passed, 6 checks |
+| `node scripts/check-uc01-uc04-browser.mjs` | Passed, 10 checks (desktop and mobile) |
+
+Documentation reached `main` with #28 (`457a2a9`), and #3 is closed as superseded. This completes the acceptance items of #15.
+
+### Problems and fixes
+
+| Symptom | Root cause | Fix | How it was verified |
+| --- | --- | --- | --- |
+| The demo backend would not start: "Found more than one migration with version 001" | Stale resources from an older branch build in `app/target/classes` were packaged because the build did not clean first | `mvnw clean package`; a separate task changes the launcher | Flyway applied V001-V004 and health returned `UP` |
+| Newly installed tools were not found by the agent shell | The desktop app keeps the PATH it started with | Prefixed the Node directory per command and passed the PostgreSQL `bin` path to the launcher | Versions printed: Node 24.20.0, pnpm 11.19.0, PostgreSQL 18.6 |
+
+### Authorship
+
+Run and recorded by an AI agent (Claude Code) under Liu Tongyao's instruction. Member acceptance of #6-#9 remains separate.
