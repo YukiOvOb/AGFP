@@ -2,7 +2,14 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ErrorState, LoadingState } from '@/components/Feedback';
 import { message } from '@/api/client';
-import { useAssignment, useOpenCases, useTechnicians, type MaintenanceCase } from './queries';
+import {
+  useAssignment,
+  useOpenCases,
+  useTechnicians,
+  type MaintenanceCase,
+  type Priority,
+} from './queries';
+import { enumLabel, priorities } from './format';
 import { MaintenanceCaseCard } from './MaintenanceCaseCard';
 function Assignment({
   item,
@@ -47,24 +54,61 @@ function Assignment({
     </form>
   );
 }
+const rank = (priority: Priority) => priorities.indexOf(priority);
 export function OpenCaseQueue() {
   const cases = useOpenCases();
   const technicians = useTechnicians();
   const [assigned, setAssigned] = useState(false);
+  const [priorityFilter, setPriorityFilter] = useState<Priority | ''>('');
+  const [sort, setSort] = useState<'oldest' | 'priority'>('oldest');
+  // The server lists oldest first; filtering and the priority sort are view choices. The sort is
+  // stable, so equal priorities keep the oldest-first order.
+  const shown = (cases.data ?? []).filter(
+    (item) => !priorityFilter || item.priority === priorityFilter,
+  );
+  if (sort === 'priority') shown.sort((a, b) => rank(a.priority) - rank(b.priority));
   // A successful assignment removes the OPEN card; feedback belongs outside that card.
   return (
     <section className="maintenance-panel" onSubmitCapture={() => setAssigned(false)}>
       <h2>Open maintenance queue</h2>
       <p className="muted">Review faults and assign an active maintainer.</p>
+      <div className="maintenance-queue-controls">
+        <label htmlFor="queue-priority">Priority</label>
+        <select
+          id="queue-priority"
+          className="input"
+          value={priorityFilter}
+          onChange={(event) => setPriorityFilter(event.target.value as Priority | '')}
+        >
+          <option value="">All priorities</option>
+          {priorities.map((priority) => (
+            <option key={priority} value={priority}>
+              {enumLabel(priority)}
+            </option>
+          ))}
+        </select>
+        <label htmlFor="queue-sort">Sort</label>
+        <select
+          id="queue-sort"
+          className="input"
+          value={sort}
+          onChange={(event) => setSort(event.target.value as 'oldest' | 'priority')}
+        >
+          <option value="oldest">Oldest report first</option>
+          <option value="priority">Highest priority first</option>
+        </select>
+      </div>
       {cases.isPending ? (
         <LoadingState />
       ) : cases.isError ? (
         <ErrorState message={message(cases.error)} onRetry={() => void cases.refetch()} />
       ) : !cases.data.length ? (
         <p>No open maintenance cases.</p>
+      ) : !shown.length ? (
+        <p>No open cases with this priority.</p>
       ) : (
         <div className="maintenance-grid">
-          {cases.data.map((item) => (
+          {shown.map((item) => (
             <div key={item.maintenanceCaseId}>
               <MaintenanceCaseCard item={item} historyLink>
                 {technicians.isPending ? (

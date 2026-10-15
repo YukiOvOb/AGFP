@@ -23,7 +23,7 @@ class ReservationPolicyTest {
 
   static ReservationRuleContext ctx(Instant start, Instant end, int open, boolean overdueLoan) {
     return new ReservationRuleContext(
-        new ReservationRequest(UUID.randomUUID(), start, end, null), NOW, open, false, overdueLoan);
+        new ReservationRequest(UUID.randomUUID(), start, end, null), NOW, open, false, overdueLoan, null);
   }
 
   static ReservationRuleContext ctx(Duration startIn, Duration length) {
@@ -42,6 +42,27 @@ class ReservationPolicyTest {
         .hasValueSatisfying(v -> assertThat(v.code()).isEqualTo("invalid-interval"));
     assertThat(policy.evaluate(ctx(NOW.plusSeconds(120), NOW.plusSeconds(60), 0)))
         .hasValueSatisfying(v -> assertThat(v.code()).isEqualTo("invalid-interval"));
+  }
+
+  @Test
+  void anItemsOwnMaximumReplacesTheGlobalMaximum() {
+    var policy = new DurationPolicy(Duration.ofMinutes(30), Duration.ofDays(7));
+    Instant start = NOW.plus(Duration.ofHours(1));
+    java.util.function.BiFunction<Duration, Duration, ReservationRuleContext> withLimit = (length, limit) ->
+        new ReservationRuleContext(new ReservationRequest(UUID.randomUUID(), start, start.plus(length), null),
+            NOW, 0, false, false, limit);
+
+    assertThat(policy.evaluate(withLimit.apply(Duration.ofHours(2), Duration.ofHours(2)))).isEmpty();
+    assertThat(policy.evaluate(withLimit.apply(Duration.ofHours(2).plusMinutes(1), Duration.ofHours(2))))
+        .hasValueSatisfying(v -> {
+          assertThat(v.code()).isEqualTo("too-long");
+          assertThat(v.message()).isEqualTo("This equipment may be reserved for at most 2 hours.");
+        });
+    // A longer item limit also replaces the global seven days.
+    assertThat(policy.evaluate(withLimit.apply(Duration.ofDays(8), Duration.ofDays(10)))).isEmpty();
+    // The minimum still applies to items with their own maximum.
+    assertThat(policy.evaluate(withLimit.apply(Duration.ofMinutes(10), Duration.ofHours(2))))
+        .hasValueSatisfying(v -> assertThat(v.code()).isEqualTo("too-short"));
   }
 
   @Test

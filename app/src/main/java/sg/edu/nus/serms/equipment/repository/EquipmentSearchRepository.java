@@ -2,6 +2,7 @@ package sg.edu.nus.serms.equipment.repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -44,6 +45,11 @@ public class EquipmentSearchRepository {
            AND tstzrange(r.start_at, r.end_at, '[)') && tstzrange(:windowStart, :windowEnd, '[)')))
       """;
 
+  /** Equipment columns shared by search and detail reads; the duration is read in whole seconds. */
+  static final String COLUMNS =
+      "e.equipment_id, e.asset_tag, e.name, e.category, e.location, e.status, e.requires_approval,"
+          + " e.description, EXTRACT(EPOCH FROM e.max_borrow_duration)::bigint AS max_borrow_seconds";
+
   private final NamedParameterJdbcTemplate jdbc;
 
   public EquipmentSearchRepository(NamedParameterJdbcTemplate jdbc) {
@@ -77,8 +83,7 @@ public class EquipmentSearchRepository {
     params.addValue("limit", criteria.size());
     params.addValue("offset", (long) criteria.page() * criteria.size());
     String sql =
-        "SELECT e.equipment_id, e.asset_tag, e.name, e.category, e.location, e.status,"
-            + " e.requires_approval, "
+        "SELECT " + COLUMNS + ", "
             + available
             + " AS available_in_window, count(*) OVER () AS total"
             + " FROM serms.equipment e WHERE "
@@ -109,8 +114,7 @@ public class EquipmentSearchRepository {
     }
     return jdbc
         .query(
-            "SELECT e.equipment_id, e.asset_tag, e.name, e.category, e.location, e.status,"
-                + " e.requires_approval, "
+            "SELECT " + COLUMNS + ", "
                 + available
                 + " AS available_in_window FROM serms.equipment e"
                 + " WHERE e.equipment_id = :id AND e.status <> 'RETIRED'",
@@ -185,6 +189,8 @@ public class EquipmentSearchRepository {
 
   private static EquipmentSummary summary(ResultSet rs) throws SQLException {
     Object available = rs.getObject("available_in_window");
+    long maxSeconds = rs.getLong("max_borrow_seconds");
+    Duration maxBorrow = rs.wasNull() ? null : Duration.ofSeconds(maxSeconds);
     return new EquipmentSummary(
         rs.getObject("equipment_id", UUID.class),
         rs.getString("asset_tag"),
@@ -193,7 +199,9 @@ public class EquipmentSearchRepository {
         rs.getString("location"),
         EquipmentStatus.valueOf(rs.getString("status")),
         rs.getBoolean("requires_approval"),
-        available == null ? null : (Boolean) available);
+        available == null ? null : (Boolean) available,
+        rs.getString("description"),
+        maxBorrow);
   }
 
   static String escapeLike(String text) {

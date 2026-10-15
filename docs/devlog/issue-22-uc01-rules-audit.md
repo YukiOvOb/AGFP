@@ -48,3 +48,44 @@ The audit rows are written directly rather than by an event-driven audit module 
 ### Authorship
 
 Implementation, tests and this entry were produced by an AI agent (Claude Code) under Liu Tongyao's instruction. No teammate review is claimed.
+
+## 2026-10-15 Per-equipment maximum borrowing duration
+
+Branch: `feature/liu-tongyao-uc01-equipment-limit` · Baseline: main `b72ee5b` (V005 from #40 merged)
+
+### What was built
+
+- `DurationPolicy` uses an item's own `max_borrow_duration` (V005) in place of the global seven days when the item has one; the minimum still applies. The violation keeps the code `too-long` and says "This equipment may be reserved for at most 2 hours."
+- `ReservationRepository.lockEquipment` reads the limit inside the same locked read that already provides status and approval; `ReservationRuleContext` carries it to the policies.
+- Reservation page: when the item has a limit, it says "This item can be reserved for at most 3 days.", and the client-side rules in `rules.ts` apply the same limit with the server's wording, so a too-long request is refused before any call. React Hook Form reads the resolver on every render, so the limit applies as soon as availability has loaded.
+- Contract section 6 (`DurationPolicy` row) describes the item limit.
+
+### Design notes
+
+- **Item limit replaces, not tightens.** The issue defines NULL as "use the global default", so a set value is the item's limit in either direction: a projector may allow 2 days, a laptop 10 days. A longer item limit is honoured; the database only requires a positive interval.
+- **Strategy pattern unchanged.** The limit is a fact in the rule context, like `requiresApproval`; `DurationPolicy` stays the single place that decides duration, and no new policy class was needed.
+- **Same words in both places.** The client formats durations the way the server's `DurationPolicy.human` does (whole days, else whole hours, else minutes), so the message does not change between the instant check and the server's answer.
+
+### Problems and fixes
+
+| Symptom | Root cause | Fix | How it was verified |
+| --- | --- | --- | --- |
+| The form schema is built at the first render, before the equipment (and its limit) is loaded | The resolver was created once from `reservationSchema()` | Pass the limit on each render; React Hook Form 7.88 re-reads `resolver` from its options on every render (checked in its source) | Component test types a too-long range after load and gets the item message without a request |
+
+### Verification
+
+Base `b72ee5b` plus this change set, in a separate worktree; Windows 11, Java 25.0.4 (target 17), Node 24.20.0, PostgreSQL 18.6.
+
+| Check | Result |
+| --- | --- |
+| `./mvnw -B test` with `SERMS_APP_TEST_JDBC_URL` | Passed: 575 (573 before, 2 new: policy unit test for the item limit, PostgreSQL submit with a two-hour item) |
+| `pnpm lint`, `typecheck`, `test`, `build` | Passed: 128 component tests (2 new) |
+| `pnpm test:e2e` | Passed: 12 |
+
+### Follow-ups
+
+- #17 (Zhou Fanhao): the equipment management page sets `max_borrow_duration`; until then it is set in the demo data (camera 3 days, projector 2 days, laptop 5 days).
+
+### Authorship
+
+Implementation, tests and this section were produced by an AI agent (Claude Code) under Liu Tongyao's instruction. No teammate review is claimed.

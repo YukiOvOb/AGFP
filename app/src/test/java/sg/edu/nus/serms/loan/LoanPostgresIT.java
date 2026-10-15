@@ -33,7 +33,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.event.EventListener;
 
-/** Full application: real Flyway V001/V002/V003/V004, security, UC03, UC04 and notification bridge. */
+/** Full application: real Flyway V001-V006, security, UC03, UC04 and notification bridge. */
 @SpringBootTest(properties={"serms.notifications.worker-enabled=false", "springdoc.api-docs.enabled=true",
     "serms.security.secure-cookies=false", "server.servlet.session.cookie.secure=false"})
 @AutoConfigureMockMvc
@@ -115,6 +115,8 @@ class LoanPostgresIT {
     assertThat(count("maintenance_case","loan_id",loan.loanId())).isEqualTo(1);
     UUID caseId=jdbc.queryForObject("SELECT maintenance_case_id FROM serms.maintenance_case WHERE loan_id=?",UUID.class,loan.loanId());
     assertThat(count("audit_log","entity_id",caseId)).isEqualTo(1);
+    assertThat(jdbc.queryForMap("SELECT fault_category, priority FROM serms.maintenance_case WHERE maintenance_case_id=?",caseId))
+        .containsEntry("fault_category","PHYSICAL_DAMAGE").containsEntry("priority","HIGH");
   }
   @Test void validationRejectsIllegalHandoverWithoutWrites() {
     assertThatThrownBy(() -> service.checkout(reservation,borrower,0,false)).isInstanceOf(IllegalArgumentException.class);
@@ -152,6 +154,8 @@ class LoanPostgresIT {
     service.receive(loan.loanId(),0,"DAMAGED","Damaged before retirement");
     assertThat(state()).isEqualTo("RETIRED");
     assertThat(count("maintenance_case","loan_id",loan.loanId())).isEqualTo(1);
+    assertThat(jdbc.queryForMap("SELECT fault_category, priority FROM serms.maintenance_case WHERE loan_id=?",loan.loanId()))
+        .containsEntry("fault_category","PHYSICAL_DAMAGE").containsEntry("priority","HIGH");
   }
   @Test void returnRequiresDamageDescriptionAndCurrentVersion() {
     var loan=checkout();
@@ -204,7 +208,7 @@ class LoanPostgresIT {
     assertThat(environment.getProperty("spring.datasource.driver-class-name")).isEqualTo("org.postgresql.Driver");
     assertThat(environment.getProperty("spring.flyway.locations")).isEqualTo("classpath:db/migration");
     assertThat(environment.getProperty("serms.approval.enabled")).isEqualTo("true");
-    assertThat(jdbc.queryForObject("SELECT max(version) FROM serms.schema_version",Integer.class)).isEqualTo(4);
+    assertThat(jdbc.queryForObject("SELECT max(version) FROM serms.schema_version",Integer.class)).isEqualTo(6);
     assertThat(jdbc.queryForObject("SELECT notification_principal FROM serms.app_user WHERE user_id=?",String.class,custodian)).isEqualTo(custodian.toString());
     assertThat(service.checkoutQueue(0,100)).anyMatch(r -> r.reservationId().equals(reservation));
   }

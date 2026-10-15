@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ErrorState } from '@/components/Feedback';
 import { message } from '@/api/client';
-import { faultSchema, hasAnyRole, uuid } from './format';
+import { enumLabel, faultCategories, faultSchema, hasAnyRole, priorities, uuid } from './format';
 import { useReportFault } from './queries';
 export function ReportFaultForm() {
   const { user } = useAuth();
@@ -22,6 +22,8 @@ export function ReportFaultForm() {
       equipmentId: selected.success ? selected.data : '',
       loanId: '',
       faultDescription: '',
+      faultCategory: 'OTHER',
+      priority: 'MEDIUM',
     },
   });
   return (
@@ -37,9 +39,17 @@ export function ReportFaultForm() {
               equipmentId: values.equipmentId,
               ...(values.loanId ? { loanId: values.loanId } : {}),
               faultDescription: values.faultDescription,
+              faultCategory: values.faultCategory,
+              priority: values.priority,
             });
             setCreated(item.maintenanceCaseId);
-            form.reset({ equipmentId: '', loanId: '', faultDescription: '' });
+            form.reset({
+              equipmentId: '',
+              loanId: '',
+              faultDescription: '',
+              faultCategory: 'OTHER',
+              priority: 'MEDIUM',
+            });
           } catch {
             /* ProblemDetail is rendered below. */
           }
@@ -69,6 +79,22 @@ export function ReportFaultForm() {
         <p id="fault-loan-error" className="field-error">
           {form.formState.errors.loanId?.message}
         </p>
+        <label htmlFor="fault-category">Fault category</label>
+        <select id="fault-category" className="input" {...form.register('faultCategory')}>
+          {faultCategories.map((category) => (
+            <option key={category} value={category}>
+              {enumLabel(category)}
+            </option>
+          ))}
+        </select>
+        <label htmlFor="fault-priority">Priority</label>
+        <select id="fault-priority" className="input" {...form.register('priority')}>
+          {priorities.map((priority) => (
+            <option key={priority} value={priority}>
+              {enumLabel(priority)}
+            </option>
+          ))}
+        </select>
         <label htmlFor="fault-description">Fault description</label>
         <textarea
           id="fault-description"
