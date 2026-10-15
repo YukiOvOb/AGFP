@@ -134,7 +134,7 @@ The backend lives in `app/`, and React pages live in `frontend/`. The default co
 
 ## UC01 Search and Reserve Equipment (Member 1)
 
-Backend `equipment` and `reservation` modules in `app/`, and frontend `frontend/src/features/{equipment,reservation}`: search by name / category / location / time interval, view occupied slots, submit and cancel reservations, and view personal reservations. Reservation rules use the Strategy pattern, and `ReservationApprovalService` implements the UC02 contract. The test bench includes concurrency conflict tests on PostgreSQL 18 (Testcontainers, requiring Docker). See the [UC01 documentation](docs/uc01-search-and-reserve.md) and [interface contract](docs/contracts/equipment-and-reservation.md).
+Backend `equipment` and `reservation` modules in `app/`, and frontend `frontend/src/features/{equipment,reservation}`: search by name / category / location / time interval, view occupied slots, submit and cancel reservations, and view personal reservations. Reservation rules use the Strategy pattern, and `ReservationApprovalService` implements the UC02 contract. The test bench includes concurrency conflict tests on PostgreSQL 18 (Testcontainers, requiring Docker). Borrowers holding overdue equipment are refused, each item's own maximum duration applies, and submit/cancel are audited. A real-browser acceptance check runs against the local demo (`node scripts/check-uc01-browser.mjs`). See the [UC01 documentation](docs/uc01-search-and-reserve.md), [interface contract](docs/contracts/equipment-and-reservation.md) and [UC01 verification record](docs/evidence/uc01/verification.md).
 
 Requirements, Sprint plans, progress and risks, demo scripts, and agile evidence are in [docs/agile/](docs/agile/README.md).
 
