@@ -2,7 +2,8 @@ name: Deploy
 on:
   push:
     branches: [main]
-    paths-ignore: ['**.md', 'docs/**']
+    # Documentation-only pushes never deploy; a mixed push with any code change still does.
+    paths-ignore: ['**.md', 'docs/**', '.agents/**', '.github/ISSUE_TEMPLATE/**']
   workflow_dispatch: {}
 concurrency:
   group: deploy-production
