@@ -10,19 +10,23 @@ import sg.edu.nus.serms.notification.domain.NotificationType;
 @Component
 public class ApprovalNotificationFactory {
   public NotificationRequest from(ReservationDecided event) {
+    return from(event, "reservation " + event.reservationId());
+  }
+
+  public NotificationRequest from(ReservationDecided event, String equipmentName) {
     Objects.requireNonNull(event, "event");
     if (event.comment() != null && event.comment().length() > 1000) {
       throw new IllegalArgumentException("Approval comment exceeds the agreed 1000 characters");
     }
     String content =
         switch (event.decision()) {
-          case APPROVED -> "Your reservation " + event.reservationId() + " has been confirmed.";
+          case APPROVED -> "Your reservation for " + equipmentName + " has been confirmed.";
           case REJECTED -> {
             if (event.comment() == null || event.comment().isBlank()) {
               throw new IllegalArgumentException("A rejected reservation requires a reason");
             }
-            yield "Your reservation "
-                + event.reservationId()
+            yield "Your reservation for "
+                + equipmentName
                 + " was rejected. Reason: "
                 + event.comment();
           }

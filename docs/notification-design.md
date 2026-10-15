@@ -48,3 +48,13 @@ sequenceDiagram
 ```
 
 The Loan adapter and producers are Sprint 2 integration points. Pure reminder classification is independent of browser rendering and persistence.
+
+## UC04 maintenance recipients
+
+`MaintenanceAssigned` creates one in-app notification for the assigned technician. When a case reaches `RESOLVED` or `UNREPAIRABLE`, `MaintenanceCompleted` creates one notification for the original fault reporter (`maintenance_case.reported_by`), including the outcome. The listener reads the saved case by `maintenanceCaseId` inside the maintenance transaction and verifies its equipment, assigned technician, and terminal outcome. The source key is stable per case, so a duplicate completion event cannot create another request. Delivery remains the worker's post-commit responsibility; a rolled-back maintenance transaction leaves no request.
+
+## UC05 completion
+
+`ReservationSubmitted` persists one request per active approver when approval is pending. An immediately confirmed reservation notifies its requester. `ReservationCancelled` notifies its requester and cancels any pending collection reminder. These listeners join the producer transaction. A confirmed, uncollected reservation entering the configurable `serms.notifications.collection-lead` window (default 24 hours) gets one collection request; repeated scans use the stable reservation and requester key. The worker handles in-app delivery after commit.
+
+Production notification text resolves equipment names from persisted records and renders times in Asia/Singapore. The overdue projection is read-only and does not add an `OVERDUE` loan state. `NotificationChannel` from the Proposal is not implemented in this PR; in-app delivery remains the existing worker and repository flow, so the report must not claim the channel Adapter pattern. Email is outside the agreed scope (D-009).

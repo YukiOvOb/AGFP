@@ -15,6 +15,9 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
+      - name: Prepare PostgreSQL 18 image for Testcontainers
+        run: docker pull postgres:18-alpine
+        timeout-minutes: 10
       - name: Regression and default PostgreSQL 18 application integration
         run: mvn -B -f app/pom.xml -Puc03-postgres-it clean verify
       - uses: actions/upload-artifact@v4

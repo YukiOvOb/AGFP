@@ -102,7 +102,7 @@ export const navigation: NavItem[] = [
     icon: ClockAlert,
     roles: ['CUSTODIAN', 'ADMIN'],
     group: 'manage',
-    available: false,
+    available: true,
   },
   // Reserved for Issue #17.
   {
