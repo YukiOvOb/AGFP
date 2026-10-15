@@ -6,6 +6,7 @@ import { LoanPage } from '@/features/loan/LoanPage';
 import { OverduePage } from '@/features/overdue/OverduePage';
 import { NotificationPage } from '@/features/notification/NotificationPage';
 import { EquipmentSearchPage } from '@/features/equipment/EquipmentSearchPage';
+import { EquipmentManagementPage } from '@/features/equipment/EquipmentManagementPage';
 import { ReservePage } from '@/features/reservation/ReservePage';
 import { MyReservationsPage } from '@/features/reservation/MyReservationsPage';
 import { RequireRole } from './RequireRole';
@@ -39,6 +40,9 @@ export function App() {
             <Route path="/approvals/:reservationId" element={<ApprovalDetailPage />} />
           </Route>
           <Route path="/equipment" element={<EquipmentSearchPage />} />
+          <Route element={<RequireRole role={['CUSTODIAN', 'ADMIN']} />}>
+            <Route path="/manage/equipment" element={<EquipmentManagementPage />} />
+          </Route>
           <Route element={<RequireRole role="BORROWER" />}>
             <Route path="/equipment/:equipmentId/reserve" element={<ReservePage />} />
             <Route path="/reservations" element={<MyReservationsPage />} />

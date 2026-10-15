@@ -68,6 +68,28 @@ Returns equipment, `available` (same criteria as 2.1), `openMaintenance` (open f
 
 ---
 
+## 2.4 Equipment Management (Proposal 5.2, Issue #17)
+
+Only active `CUSTODIAN` and `ADMIN` accounts may use `/api/v1/equipment/manage` and its child endpoints. A session role alone is insufficient after the role is revoked in the database. Other roles receive 403; unauthenticated requests receive 401. Writes require the normal CSRF header.
+
+| Method and path | Purpose | Response |
+| --- | --- | --- |
+| `GET /api/v1/equipment/manage?page=0&size=20` | List equipment, including retired records, by name and asset tag | Array of `ManagedEquipment`; size 1-100 |
+| `POST /api/v1/equipment/manage` | Register an item | 201 with `Location` and `ManagedEquipment` |
+| `PUT /api/v1/equipment/manage/{id}` | Update master data without changing status | `ManagedEquipment` |
+| `POST /api/v1/equipment/manage/{id}/retire` | Retire an item after checking for an active loan | `ManagedEquipment` |
+| `GET /api/v1/equipment/manage/categories` | List all categories, including currently unused names | Array of strings |
+| `POST /api/v1/equipment/manage/categories` | Create a category | 201 with updated category list |
+| `PATCH /api/v1/equipment/manage/categories/{name}` | Rename a category | Updated category list |
+
+Registration and update use `assetTag`, nullable `serialNumber`, `name`, nullable `description`, `category`, `location`, `condition` (`GOOD`, `FAIR`, `POOR`), `requiresApproval`, and nullable `maxBorrowDuration` (positive ISO-8601 duration in whole seconds). The category must already exist. Update additionally requires `expectedVersion`; retirement takes `{ "expectedVersion": 3 }`. The response includes these fields plus `equipmentId`, the current four-state `status`, and `version`. Empty optional text fields are stored as null. The V005 backfill leaves historical serial numbers null and their condition `GOOD`.
+
+Duplicate asset tag or serial number produces 409 `/problems/equipment-conflict` with `errors: [{field, message}]`; validation produces 400 `/problems/validation` with field errors. A stale version or active loan prevents retirement with 409. Only the loan and maintenance flows may make normal status changes; this API can change status only to `RETIRED`. Retirement retains history, excludes the item from UC01 search and availability, and prevents new reservations. Category rename cascades to current equipment through the V005 foreign key. Register, update, retire, and category writes append success audit records in the same transaction.
+
+The UC01 search and availability endpoints, query parameters, and response fields in Sections 2.1-2.3 remain unchanged. The UC01 owner must confirm this additive management contract before merge.
+
+---
+
 ## 3. Reservations (`BORROWER` Only)
 
 Services enforce `@PreAuthorize("hasRole('BORROWER') and #requesterId.toString() == authentication.name")`: missing BORROWER gives 403; nobody acts for another borrower.

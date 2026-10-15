@@ -112,7 +112,7 @@ export const navigation: NavItem[] = [
     icon: PackagePlus,
     roles: ['CUSTODIAN', 'ADMIN'],
     group: 'manage',
-    available: false,
+    available: true,
   },
   // Issue #23.
   {
