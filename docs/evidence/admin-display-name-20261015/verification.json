@@ -1,0 +1,50 @@
+{
+  "status": "passed",
+  "mocked": false,
+  "startedAt": "2026-10-15T10:24:57.102Z",
+  "checks": [
+    "desktop: administrator creates and renames a borrower; password cleared; literal search; rename audit visible; same password still signs in with new name; administrator UI/API denied; no overflow",
+    "mobile: administrator creates and renames a borrower; password cleared; literal search; rename audit visible; same password still signs in with new name; administrator UI/API denied; no overflow"
+  ],
+  "startingHead": "7afe031209cb6384d080b105e84974c6aff17a93",
+  "fetchedMain": "2d19ef9b4e7b7e38c7241e8b5f9e4dcf524db9cf",
+  "sourceHashes": [
+    {
+      "path": "scripts/check-admin-browser.mjs",
+      "sha256": "93102f66ed439cc8785d70fffc48b3861f58a06fb96fc57b02c898429f45483b"
+    },
+    {
+      "path": "frontend/src/features/admin/UsersPage.tsx",
+      "sha256": "965c5aacebb5c0859b0852f1c1c90069ea0b7b6eb8aab6f934da54538c7f9aed"
+    },
+    {
+      "path": "frontend/src/features/admin/EditDisplayNameDialog.tsx",
+      "sha256": "0c8d5dfabfbb9db973b3c65d73ba210b5c9fa0c478fbee49e48918244b47e7df"
+    },
+    {
+      "path": "frontend/src/features/admin/AuditPage.tsx",
+      "sha256": "105b8aa248c9ca25aed69e241cd64da4e1239b18fb9547f9a8a4a94fa6e2bb22"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/identity/service/AdminUserService.java",
+      "sha256": "c62234af190e040e2f5e45b49ac780dc97bcbfb42845bad32246bba75f6f28b9"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/identity/api/AdminUserController.java",
+      "sha256": "ebc8d89ef337091cef36df06846a5fe0cdbd8c9d37b6f951c60d55361ea1752d"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/identity/api/AdminUserProblemHandler.java",
+      "sha256": "d3269e0b1bbc24e125850f0d53c0bcde92ef5df4a3ffa00571ad3edf6d96e43c"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/identity/repository/AdminUserRepository.java",
+      "sha256": "33d15ced25628e21c82905eb35c00f06313862fddb00ecf495fe92d2707a0e54"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/audit/repository/AuditQueryRepository.java",
+      "sha256": "ee0e875df3aabeb39fefe4bbe49f27993d8deac12f7bedad3ac61c1c449f641e"
+    }
+  ],
+  "finishedAt": "2026-10-15T10:25:05.355Z"
+}

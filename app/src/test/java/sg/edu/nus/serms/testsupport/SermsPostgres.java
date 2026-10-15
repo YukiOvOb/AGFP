@@ -60,6 +60,21 @@ public final class SermsPostgres {
   }
 
   /** V001, V002, ... in version order (the names are zero-padded, so name order is version order). */
+  public static DataSource isolatedDataSource() {
+    var original = (PGSimpleDataSource) dataSource();
+    String database = "serms_test_isolated_" + java.util.UUID.randomUUID().toString().replace("-", "");
+    try (var connection = original.getConnection(); var statement = connection.createStatement()) {
+      // Identifier is entirely generated here, never derived from user/config input.
+      statement.execute("CREATE DATABASE " + database);
+    } catch (SQLException e) { throw new IllegalStateException("Could not create isolated test database", e); }
+    var isolated = new PGSimpleDataSource();
+    isolated.setURL(original.getURL()); isolated.setDatabaseName(database);
+    isolated.setUser(original.getUser()); isolated.setPassword(original.getPassword());
+    migrate(isolated);
+    return isolated;
+  }
+
+  /** V001, V002, ... in version order (the names are zero-padded, so name order is version order). */
   static List<Path> scripts() throws IOException {
     try (var files = Files.list(MIGRATIONS)) {
       return files.filter(f -> f.getFileName().toString().matches("V\\d{3}__.+\\.sql")).sorted().toList();

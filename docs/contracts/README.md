@@ -5,6 +5,7 @@ Repository contracts remain authoritative; changes require a PR and affected-own
 | Contract / integration record | Modules | Reading purpose |
 | --- | --- | --- |
 | [Authentication and approval (UC02)](auth-and-approval.md) | identity, approval, reservation, shared platform/data | Authentication, roles, CSRF, public reservation service, approval API, transactions, pending states |
+| [Administrator console (#18)](admin-console.md) | identity, audit, frontend admin | User/role/status/password operations and audit reader; Identity/session revocation confirmed by Wang via the user's reply; PR acceptance remains separate |
 | [Equipment search and reservation (UC01)](equipment-and-reservation.md) | equipment, reservation, approval | APIs, states, rules, exceptions, approval interface |
 | [Notification interface alignment](../notification-interface-alignment.md) | loan, notification, PostgreSQL adapter | Existing integration boundaries; this record does not override confirmed contracts |
 | [Approval notification review](../reviews/pr-8-notification-contract.md) | approval, notification | Review context/gaps; verify covered commits |

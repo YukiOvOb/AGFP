@@ -22,4 +22,8 @@ public class IdentityService {
   public Optional<UserAccount> findById(UUID id) {
     return accounts.findById(id);
   }
+
+  public boolean isSessionCurrent(UUID id, long version) {
+    return accounts.isSessionCurrent(id, version);
+  }
 }
