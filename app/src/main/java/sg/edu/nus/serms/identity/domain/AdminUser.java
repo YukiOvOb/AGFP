@@ -11,8 +11,12 @@ public record AdminUser(
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String email,
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String displayName,
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String accountStatus,
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Set<Role> roles) {
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Set<Role> roles,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long version) {
   public AdminUser { roles = Set.copyOf(roles); }
+  public AdminUser(UUID userId, String email, String displayName, String accountStatus, Set<Role> roles) {
+    this(userId, email, displayName, accountStatus, roles, 0L);
+  }
 
   @Schema(name = "AdminUserRole")
   public enum Role { BORROWER, APPROVER, CUSTODIAN, MAINTAINER, ADMIN }

@@ -56,6 +56,68 @@ public class AdminUserService {
     if (current.displayName().equals(normalized)) return current;
     users.updateDisplayName(target, expectedDisplayName, normalized);
     users.auditDisplayNameChange(actor, target);
-    return new AdminUser(target, current.email(), normalized, current.accountStatus(), current.roles());
+    return new AdminUser(target, current.email(), normalized, current.accountStatus(), current.roles(), current.version());
+  }
+
+  @Transactional
+  public AdminUser updateStatus(UUID actor, UUID target, boolean active, long expectedVersion) {
+    var current = lockSecurityChange(actor, target, expectedVersion);
+    String status = active ? "ACTIVE" : "DISABLED";
+    if (!active && actor.equals(target))
+      throw new AccountChangeConflictException(AccountChangeConflictException.Reason.SELF_DEACTIVATION);
+    if (current.accountStatus().equals(status)) return current;
+    protectLastAdministrator(current, active, current.roles());
+    users.updateStatus(target, status);
+    users.advanceSessionVersion(target, expectedVersion);
+    users.auditSecurityChange(actor, target, active ? "USER_ACTIVATED" : "USER_DEACTIVATED");
+    return new AdminUser(target, current.email(), current.displayName(), status, current.roles(), expectedVersion + 1);
+  }
+
+  @Transactional
+  public AdminUser updateRoles(UUID actor, UUID target, Set<AdminUser.Role> roles, long expectedVersion) {
+    // Authorization precedes validation/target lookup; copy caller-owned mutable data before using it.
+    users.lockAdministratorChanges();
+    access.requireAdministrator(actor);
+    AdminUserRules.roles(roles);
+    var requested = Set.copyOf(roles);
+    var current = checkedTarget(target, expectedVersion);
+    if (current.roles().equals(requested)) return current;
+    protectLastAdministrator(current, current.accountStatus().equals("ACTIVE"), requested);
+    users.replaceRoles(target, requested);
+    users.advanceSessionVersion(target, expectedVersion);
+    users.auditSecurityChange(actor, target, "USER_ROLES_CHANGED");
+    return new AdminUser(target, current.email(), current.displayName(), current.accountStatus(), requested, expectedVersion + 1);
+  }
+
+  @Transactional
+  public AdminUser resetPassword(UUID actor, UUID target, String password, long expectedVersion) {
+    users.lockAdministratorChanges();
+    access.requireAdministrator(actor);
+    AdminUserRules.password(password);
+    var current = checkedTarget(target, expectedVersion);
+    users.resetPassword(target, passwords.encode(password));
+    users.advanceSessionVersion(target, expectedVersion);
+    users.auditSecurityChange(actor, target, "USER_PASSWORD_RESET");
+    return new AdminUser(target, current.email(), current.displayName(), current.accountStatus(), current.roles(), expectedVersion + 1);
+  }
+
+  private AdminUser lockSecurityChange(UUID actor, UUID target, long expectedVersion) {
+    users.lockAdministratorChanges();
+    access.requireAdministrator(actor);
+    return checkedTarget(target, expectedVersion);
+  }
+
+  private AdminUser checkedTarget(UUID target, long expectedVersion) {
+    if (target == null || expectedVersion < 0) throw new IllegalArgumentException("Invalid account version");
+    var current = users.lockForDisplayNameUpdate(target);
+    if (current.version() != expectedVersion)
+      throw new AccountChangeConflictException(AccountChangeConflictException.Reason.STALE_ACCOUNT);
+    return current;
+  }
+
+  private void protectLastAdministrator(AdminUser current, boolean active, Set<AdminUser.Role> roles) {
+    if (current.accountStatus().equals("ACTIVE") && current.roles().contains(AdminUser.Role.ADMIN)
+        && (!active || !roles.contains(AdminUser.Role.ADMIN)) && users.activeAdministratorCount() <= 1)
+      throw new AccountChangeConflictException(AccountChangeConflictException.Reason.LAST_ACTIVE_ADMIN);
   }
 }

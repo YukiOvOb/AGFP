@@ -1,0 +1,369 @@
+{
+  "status": "passed",
+  "scope": "Local checks only; no hosted CI, member review, merge or deployment implied",
+  "inputHead": "f189b5c79a7aa62d40b9d76de4165f884b0f8932",
+  "fetchedBase": "0be0a29af011862824c6aaab642512241764bcd9",
+  "inputsWereUncommitted": true,
+  "environment": {
+    "os": "Windows",
+    "java": "25.0.4 targeting 17",
+    "springBoot": "4.0.8",
+    "postgresql": "18.6",
+    "maven": "3.9.11",
+    "node": "v24.19.0",
+    "pnpm": "11.25.0 (manifest 11.19.0)"
+  },
+  "backend": {
+    "ordinary": 685,
+    "uc02": 30,
+    "uc03AndUc05": 30,
+    "total": 745,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "finishedAt": "2026-10-15T21:09:16+08:00",
+    "command": "pwsh -NoProfile -File scripts/test-uc02.ps1 -PostgresBin <PostgreSQL18 bin> -IncludeLoanIntegration",
+    "administratorAndAuditCases": {
+      "api": 38,
+      "serviceUnit": 29,
+      "postgres": 26,
+      "auditQueryUnit": 2
+    }
+  },
+  "coverage": {
+    "covered": 1307,
+    "missed": 299,
+    "linePercent": 81.38231631382317,
+    "minimum": 70,
+    "negativeThresholdRejected": true,
+    "originalDataRestoredByteForByte": true
+  },
+  "frontend": {
+    "components": 169,
+    "mockedDesktopMobilePlaywright": 14,
+    "lint": "passed",
+    "typecheck": "passed",
+    "build": "passed",
+    "apiDrift": "passed"
+  },
+  "realUc02": {
+    "status": "passed",
+    "startedAt": "2026-10-15T13:11:55.009Z",
+    "finishedAt": "2026-10-15T13:16:08.508Z",
+    "checks": [
+      "desktop: borrower real UI login, menu and backend permissions",
+      "desktop: approver real UI login, menu and backend permissions",
+      "desktop: custodian real UI login, menu and backend permissions",
+      "desktop: maintainer real UI login, menu and backend permissions",
+      "desktop: admin real UI login, menu and backend permissions",
+      "desktop: real empty approval queue",
+      "desktop: required rejection comment, persisted rejection and borrower status",
+      "desktop: rejection releases real allocation",
+      "desktop: separate approver confirms actual borrower request",
+      "desktop: committed approval notification delivered and marked read",
+      "desktop: custodian physical checkout and damaged return with required note",
+      "desktop: auto-created linked maintenance assigned, diagnosed, repaired and resolved",
+      "desktop: equipment restored and actual administrator report page loads",
+      "desktop: real dual-role login and own pending browser reservation",
+      "desktop: own-request marker and UI block both decision controls",
+      "desktop: browser-forged self APPROVED is 403 with no persisted side effects",
+      "desktop: browser-forged self REJECTED is 403 with no persisted side effects",
+      "desktop: a different real approver can decide the same request exactly once",
+      "mobile: borrower real UI login, menu and backend permissions",
+      "mobile: approver real UI login, menu and backend permissions",
+      "mobile: custodian real UI login, menu and backend permissions",
+      "mobile: maintainer real UI login, menu and backend permissions",
+      "mobile: admin real UI login, menu and backend permissions",
+      "mobile: real empty approval queue",
+      "mobile: required rejection comment, persisted rejection and borrower status",
+      "mobile: rejection releases real allocation",
+      "mobile: separate approver confirms actual borrower request",
+      "mobile: committed approval notification delivered and marked read",
+      "mobile: custodian physical checkout and damaged return with required note",
+      "mobile: auto-created linked maintenance assigned, diagnosed, repaired and resolved",
+      "mobile: equipment restored and actual administrator report page loads",
+      "mobile: real dual-role login and own pending browser reservation",
+      "mobile: own-request marker and UI block both decision controls",
+      "mobile: browser-forged self APPROVED is 403 with no persisted side effects",
+      "mobile: browser-forged self REJECTED is 403 with no persisted side effects",
+      "mobile: a different real approver can decide the same request exactly once",
+      "temporary dual-role assignment restored; pre-existing roles untouched"
+    ]
+  },
+  "realRoleMatrix": {
+    "status": "passed",
+    "startedAt": "2026-10-15T13:16:09.942Z",
+    "finishedAt": "2026-10-15T13:17:43.416Z",
+    "groups": 66,
+    "pages": 210,
+    "reads": 350,
+    "deniedWrites": 170,
+    "ownershipDenials": 4,
+    "checks": [
+      "route inventory covers every implemented application page; future pages explicitly excluded",
+      "desktop anonymous: all 25 real read APIs match permissions/ownership",
+      "desktop anonymous: all 15 direct page routes, deny states and viewport fit",
+      "desktop borrower: actual login and exact role menu",
+      "desktop borrower: all 25 real read APIs match permissions/ownership",
+      "desktop borrower: all 15 direct page routes, deny states and viewport fit",
+      "desktop borrower: valid-CSRF role-denied mutations and missing-CSRF protection",
+      "desktop borrower: actual logout invalidates browser session",
+      "desktop approver: actual login and exact role menu",
+      "desktop approver: all 25 real read APIs match permissions/ownership",
+      "desktop approver: all 15 direct page routes, deny states and viewport fit",
+      "desktop approver: valid-CSRF role-denied mutations and missing-CSRF protection",
+      "desktop approver: actual logout invalidates browser session",
+      "desktop custodian: actual login and exact role menu",
+      "desktop custodian: all 25 real read APIs match permissions/ownership",
+      "desktop custodian: all 15 direct page routes, deny states and viewport fit",
+      "desktop custodian: valid-CSRF role-denied mutations and missing-CSRF protection",
+      "desktop custodian: actual logout invalidates browser session",
+      "desktop maintainer: actual login and exact role menu",
+      "desktop maintainer: all 25 real read APIs match permissions/ownership",
+      "desktop maintainer: all 15 direct page routes, deny states and viewport fit",
+      "desktop maintainer: valid-CSRF role-denied mutations and missing-CSRF protection",
+      "desktop maintainer: actual logout invalidates browser session",
+      "desktop admin: actual login and exact role menu",
+      "desktop admin: all 25 real read APIs match permissions/ownership",
+      "desktop admin: all 15 direct page routes, deny states and viewport fit",
+      "desktop admin: valid-CSRF role-denied mutations and missing-CSRF protection",
+      "desktop admin: actual logout invalidates browser session",
+      "desktop borrower2: actual login and exact role menu",
+      "desktop borrower2: all 25 real read APIs match permissions/ownership",
+      "desktop borrower2: all 15 direct page routes, deny states and viewport fit",
+      "desktop borrower2: valid-CSRF role-denied mutations and missing-CSRF protection",
+      "desktop borrower2: actual logout invalidates browser session",
+      "mobile anonymous: all 25 real read APIs match permissions/ownership",
+      "mobile anonymous: all 15 direct page routes, deny states and viewport fit",
+      "mobile borrower: actual login and exact role menu",
+      "mobile borrower: all 25 real read APIs match permissions/ownership",
+      "mobile borrower: all 15 direct page routes, deny states and viewport fit",
+      "mobile borrower: valid-CSRF role-denied mutations and missing-CSRF protection",
+      "mobile borrower: actual logout invalidates browser session",
+      "mobile approver: actual login and exact role menu",
+      "mobile approver: all 25 real read APIs match permissions/ownership",
+      "mobile approver: all 15 direct page routes, deny states and viewport fit",
+      "mobile approver: valid-CSRF role-denied mutations and missing-CSRF protection",
+      "mobile approver: actual logout invalidates browser session",
+      "mobile custodian: actual login and exact role menu",
+      "mobile custodian: all 25 real read APIs match permissions/ownership",
+      "mobile custodian: all 15 direct page routes, deny states and viewport fit",
+      "mobile custodian: valid-CSRF role-denied mutations and missing-CSRF protection",
+      "mobile custodian: actual logout invalidates browser session",
+      "mobile maintainer: actual login and exact role menu",
+      "mobile maintainer: all 25 real read APIs match permissions/ownership",
+      "mobile maintainer: all 15 direct page routes, deny states and viewport fit",
+      "mobile maintainer: valid-CSRF role-denied mutations and missing-CSRF protection",
+      "mobile maintainer: actual logout invalidates browser session",
+      "mobile admin: actual login and exact role menu",
+      "mobile admin: all 25 real read APIs match permissions/ownership",
+      "mobile admin: all 15 direct page routes, deny states and viewport fit",
+      "mobile admin: valid-CSRF role-denied mutations and missing-CSRF protection",
+      "mobile admin: actual logout invalidates browser session",
+      "mobile borrower2: actual login and exact role menu",
+      "mobile borrower2: all 25 real read APIs match permissions/ownership",
+      "mobile borrower2: all 15 direct page routes, deny states and viewport fit",
+      "mobile borrower2: valid-CSRF role-denied mutations and missing-CSRF protection",
+      "mobile borrower2: actual logout invalidates browser session",
+      "all business/audit/notification-read/role snapshots unchanged"
+    ]
+  },
+  "realAdminSecurity": {
+    "status": "passed",
+    "startedAt": "2026-10-15T13:17:45.088Z",
+    "finishedAt": "2026-10-15T13:17:59.694Z",
+    "checks": [
+      "desktop: UI create/explicit roles/disable/activate/password reset; two old cookie sessions revoked; disabled/old-password login denied; new login succeeds; reactivation does not resurrect sessions; five audits; version4; no overflow",
+      "mobile: UI create/explicit roles/disable/activate/password reset; two old cookie sessions revoked; disabled/old-password login denied; new login succeeds; reactivation does not resurrect sessions; five audits; version4; no overflow"
+    ]
+  },
+  "realAdminFoundation": {
+    "status": "passed",
+    "startedAt": "2026-10-15T13:18:00.467Z",
+    "finishedAt": "2026-10-15T13:18:07.201Z",
+    "checks": [
+      "desktop: administrator creates and renames a borrower; password cleared; literal search; rename audit visible; same password still signs in with new name; administrator UI/API denied; no overflow",
+      "mobile: administrator creates and renames a borrower; password cleared; literal search; rename audit visible; same password still signs in with new name; administrator UI/API denied; no overflow"
+    ]
+  },
+  "sourceHashes": [
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/identity/api/AdminUserController.java",
+      "sha256": "0e20fb82f323db119d1dfa6b73b2776593ada276321da9a565f01a25cc0aa8b2"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/identity/api/AdminUserProblemHandler.java",
+      "sha256": "7e97c08e208390c288dffd117f95bdaf83635d7ab7005086f7f3dc6656b9718f"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/identity/domain/AdminUser.java",
+      "sha256": "2e6c226e94f952fdbb95a4c6d95aff2e6b894c36f4b43066f343c388ea0f5052"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/identity/domain/UserAccount.java",
+      "sha256": "77d2977ef3afe5dec89864b10221ed315a831325ace5bb2a7881c8a9815b2682"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/identity/repository/AdminUserRepository.java",
+      "sha256": "b284746bc9c18196ce1af9a740d66502d1d938294124b72cf4e2a65b3f567970"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/identity/repository/UserAccountRepository.java",
+      "sha256": "5f23045643a741c9daa59d8e685e4b36fb79951693e1641f17dbf044cca9bf0d"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/identity/service/AccountChangeConflictException.java",
+      "sha256": "ce2276e1dbd4d7e819b20271b9f0b1446d14bd83018879ea4593c349a4ed909d"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/identity/service/AdminUserService.java",
+      "sha256": "c96eb5a91861a72eb556dc1823b9c2e9eb81acec8dfe4485b0dd0d323be709b6"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/identity/service/IdentityService.java",
+      "sha256": "d7bd1b3314944dc2ed094fe54c89242a7860547af262c8d2c5f6f2be850db396"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/shared/config/SecurityConfig.java",
+      "sha256": "5b6a146debdc2c699d4e7609eeae1eba35bab06773a471862e647b9ba6342fde"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/shared/security/SermsUserPrincipal.java",
+      "sha256": "61e4a6fe830871ee116959a4a6c4cee80eec4bf850205c51ef020919016e84dd"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/shared/security/SessionVersionFilter.java",
+      "sha256": "913514250828f2bc72b487e201c1db049cd2e0c552db06952846d7906816128c"
+    },
+    {
+      "path": "app/src/main/resources/db/migration/V007__identity_session_version.sql",
+      "sha256": "a4e925a76da2452047a583e77aece61fd21004e65e6fde4f4a4a76ac6f1e1ecf"
+    },
+    {
+      "path": "app/src/test/java/sg/edu/nus/serms/IdentityApiTest.java",
+      "sha256": "a496835872bad30a67f918d3221169726dac264d43bf94e77009e61e3ec805c0"
+    },
+    {
+      "path": "app/src/test/java/sg/edu/nus/serms/NotificationIntegrationTest.java",
+      "sha256": "9302084dccb7e660c9b770df01d84bf847c2e6f08fb09fe037d19071be638f1c"
+    },
+    {
+      "path": "app/src/test/java/sg/edu/nus/serms/approval/api/ApprovalApiTest.java",
+      "sha256": "2c51d17f7f50692e3fbf42e7878da200ae6cf5d07bde7a113a4e267a05f94e99"
+    },
+    {
+      "path": "app/src/test/java/sg/edu/nus/serms/identity/api/AdminConsoleApiTest.java",
+      "sha256": "b822120676645fb50e4081706619e2e829cba4a147586106db9534aed24e5551"
+    },
+    {
+      "path": "app/src/test/java/sg/edu/nus/serms/identity/repository/UserAccountRepositoryTest.java",
+      "sha256": "a003c34b41100276cecff452849e018343fc17c73a6ac5414dea3dd8ca2a523f"
+    },
+    {
+      "path": "app/src/test/java/sg/edu/nus/serms/identity/service/AdminSecurityServiceTest.java",
+      "sha256": "a1199b17558fd6c8832eb0310d961d21b963ce1adad6a9e61cbdb577c2d07082"
+    },
+    {
+      "path": "app/src/test/java/sg/edu/nus/serms/identity/service/AdminSessionPostgresTest.java",
+      "sha256": "38210d23411d7f15889459290ff30a083e041bb20d164b177daf53cfdae52a99"
+    },
+    {
+      "path": "app/src/test/java/sg/edu/nus/serms/identity/service/LastAdministratorPostgresTest.java",
+      "sha256": "aa86d7f0d88c5c4dcfe5798142e50b28a9837d886a247d01f5d0c70d3d440b0f"
+    },
+    {
+      "path": "app/src/test/java/sg/edu/nus/serms/loan/LoanPostgresIT.java",
+      "sha256": "c8cfe81ea64e2c899214c87a944e3a2a376f6f6d4b4cca1503fe2848d8074646"
+    },
+    {
+      "path": "app/src/test/java/sg/edu/nus/serms/maintenance/api/MaintenanceApiTest.java",
+      "sha256": "8c51fde101751215b9fe42c36ecc00695ff2afd4ca293b24448abd2917885b21"
+    },
+    {
+      "path": "app/src/test/java/sg/edu/nus/serms/notification/Uc05PostgresIT.java",
+      "sha256": "b7f65200e0009606dac8e70c40e8ea1ee5ecff9d8308adf3b85456469bfa48dc"
+    },
+    {
+      "path": "app/src/test/java/sg/edu/nus/serms/report/ReportApiTest.java",
+      "sha256": "a94d425a61cfca5f1dae483c0a6fe5d96b28adf839991d075968f8043ccdc601"
+    },
+    {
+      "path": "app/src/test/java/sg/edu/nus/serms/reservation/api/ReservationApiTest.java",
+      "sha256": "6c19504467291d2fd8e98b8b38e6e963dccda128f4275ed5944abf11b04bb41e"
+    },
+    {
+      "path": "app/src/test/java/sg/edu/nus/serms/testsupport/SermsPostgres.java",
+      "sha256": "3946a2fb7bf6d636a33dafcfaf0f7ec5a2ee133a2287615d82231313735537c1"
+    },
+    {
+      "path": "frontend/e2e/admin.spec.ts",
+      "sha256": "b4e92292b694285979cc07cd1c34f461cf06f81592687185409c7e15e5042fac"
+    },
+    {
+      "path": "frontend/src/api/schema.d.ts",
+      "sha256": "b5ca4ca2df49aadc89cd9bea0b859dd29624f5521f0aa70c7f8f9a063c2305de"
+    },
+    {
+      "path": "frontend/src/features/admin/AccountSecurityDialog.tsx",
+      "sha256": "6adb14135ae76bfa0ae97b0deb871255c83d10bc066dd62493279df581e6b70f"
+    },
+    {
+      "path": "frontend/src/features/admin/UsersPage.tsx",
+      "sha256": "194abad2c35d4d15dbe0d50c479e1012c3bcdaed91b00a8de190bcc756777db8"
+    },
+    {
+      "path": "frontend/src/features/admin/account-security.test.tsx",
+      "sha256": "3c74202b9255d6f7d21210d05c019b5612666fc3c2fb7d23d79f35ce5ca82445"
+    },
+    {
+      "path": "frontend/src/features/admin/admin.test.tsx",
+      "sha256": "a611c09908a17b9a4455ebf809c9279f7ccfdd4ace827956dfda252a30b01e4f"
+    },
+    {
+      "path": "scripts/check-admin-security-browser.mjs",
+      "sha256": "351c4f50e2931bafa021c67be66bb26eb3b0e07f54ab24a91116608e5c2dc949"
+    },
+    {
+      "path": "scripts/lib/role-access.mjs",
+      "sha256": "309218677ba934f77ff9c7cb7e8fff10d8876e859e29da1c8aa63dd4bb0295b0"
+    },
+    {
+      "path": "scripts/role-access.test.mjs",
+      "sha256": "8fbe60b446242b46c9299d4b5c82c535e5f6f581697f7dcf720f6a31e25f8f9e"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "desktop-roles.png",
+      "sha256": "331e526e85826cf09922e4b4c6732dd8b66fe43ed5de0155234609a955f12d71"
+    },
+    {
+      "file": "mobile-roles.png",
+      "sha256": "04c9ea7a1c8ebe450566bac08188ea8a9f5a0cc15fb675bb46811eed183ff005"
+    },
+    {
+      "file": "desktop-security.png",
+      "sha256": "7706741bce9f3c1f586d03003032f9451eebe40c3bc87e44c4283d364871b723"
+    },
+    {
+      "file": "mobile-security.png",
+      "sha256": "afbcc0c87905edbf03409a3f99050ca8f748054c21e6ad3a316269f7ab081660"
+    },
+    {
+      "file": "desktop-audit.png",
+      "sha256": "fc32bcf7e5e4839f6fc9cfb87e18155309c0a280fc1533ab43d0494238bf7184"
+    },
+    {
+      "file": "mobile-audit.png",
+      "sha256": "2816b830575b6b27d9b249123981055835f615ce41e500b6d87677fd5727f958"
+    }
+  ],
+  "remaining": [
+    "latest delivered-head hosted CI",
+    "member check",
+    "migration-number coordination at merge",
+    "main merge",
+    "deployment acceptance",
+    "final new-page regression after dependent feature merges"
+  ]
+}

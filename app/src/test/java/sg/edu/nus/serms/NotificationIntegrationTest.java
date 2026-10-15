@@ -39,6 +39,8 @@ class NotificationIntegrationTest {
   @Autowired JdbcTemplate jdbc;
   @MockitoBean Clock clock;
   @MockitoBean LoanReminderGuard guard;
+  // This historical H2 notification bench simulates identity; real revocation is in AdminSessionPostgresTest.
+  @MockitoBean sg.edu.nus.serms.identity.service.IdentityService identity;
   @MockitoBean sg.edu.nus.serms.approval.service.ReservationApprovalPort approvalReservations;
   @MockitoBean sg.edu.nus.serms.approval.service.ApprovalDecisionPort approvalDecisions;
   static final String ALICE = "00000000-0000-0000-0000-000000000001";
@@ -64,6 +66,7 @@ class NotificationIntegrationTest {
 
   @BeforeEach
   void setup() {
+    when(identity.isSessionCurrent(any(), anyLong())).thenReturn(true);
     jdbc.update("DELETE FROM notification_attempt");
     repository.deleteAll();
     when(clock.instant()).thenReturn(now);

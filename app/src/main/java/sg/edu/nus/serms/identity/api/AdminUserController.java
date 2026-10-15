@@ -13,6 +13,8 @@ import sg.edu.nus.serms.identity.domain.AdminUser;
 import sg.edu.nus.serms.identity.domain.AdminUser.Role;
 import sg.edu.nus.serms.identity.service.AdminUserService;
 import sg.edu.nus.serms.shared.security.SermsUserPrincipal;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import sg.edu.nus.serms.shared.api.StrictVersionDeserializer;
 
 @RestController
 @RequestMapping(value = "/api/v1/admin/users", produces = "application/json")
@@ -29,6 +31,15 @@ public class AdminUserController {
   public record UpdateDisplayNameRequest(
       @NotBlank @Size(max = 200) String displayName,
       @NotBlank @Size(max = 200) String expectedDisplayName) {}
+
+  public record UpdateStatusRequest(@NotNull Boolean active,
+      @NotNull @Min(0) @JsonDeserialize(using = StrictVersionDeserializer.class) Long expectedVersion) {}
+  public record UpdateRolesRequest(@NotEmpty Set<@NotNull Role> roles,
+      @NotNull @Min(0) @JsonDeserialize(using = StrictVersionDeserializer.class) Long expectedVersion) {}
+  public record ResetPasswordRequest(@NotBlank @Size(min = 12, max = 72) String newPassword,
+      @NotNull @Min(0) @JsonDeserialize(using = StrictVersionDeserializer.class) Long expectedVersion) {
+    @Override public String toString() { return "ResetPasswordRequest[REDACTED]"; }
+  }
 
   private final AdminUserService users;
   public AdminUserController(AdminUserService users) { this.users = users; }
@@ -56,5 +67,26 @@ public class AdminUserController {
   public AdminUser updateDisplayName(@AuthenticationPrincipal SermsUserPrincipal me,
       @PathVariable UUID userId, @Valid @RequestBody UpdateDisplayNameRequest request) {
     return users.updateDisplayName(me.getUserId(), userId, request.displayName(), request.expectedDisplayName());
+  }
+
+  @PatchMapping("/{userId}/status")
+  @Operation(operationId = "adminUpdateUserStatus")
+  public AdminUser status(@AuthenticationPrincipal SermsUserPrincipal me, @PathVariable UUID userId,
+      @Valid @RequestBody UpdateStatusRequest request) {
+    return users.updateStatus(me.getUserId(), userId, request.active(), request.expectedVersion());
+  }
+
+  @PatchMapping("/{userId}/roles")
+  @Operation(operationId = "adminUpdateUserRoles")
+  public AdminUser roles(@AuthenticationPrincipal SermsUserPrincipal me, @PathVariable UUID userId,
+      @Valid @RequestBody UpdateRolesRequest request) {
+    return users.updateRoles(me.getUserId(), userId, request.roles(), request.expectedVersion());
+  }
+
+  @PostMapping("/{userId}/password-reset")
+  @Operation(operationId = "adminResetUserPassword")
+  public AdminUser password(@AuthenticationPrincipal SermsUserPrincipal me, @PathVariable UUID userId,
+      @Valid @RequestBody ResetPasswordRequest request) {
+    return users.resetPassword(me.getUserId(), userId, request.newPassword(), request.expectedVersion());
   }
 }

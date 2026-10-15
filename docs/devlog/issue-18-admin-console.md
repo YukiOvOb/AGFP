@@ -167,3 +167,94 @@ PR remains draft, and no member check, production deployment or team Done is cla
 
 Codex-assisted implementation and checks for Zhang Hanming, at the user's explicit request. No
 teammate message/Issue comment, approval, reallocation, hours or production change was made.
+
+## 2026-10-15 Confirmed Identity/session continuation
+
+### Task, authorization and versions
+
+Owner: Zhang Hanming (`Hanming1008`), #18. Sole writer: this Codex session, resumed in
+`SERMS-hanming-admin-20261015` on `codex/hanming-admin-console-20261015`; clean starting HEAD
+`828f16407422c767f1dec8b27ca6f3523a4915b1`. The user pasted Wang Yuanmeng's explicit agreement to
+the three session behaviours. This resolves that dependency, not whole-PR acceptance. No new
+teammate message, Issue comment, main merge, protected setting or production operation is authorized.
+
+Fetched main `0be0a29af011862824c6aaab642512241764bcd9`; only two CI/deployment trigger files
+changed from the previous base. Normal merge `f189b5c79a7aa62d40b9d76de4165f884b0f8932` synchronized
+the branch, preserving all main/source history and others' worktrees. Functional inputs below were
+uncommitted against that merge HEAD during verification. No old migration was rewritten.
+
+Rules read: `AGENTS.md`, `.github/CONTRIBUTING.md`, `docs/tech-stack.md`, `docs/testing.md`,
+`docs/contracts/{README,auth-and-approval,admin-console}.md`, `docs/collaboration/{ownership,
+agent-workflow,decisions}.md`, `docs/devlog/README.md`, and `.agents/skills/serms-{task,worktree,
+verify,pr}/SKILL.md`. Scope: Identity/admin, narrow shared security integration, additive migration,
+shared test projections, admin UI and corresponding evidence. Existing UC02/business models,
+first-admin authorship, deployment and required checks are excluded from redesign.
+
+### What was built
+
+- PostgreSQL `session_version` (BIGINT, default 0, nonnegative), next currently free V007. Preserve
+  V001–V006; renumber this unmerged migration if another migration takes that number first.
+- `SermsUserPrincipal` stores the login version but no password hash. A credential-free Identity
+  projection and `SessionVersionFilter` compare it on protected requests, clear old authentication
+  and Session and return 401. Public CSRF/login/logout remain available. CurrentUser, UUID mapping,
+  explicit-role semantics and ordinary 403 responses remain unchanged.
+- ADMIN status/role/password-reset APIs, optimistic security versions and safe summaries. Actual
+  status/role changes revoke old sessions; no-ops do not. Every explicit reset revokes sessions.
+  All account/role/hash updates, version increments and safe audits share the business transaction.
+- Self-deactivation is rejected. Role/status mutations use bootstrap's existing global PostgreSQL
+  advisory transaction lock, then current-actor/target/version/count checks, to retain an active ADMIN
+  even under concurrent independent transactions. This is direct service orchestration, not a forced
+  additional design pattern or replacement for the UC02 responsibility chain.
+- Shared React dialogs for explicit roles, disable/activate confirmation and password reset. Guard
+  stale edits; explain/reopen after conflicts, disable self-deactivation, clear replacement passwords,
+  keep them out of query/mutation caches, and reload identity after self role/password changes.
+- Real PostgreSQL two-session/rollback/concurrency tests, every-role/CSRF/strict-version API tests,
+  component tests, expanded denied-write inventory, and a repeatable real desktop/mobile script
+  `scripts/check-admin-security-browser.mjs`.
+
+### Problems and fixes
+
+| Symptom / risk | Root cause | Fix and verification |
+| --- | --- | --- |
+| Initial sandbox Maven command stalled with an empty log | Local process/runtime restrictions | Stop only its owned execution; rerun with existing explicit JDK under approved local execution; no test/production bypass |
+| New invalid-version API tests got 500 instead of 400 for coerced input | Default Jackson coercion admitted string/fraction values into service mocks | Reuse `StrictVersionDeserializer`; all integer-shape validation tests pass |
+| Historical notification H2 cases lacked an Identity table | That test bench simulates cookie identities and never installed the real Identity schema | Explicit Identity projection mock for this historical bench; real revocation tested with actual PostgreSQL/Spring separately |
+| Disabled UC05 session formerly expected 403 | Global revocation now precedes module permission checks under Wang's new agreement | Assert existing 401 ProblemDetail and invalidated session; retain the active-but-missing-role 403 test; no case skipped |
+| New migration needed both Flyway and the existing schema inventory | Early draft added the column but not `serms.schema_version` | Follow V005/V006 bookkeeping and test V001–V007 at runtime; update exact UC03 inventory assertion to 7 |
+| Restarting previous local browser database refused seeding | Prior admin UI tests intentionally retained extra created accounts | Preserve the complete stopped runtime as `.cache/admin-display-name-pre-session-20261015`; create a fresh isolated cluster, never clear histories or weaken the seed guard |
+
+### Verification and follow-ups
+
+Final backend source run: `scripts/test-uc02.ps1 -PostgresBin <native PostgreSQL18 bin>
+-IncludeLoanIntegration`, Windows, Java25.0.4 targeting17, Boot4.0.8, Maven3.9.11/PostgreSQL18.6.
+685 ordinary + 30 UC02 + 30 UC03/UC05 = **745 passed, zero failures/errors/skips**, ending
+2026-10-15 21:09:16 SGT. Administrator/audit scope includes 38 API, 21 existing service unit,
+8 new service unit, 15 existing PostgreSQL, 10 cross-session PostgreSQL, 1 isolated last-admin
+concurrency and 2 audit-query unit cases. Coverage: 1,307 covered / 299 missed = 81.38%; unchanged
+70% gate and deliberate-zero negative/byte-restoration exercise passed. Earlier failed candidate
+logs remain ignored and are not presented as passes.
+
+Frontend: 169 components passed, lint/typecheck/build passed. Fresh backend-exported types generated
+and drift checked. Existing mocked desktop/mobile Playwright contract suite: 14 passed. These are
+not substitutes for the actual-stack flows; current real-browser results and source hashes are recorded
+in the accompanying evidence after execution. No real-browser success is assumed in advance.
+
+The subsequent fresh actual-stack run passed the desktop/mobile UC02 handover/repair and dual-role
+protection flows, then a no-write role matrix (66 groups, 210 pages, 350 reads, 170 denied mutations,
+4 ownership denials and unchanged database fingerprints). Both desktop/mobile administrator security
+flows passed actual UI role changes, disable/activate, password reset, two-session revocation,
+new-password login and exactly one audit per committed action. The original create/name/audit/login
+flows also passed. Reviewed synthetic screenshots and exact source hashes are in
+[the current security evidence](../evidence/admin-session-20261015/README.md); private traces,
+credentials and complete retained histories remain ignored. Earlier evidence stays historical.
+
+Remaining: latest delivered-HEAD hosted CI, affected member review/check, migration-number recheck
+at merge, release/deployed acceptance and final new-page role regression after the dependent feature
+PRs merge. No Issue is closed or whole-team Done claimed here. First-admin bootstrap stays Liu's
+#41/#43 contribution. Development records are factual, not manufactured ideal completion or hours.
+
+### Authorship
+
+Codex-assisted code and verification for Zhang Hanming, under the user's existing implementation
+authorization and Wang's reply supplied by the user. No personally executed human test, GitHub
+approval, public confirmation, effort hours or deployment is invented.

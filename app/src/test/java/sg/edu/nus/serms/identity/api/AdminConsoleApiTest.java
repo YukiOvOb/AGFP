@@ -63,10 +63,66 @@ class AdminConsoleApiTest {
   }
 
   @BeforeEach void setup() {
+    when(identity.isSessionCurrent(any(), anyLong())).thenReturn(true);
     when(accounts.isActiveAdministrator(actor)).thenReturn(true);
     when(accounts.list(anyString(), anyInt(), anyInt())).thenReturn(new AdminUser.Page(List.of(), 0, 0, 20));
     when(audit.list(any(), anyString(), anyString(), any(), any(), anyInt(), anyInt()))
         .thenReturn(new AuditEntry.Page(List.of(), 0, 0, 20));
+  }
+
+  @ParameterizedTest @ValueSource(strings={"BORROWER", "APPROVER", "CUSTODIAN", "MAINTAINER"})
+  void securityMutationsDenyEveryNonAdministratorBeforeLookup(String role) throws Exception {
+    for (String operation : List.of("status", "roles", "password-reset")) {
+      var request = operation.equals("password-reset") ? post("/api/v1/admin/users/"+target+"/"+operation)
+          : patch("/api/v1/admin/users/"+target+"/"+operation);
+      mvc.perform(request.with(as(role)).with(cookieCsrf(true)).contentType("application/json")
+          .content(securityBody(operation))).andExpect(status().isForbidden());
+    }
+    verifyNoInteractions(accounts);
+  }
+
+  String securityBody(String operation) {
+    return switch(operation) {
+      case "status" -> "{\"active\":false,\"expectedVersion\":0}";
+      case "roles" -> "{\"roles\":[\"APPROVER\"],\"expectedVersion\":0}";
+      default -> "{\"newPassword\":\"replacement-test-password\",\"expectedVersion\":0}";
+    };
+  }
+
+  @ParameterizedTest @ValueSource(strings={"status", "roles", "password-reset"})
+  void securityMutationsRequireAuthenticationCsrfAndValidVersion(String operation) throws Exception {
+    String path="/api/v1/admin/users/"+target+"/"+operation;
+    java.util.function.Supplier<org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder> request =
+        () -> operation.equals("password-reset") ? post(path) : patch(path);
+    mvc.perform(request.get().with(cookieCsrf(true)).contentType("application/json").content(securityBody(operation)))
+        .andExpect(status().isUnauthorized());
+    mvc.perform(request.get().with(as("ADMIN")).contentType("application/json").content(securityBody(operation)))
+        .andExpect(status().isForbidden()).andExpect(jsonPath("$.type").value("/problems/csrf"));
+    for (String version : List.of("-1", "null", "\"0\"", "0.5"))
+      mvc.perform(request.get().with(as("ADMIN")).with(cookieCsrf(true)).contentType("application/json")
+          .content(securityBody(operation).replace("\"expectedVersion\":0", "\"expectedVersion\":"+version)))
+          .andExpect(status().isBadRequest());
+    verifyNoInteractions(accounts);
+  }
+
+  @Test void securityMutationsReturnSafeSummaryAndConflictProblems() throws Exception {
+    when(accounts.lockForDisplayNameUpdate(target)).thenReturn(
+        new AdminUser(target, "p@example.test", "P", "ACTIVE", Set.of(AdminUser.Role.BORROWER)));
+    mvc.perform(patch("/api/v1/admin/users/"+target+"/roles").with(as("ADMIN")).with(cookieCsrf(true))
+        .contentType("application/json").content(securityBody("roles"))).andExpect(status().isOk())
+        .andExpect(jsonPath("$.version").value(1)).andExpect(jsonPath("$.roles[0]").value("APPROVER"))
+        .andExpect(jsonPath("$.passwordHash").doesNotExist());
+    when(accounts.lockForDisplayNameUpdate(target)).thenReturn(
+        new AdminUser(target, "p@example.test", "P", "ACTIVE", Set.of(AdminUser.Role.APPROVER), 1));
+    mvc.perform(post("/api/v1/admin/users/"+target+"/password-reset").with(as("ADMIN")).with(cookieCsrf(true))
+        .contentType("application/json").content(securityBody("password-reset")))
+        .andExpect(status().isConflict()).andExpect(jsonPath("$.type").value("/problems/account-version-conflict"));
+  }
+
+  @Test void versionMismatchInvalidatesSessionBeforeAdminPermissionChecks() throws Exception {
+    when(identity.isSessionCurrent(any(), anyLong())).thenReturn(false);
+    mvc.perform(get("/api/v1/admin/users").with(as("ADMIN"))).andExpect(status().isUnauthorized());
+    verifyNoInteractions(accounts);
   }
 
   @Test void anonymousReadsAndWritesAre401WithValidCsrf() throws Exception {

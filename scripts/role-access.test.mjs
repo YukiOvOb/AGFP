@@ -34,8 +34,8 @@ test('all dynamic API/page paths resolve with explicit real-fixture inputs', () 
 });
 test('denied-write matrix includes every existing business mutation family', () => {
   const specs = deniedWrites({ equipmentId: 'e', reservationId: 'r', borrowerId: 'b', loanId: 'l', caseId: 'c', reservationVersion: 1, loanVersion: 1 });
-  assert.equal(specs.length, 15);
-  assert.equal(new Set(specs.map(s => s.route)).size, 15);
+  assert.equal(specs.length, 18);
+  assert.equal(new Set(specs.map(s => s.route)).size, 18);
   assert.equal(specs.find(s => s.id === 'admin display name update').method, 'PATCH');
   for (const spec of specs) assert.ok(Object.values(accounts).some(role => !spec.roles.includes(role)));
   assert.equal(specs.find(s => s.id === 'approval decision').body.decision, 'REJECTED');

@@ -16,6 +16,7 @@ import org.springframework.security.web.context.*;
 import org.springframework.security.web.csrf.*;
 import org.springframework.security.web.savedrequest.NullRequestCache;
 import sg.edu.nus.serms.shared.security.*;
+import sg.edu.nus.serms.identity.service.IdentityService;
 
 @Configuration
 @EnableWebSecurity
@@ -58,11 +59,13 @@ public class SecurityConfig {
       CookieCsrfTokenRepository csrf,
       SecurityContextRepository contexts,
       SecurityProblemWriter problems,
+      IdentityService identity,
       @Value("${springdoc.swagger-ui.enabled:false}") boolean docs)
       throws Exception {
     // The SPA sends the raw Cookie token in a header; no server-rendered token appears in HTML.
     var handler = new CsrfTokenRequestAttributeHandler();
-    http.csrf(c -> c.csrfTokenRepository(csrf).csrfTokenRequestHandler(handler))
+    http.addFilterAfter(new SessionVersionFilter(identity, problems), SecurityContextHolderFilter.class)
+        .csrf(c -> c.csrfTokenRepository(csrf).csrfTokenRequestHandler(handler))
         .securityContext(c -> c.securityContextRepository(contexts).requireExplicitSave(true))
         .requestCache(c -> c.requestCache(new NullRequestCache()))
         .authorizeHttpRequests(

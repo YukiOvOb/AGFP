@@ -9,7 +9,7 @@ test('administrator creates a borrower who can sign in', async ({ page, context 
     roles: ['ADMIN'],
   };
   let signedIn: typeof admin | null = null;
-  let created: (typeof admin & { accountStatus: string }) | null = null;
+  let created: (typeof admin & { accountStatus: string; version: number }) | null = null;
   const password = 'browser-only-password';
   await page.route('**/api/v1/**', async (route) => {
     const request = route.request();
@@ -53,6 +53,7 @@ test('administrator creates a borrower who can sign in', async ({ page, context 
         displayName: body.displayName,
         roles: body.roles,
         accountStatus: 'ACTIVE',
+        version: 0,
       };
       return route.fulfill({ status: 201, json: created });
     }

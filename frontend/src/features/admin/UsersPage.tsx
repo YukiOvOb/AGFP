@@ -15,6 +15,7 @@ import { Field } from '@/components/ui/field';
 import { EmptyState, ErrorState } from '@/components/Feedback';
 import { roleLabels, roleLabel, ROLES } from '@/lib/roles';
 import { EditDisplayNameDialog } from './EditDisplayNameDialog';
+import { AccountSecurityDialog } from './AccountSecurityDialog';
 
 type User = components['schemas']['AdminUser'];
 const column = createColumnHelper<User>();
@@ -32,7 +33,14 @@ const columns = [
   column.display({
     id: 'actions',
     header: 'Actions',
-    cell: (info) => <EditDisplayNameDialog user={info.row.original} />,
+    cell: (info) => (
+      <div className="flex flex-wrap gap-2 min-w-56">
+        <EditDisplayNameDialog user={info.row.original} />
+        {(['roles', 'status', 'password'] as const).map((operation) => (
+          <AccountSecurityDialog key={operation} user={info.row.original} operation={operation} />
+        ))}
+      </div>
+    ),
   }),
 ];
 const schema = z.object({
@@ -89,7 +97,7 @@ export function UsersPage() {
       <PageHeader
         eyebrow="ADMINISTRATION"
         title="Users and roles"
-        description="Create accounts and review their assigned roles. Administrator does not imply any other role."
+        description="Manage accounts and explicit roles. Administrator does not imply any other role."
       />
       <Card>
         <CardContent className="pt-6 space-y-4">
@@ -135,8 +143,8 @@ export function UsersPage() {
         <CardContent className="pt-6 space-y-4">
           <h2>Create account</h2>
           <p className="text-sm text-muted-foreground">
-            Changing existing roles, deactivation and password reset will follow after the
-            session-revocation contract is confirmed.
+            Security changes expire old sessions on their next protected request. You cannot disable
+            yourself or remove the last active administrator.
           </p>
           <form
             onSubmit={(event) => void form.handleSubmit(create)(event)}

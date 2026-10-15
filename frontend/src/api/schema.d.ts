@@ -273,6 +273,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/users/{userId}/password-reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["adminResetUserPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{userId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["adminUpdateUserStatus"];
+        trace?: never;
+    };
+    "/api/v1/admin/users/{userId}/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["adminUpdateUserRoles"];
+        trace?: never;
+    };
     "/api/v1/admin/users/{userId}/display-name": {
         parameters: {
             query?: never;
@@ -896,6 +944,23 @@ export interface components {
             displayName: string;
             accountStatus: string;
             roles: ("BORROWER" | "APPROVER" | "CUSTODIAN" | "MAINTAINER" | "ADMIN")[];
+            /** Format: int64 */
+            version: number;
+        };
+        ResetPasswordRequest: {
+            newPassword: string;
+            /** Format: int64 */
+            expectedVersion: number;
+        };
+        UpdateStatusRequest: {
+            active: boolean;
+            /** Format: int64 */
+            expectedVersion: number;
+        };
+        UpdateRolesRequest: {
+            roles: ("BORROWER" | "APPROVER" | "CUSTODIAN" | "MAINTAINER" | "ADMIN")[];
+            /** Format: int64 */
+            expectedVersion: number;
         };
         UpdateDisplayNameRequest: {
             displayName: string;
@@ -1703,6 +1768,84 @@ export interface operations {
         responses: {
             /** @description Account created */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUser"];
+                };
+            };
+        };
+    };
+    adminResetUserPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUser"];
+                };
+            };
+        };
+    };
+    adminUpdateUserStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateStatusRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUser"];
+                };
+            };
+        };
+    };
+    adminUpdateUserRoles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRolesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

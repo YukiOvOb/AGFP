@@ -33,7 +33,7 @@ public class AdminUserRepository {
     long total = jdbc.queryForObject("SELECT count(*) FROM serms.app_user u" + where,
         Long.class, pattern, pattern);
     var rows = jdbc.query("""
-        SELECT u.user_id, u.email, u.display_name, u.account_status,
+        SELECT u.user_id, u.email, u.display_name, u.account_status, u.session_version,
           coalesce(string_agg(r.code, ',' ORDER BY r.code), '') AS roles
         FROM serms.app_user u
         LEFT JOIN serms.user_role ur USING (user_id) LEFT JOIN serms.role r USING (role_id)
@@ -41,7 +41,7 @@ public class AdminUserRepository {
         (rs, row) -> new AdminUser(rs.getObject("user_id", UUID.class), rs.getString("email"),
             rs.getString("display_name"), rs.getString("account_status"),
             rs.getString("roles").isEmpty() ? Set.of() : new TreeSet<>(Arrays.stream(
-                rs.getString("roles").split(",")).map(AdminUser.Role::valueOf).toList())),
+                rs.getString("roles").split(",")).map(AdminUser.Role::valueOf).toList()), rs.getLong("session_version")),
         pattern, pattern, size, (long) page * size);
     return new AdminUser.Page(rows, total, page, size);
   }
@@ -79,7 +79,7 @@ public class AdminUserRepository {
   /** Serialize name edits without blocking audit FK key-share locks on administrator actors. */
   public AdminUser lockForDisplayNameUpdate(UUID target) {
     return jdbc.query("""
-        SELECT u.user_id, u.email, u.display_name, u.account_status, r.code
+        SELECT u.user_id, u.email, u.display_name, u.account_status, u.session_version, r.code
         FROM serms.app_user u
         LEFT JOIN serms.user_role ur USING (user_id) LEFT JOIN serms.role r USING (role_id)
         WHERE u.user_id = ? FOR NO KEY UPDATE OF u
@@ -87,12 +87,13 @@ public class AdminUserRepository {
           if (!rs.next()) throw new RecordNotFoundException();
           String email = rs.getString("email"), name = rs.getString("display_name"),
               status = rs.getString("account_status");
+          long version = rs.getLong("session_version");
           var roles = new TreeSet<AdminUser.Role>();
           do {
             String role = rs.getString("code");
             if (role != null) roles.add(AdminUser.Role.valueOf(role));
           } while (rs.next());
-          return new AdminUser(target, email, name, status, roles);
+          return new AdminUser(target, email, name, status, roles, version);
         }, target);
   }
 
@@ -109,5 +110,55 @@ public class AdminUserRepository {
           (audit_id, actor_id, action, entity_type, entity_id, outcome, request_id, change_summary)
         VALUES (?, ?, 'USER_DISPLAY_NAME_CHANGED', 'User', ?, 'SUCCESS', ?, 'Administrator changed the account display name')
         """, UUID.randomUUID(), actor, target, "admin-user:" + UUID.randomUUID());
+  }
+
+  /** Same cross-instance lock as first-admin bootstrap; acquire BEFORE any target row locks. */
+  public void lockAdministratorChanges() {
+    jdbc.query("SELECT pg_advisory_xact_lock(?)", rs -> null, 0x5345524d5341444dL);
+  }
+
+  public long activeAdministratorCount() {
+    return jdbc.queryForObject("""
+        SELECT count(*) FROM serms.app_user u
+        WHERE u.account_status='ACTIVE' AND EXISTS (
+          SELECT 1 FROM serms.user_role ur JOIN serms.role r USING(role_id)
+          WHERE ur.user_id=u.user_id AND r.code='ADMIN')
+        """, Long.class);
+  }
+
+  public void updateStatus(UUID target, String status) {
+    requireOne(jdbc.update("UPDATE serms.app_user SET account_status=? WHERE user_id=?", status, target));
+  }
+
+  public void replaceRoles(UUID target, Set<AdminUser.Role> roles) {
+    jdbc.update("DELETE FROM serms.user_role WHERE user_id=?", target);
+    for (var role : roles) requireOne(jdbc.update("""
+        INSERT INTO serms.user_role(user_id,role_id) SELECT ?,role_id FROM serms.role WHERE code=?
+        """, target, role.name()));
+  }
+
+  public void resetPassword(UUID target, String hash) {
+    requireOne(jdbc.update("UPDATE serms.app_user SET password_hash=? WHERE user_id=?", hash, target));
+  }
+
+  public void advanceSessionVersion(UUID target, long expected) {
+    requireOne(jdbc.update("""
+        UPDATE serms.app_user SET session_version=session_version+1
+        WHERE user_id=? AND session_version=?
+        """, target, expected));
+  }
+
+  public void auditSecurityChange(UUID actor, UUID target, String action) {
+    // Only fixed server-owned action names; no profile input, password or hash in the audit.
+    jdbc.update("""
+        INSERT INTO serms.audit_log
+          (audit_id, actor_id, action, entity_type, entity_id, outcome, request_id, change_summary)
+        VALUES (?, ?, ?, 'User', ?, 'SUCCESS', ?, 'Administrator changed account security settings and revoked old sessions')
+        """, UUID.randomUUID(), actor, action, target, "admin-security:" + UUID.randomUUID());
+  }
+
+  private void requireOne(int changed) {
+    if (changed != 1) throw new sg.edu.nus.serms.identity.service.AccountChangeConflictException(
+        sg.edu.nus.serms.identity.service.AccountChangeConflictException.Reason.STALE_ACCOUNT);
   }
 }
