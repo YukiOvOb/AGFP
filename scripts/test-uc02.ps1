@@ -9,7 +9,7 @@ $taskRunId = [guid]::NewGuid().ToString('N').Substring(0,10)
 $taskDirectory = Join-Path $taskRepo ".cache/uc02-$taskRunId"
 $taskContainer = "serms-uc02-$taskRunId"
 $taskPassword = [guid]::NewGuid().ToString('N')
-$taskKeys = foreach ($taskPrefix in @('SERMS_APP_TEST','SERMS_UC02_TEST','SERMS_UC03_TEST')) {
+$taskKeys = foreach ($taskPrefix in @('SERMS_APP_TEST','SERMS_UC02_TEST','SERMS_UC03_TEST','SERMS_UC05_TEST')) {
   foreach ($taskSuffix in @('JDBC_URL','DB_USER','DB_PASSWORD')) { "${taskPrefix}_${taskSuffix}" }
 }
 $taskPrevious = @{}
@@ -47,7 +47,8 @@ try {
   foreach ($taskEntry in @(
       @{Prefix='SERMS_APP_TEST'; Database="serms_test_uc02_history_$taskRunId"},
       @{Prefix='SERMS_UC02_TEST'; Database="serms_test_uc02_$taskRunId"},
-      @{Prefix='SERMS_UC03_TEST'; Database="serms_test_uc03_$taskRunId"})) {
+      @{Prefix='SERMS_UC03_TEST'; Database="serms_test_uc03_$taskRunId"},
+      @{Prefix='SERMS_UC05_TEST'; Database="serms_test_uc05_$taskRunId"})) {
     if ($PostgresBin) {
       & (Join-Path $taskPostgresBin 'createdb.exe') -h 127.0.0.1 -p $taskPort -U serms_test $taskEntry.Database
     } else { docker exec $taskContainer createdb -U serms_test $taskEntry.Database }
@@ -62,9 +63,10 @@ try {
     & $taskMaven -B -Puc02-postgres-it clean verify
     if ($LASTEXITCODE -ne 0) { throw 'Application regression or UC02 PostgreSQL acceptance failed' }
     if ($IncludeLoanIntegration) {
-      # Reuse the compiled application, but run UC03 in its own fresh database and keep both XML reports.
+      # The main profile includes UC03 and UC05. Give each a fresh database; otherwise UC05's
+      # fallback to the UC03 connection imports unrelated active loans into its global projection.
       & $taskMaven -B -Puc03-postgres-it failsafe:integration-test failsafe:verify
-      if ($LASTEXITCODE -ne 0) { throw 'UC03 PostgreSQL integration regression failed' }
+      if ($LASTEXITCODE -ne 0) { throw 'UC03/UC05 PostgreSQL integration regression failed' }
     }
   } finally { Pop-Location }
 } finally {

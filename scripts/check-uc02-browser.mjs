@@ -16,7 +16,7 @@ const runId = randomUUID().replaceAll('-', '').slice(0, 10);
 const summary = {
   status: 'running', mocked: false, runId, baseURL, checks: [], records: [],
   startedAt: new Date().toISOString(),
-  remaining: ['Admin users/audit pages (#18)', 'Overdue page/scanner (#19)',
+  remaining: ['Admin users/audit pages (#18)', 'Equipment management pages (#17)',
     'Remote CI and independent member/deployment acceptance'],
 };
 const pass = name => { summary.checks.push(name); console.log('PASS ' + name); };
@@ -35,9 +35,9 @@ function fixtureSql(file, variables = {}) {
 const roles = {
   borrower: ['Overview', 'Find equipment', 'Loans and returns', 'My reservations', 'Maintenance', 'Notifications'],
   approver: ['Overview', 'Find equipment', 'Approvals', 'Notifications'],
-  custodian: ['Overview', 'Find equipment', 'Loans and returns', 'Maintenance', 'Notifications'],
+  custodian: ['Overview', 'Find equipment', 'Loans and returns', 'Maintenance', 'Notifications', 'Overdue'],
   maintainer: ['Overview', 'Find equipment', 'Maintenance', 'Notifications'],
-  admin: ['Overview', 'Find equipment', 'Maintenance', 'Notifications', 'Reports'],
+  admin: ['Overview', 'Find equipment', 'Maintenance', 'Notifications', 'Overdue', 'Reports'],
 };
 const localTime = ms => new Date(ms + 8 * 3600000).toISOString().slice(0, 16);
 async function signIn(context, account) {
@@ -102,9 +102,11 @@ async function review(page, id) {
   await page.locator('a[href="/approvals/' + id + '"]').click();
   await expect(page.getByRole('heading', { name: 'Request details', exact: true })).toBeVisible();
 }
-async function readNotification(page, id) {
+async function readNotification(page, item) {
   await page.goto(baseURL + '/notifications');
-  const row = page.getByRole('row').filter({ hasText: id });
+  // UC05 now renders the equipment name, not an internal reservation UUID. Select the
+  // decision message, not the separate submitted/collection messages for the same item.
+  const row = page.getByRole('row').filter({ hasText: 'Your reservation for ' + item.name + ' has been confirmed.' });
   await expect(async () => {
     await page.getByRole('button', { name: 'Refresh', exact: true }).click();
     await expect(row).toHaveCount(1);
@@ -287,7 +289,7 @@ try {
       await fit(approver, 'approval confirmation');
       await approver.screenshot({ path: path.join(evidence, device + '-approved.png'), fullPage: true });
       pass(device + ': separate approver confirms actual borrower request');
-      await readNotification(borrower, accepted.reservationId);
+      await readNotification(borrower, item);
       pass(device + ': committed approval notification delivered and marked read');
 
       // Real wall time, not a fake frontend or backend clock.

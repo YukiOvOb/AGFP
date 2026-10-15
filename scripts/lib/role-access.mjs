@@ -18,14 +18,14 @@ export const pages = [
   { route: '/maintenance/cases/:caseId', title: '^Case details$', roles: ['CUSTODIAN', 'MAINTAINER', 'ADMIN'] },
   { route: '/maintenance/report', title: '^Maintenance report$', roles: ['ADMIN'] },
   { route: '/reports', title: '^Reports$', roles: ['ADMIN'], menu: 'Reports' },
+  { route: '/overdue', title: '^Overdue loans$', roles: ['CUSTODIAN', 'ADMIN'], menu: 'Overdue' },
 ];
 export const unavailablePages = [
   { route: '/manage/equipment', issue: 17, owner: 'Zhou Fanhao' },
   { route: '/admin/users', issue: 18, owner: 'Zhang Hanming' },
   { route: '/admin/audit', issue: 18, owner: 'Zhang Hanming' },
-  { route: '/overdue', issue: 19, owner: 'Wang Yuanmeng' },
 ];
-export const menuOrder = ['/', '/equipment', '/loans', '/reservations', '/maintenance', '/approvals', '/notifications', '/reports'];
+export const menuOrder = ['/', '/equipment', '/loans', '/reservations', '/maintenance', '/approvals', '/notifications', '/overdue', '/reports'];
 const read = (id, route, roles) => ({ id, route, roles });
 export const reads = [
   read('identity', '/api/v1/auth/me', all),
@@ -50,6 +50,7 @@ export const reads = [
   read('equipment maintenance history', '/api/v1/maintenance/equipment/:equipmentId/history', ['CUSTODIAN', 'ADMIN']),
   read('maintenance report', '/api/v1/maintenance/report?:period', ['ADMIN']),
   read('combined report', '/api/v1/reports?:period', ['ADMIN']),
+  read('overdue projection', '/api/v1/overdue', ['CUSTODIAN', 'ADMIN']),
 ];
 export function resolveRoute(route, fixture, period) {
   return route.replace(/:([A-Za-z]+)/g, (_, key) => {

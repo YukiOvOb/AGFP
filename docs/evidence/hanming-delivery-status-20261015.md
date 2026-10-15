@@ -6,7 +6,7 @@ As checked on 2026-10-15 against freshly fetched main `2e9eda35973f0929c19fa3e61
 
 UC02 is substantially implemented, but the current task allocation includes more than UC02. [Issue #18](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/issues/18), [plan #27](https://github.com/cpg25ncu/shared-equipment-reservation-and-maintenance-system/issues/27) and [D-007](../collaboration/decisions.md#d-007-completion-task-ownership) assign Hanming the **admin console, user API, guard rails and audit viewer**. Only the first-admin bootstrap was split to Liu Tongyao's #41 and completed in #43. Admin pages are not merely another owner's dependency.
 
-## Requirement → evidence → remaining acceptance
+## Historical pre-UC05-sync snapshot: requirement → evidence → remaining acceptance
 
 | Work | Verified evidence | Status / next action |
 | --- | --- | --- |
@@ -38,3 +38,7 @@ UC02 is substantially implemented, but the current task allocation includes more
 4. After #17/#18/#19 land, extend the explicit matrix and rerun real all-role workflows. Then obtain member checks and final deployed acceptance, and update the report from these records. Do not invent hours or a percentage-complete figure.
 
 Authorship: Codex-assisted status audit for Hanming, based on actual repository/task evidence. No teammate approval or delegation beyond the published task assignment is implied.
+
+## UC05/main synchronization update
+
+The user subsequently authorized synchronizing PR #46 with main `f9596c1`; normal merge `852fc5f` retains both branches. [The synchronization log](../devlog/2026-10-15-hanming-uc05-main-sync.md) supersedes only the old snapshot's absent Overdue/CodeQL/Dependabot assumptions: these features/configurations are now present from #12/#39. Presence is not final security/performance/deployment acceptance. The explicit current-page matrix is extended to 13 routes/23 read families and must be re-executed on the combined source. Old screenshots/CI remain version-bound historical evidence, not proof of the new combination. #18 remains Hanming's next development task; only bootstrap #41 was completed by Liu.

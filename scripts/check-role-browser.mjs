@@ -13,16 +13,20 @@ const require = createRequire(path.join(repo, 'frontend/package.json'));
 const { chromium, expect } = require('@playwright/test');
 const evidence = path.join(runtime, 'role-browser-' + Date.now());
 fs.mkdirSync(evidence, { recursive: true });
-const publicDir = path.join(repo, 'docs/evidence/role-access-20261015');
+const publicDir = path.join(repo, 'docs/evidence/role-access-uc05-sync-20261015');
 const publish = process.argv.includes('--publishable-evidence');
 if (publish) fs.mkdirSync(publicDir, { recursive: true });
 const inputs = ['scripts/check-role-browser.mjs', 'scripts/lib/role-access.mjs',
   'scripts/lib/local-demo-client.mjs', 'scripts/lib/uc02-browser-guard.sql',
   'scripts/role-browser-fixture.sql', 'scripts/role-browser-snapshot.sql',
-  'frontend/src/app/App.tsx', 'frontend/src/app/RequireRole.tsx', 'frontend/src/app/navigation.ts'];
+  'frontend/src/app/App.tsx', 'frontend/src/app/RequireRole.tsx', 'frontend/src/app/navigation.ts',
+  'frontend/src/styles/shared.css',
+  'frontend/src/features/overdue/OverduePage.tsx',
+  'app/src/main/java/sg/edu/nus/serms/notification/api/OverdueController.java',
+  'app/src/main/java/sg/edu/nus/serms/notification/service/OverdueLoanService.java'];
 const summary = {
   status: 'running', mocked: false, startedAt: new Date().toISOString(), checks: [],
-  pages: [], apiReads: [], deniedWrites: [], ownership: [],
+  pages: [], apiReads: [], deniedWrites: [], ownership: [], overdueChecks: [],
   unavailable: unavailablePages.map(x => ({ ...x, status: 'not implemented at tested baseline' })),
   sourceHashes: inputs.map(file => ({ path: file,
     sha256: createHash('sha256').update(fs.readFileSync(path.join(repo, file))).digest('hex') })),
@@ -129,6 +133,20 @@ try {
             await expect(page.getByRole('heading', { level: 1,
               name: spec.fixtureHeading ? fixture[spec.fixtureHeading] : new RegExp(spec.title) })).toBeVisible();
             await expect(page.locator('main [role="alert"]')).toHaveCount(0);
+            if (spec.route === '/overdue') {
+              const response = await request(page, '/api/v1/overdue');
+              assert.equal(response.status, 200);
+              if (response.body.totalElements === 0)
+                await expect(page.getByRole('heading', { name: 'No overdue loans', exact: true })).toBeVisible();
+              const sorted = page.waitForResponse(r => new URL(r.url()).pathname === '/api/v1/overdue' && new URL(r.url()).searchParams.get('order') === 'asc');
+              await page.getByLabel('Sort by overdue duration').selectOption('asc');
+              const sortedStatus = (await sorted).status();
+              assert.equal(sortedStatus, 200);
+              summary.overdueChecks.push({ device, account, totalElements: response.body.totalElements,
+                emptyState: response.body.totalElements === 0, sortStatus: sortedStatus });
+              await expect(page.locator('main [role="alert"]')).toHaveCount(0);
+              await screenshot(page, device + '-' + account + '-overdue.png');
+            }
           }
           await fit(page);
           summary.pages.push({ device, account, route: spec.route, result: !role ? 'login redirect' : allowed ? 'allowed' : 'denied' });

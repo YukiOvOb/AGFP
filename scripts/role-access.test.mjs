@@ -22,6 +22,11 @@ test('ADMIN never implicitly approves, reserves or checks out', () => {
   for (const route of ['/approvals', '/reservations', '/loans'])
     assert.ok(!pages.find(p => p.route === route).roles.includes('ADMIN'));
 });
+test('overdue is implemented for operators only, not a future or implicitly inherited page', () => {
+  assert.deepEqual(pages.find(p => p.route === '/overdue').roles, ['CUSTODIAN', 'ADMIN']);
+  assert.deepEqual(reads.find(p => p.id === 'overdue projection').roles, ['CUSTODIAN', 'ADMIN']);
+  assert.ok(!unavailablePages.some(p => p.route === '/overdue'));
+});
 test('all dynamic API/page paths resolve with explicit real-fixture inputs', () => {
   const fixture = { equipmentId: 'equipment', reservationId: 'reservation', loanId: 'loan', caseId: 'case' };
   for (const spec of [...pages, ...reads]) assert.ok(!resolveRoute(spec.route, fixture, 'from=a&to=b').includes(':'));

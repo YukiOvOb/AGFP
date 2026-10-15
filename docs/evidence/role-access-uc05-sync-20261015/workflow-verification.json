@@ -1,0 +1,114 @@
+{
+  "status": "passed",
+  "mocked": false,
+  "runId": "52cadb7a47",
+  "startedAt": "2026-10-15T07:34:16.230Z",
+  "finishedAt": "2026-10-15T07:38:10.387Z",
+  "checks": [
+    "desktop: borrower real UI login, menu and backend permissions",
+    "desktop: approver real UI login, menu and backend permissions",
+    "desktop: custodian real UI login, menu and backend permissions",
+    "desktop: maintainer real UI login, menu and backend permissions",
+    "desktop: admin real UI login, menu and backend permissions",
+    "desktop: real empty approval queue",
+    "desktop: required rejection comment, persisted rejection and borrower status",
+    "desktop: rejection releases real allocation",
+    "desktop: separate approver confirms actual borrower request",
+    "desktop: committed approval notification delivered and marked read",
+    "desktop: custodian physical checkout and damaged return with required note",
+    "desktop: auto-created linked maintenance assigned, diagnosed, repaired and resolved",
+    "desktop: equipment restored and actual administrator report page loads",
+    "desktop: real dual-role login and own pending browser reservation",
+    "desktop: own-request marker and UI block both decision controls",
+    "desktop: browser-forged self APPROVED is 403 with no persisted side effects",
+    "desktop: browser-forged self REJECTED is 403 with no persisted side effects",
+    "desktop: a different real approver can decide the same request exactly once",
+    "mobile: borrower real UI login, menu and backend permissions",
+    "mobile: approver real UI login, menu and backend permissions",
+    "mobile: custodian real UI login, menu and backend permissions",
+    "mobile: maintainer real UI login, menu and backend permissions",
+    "mobile: admin real UI login, menu and backend permissions",
+    "mobile: real empty approval queue",
+    "mobile: required rejection comment, persisted rejection and borrower status",
+    "mobile: rejection releases real allocation",
+    "mobile: separate approver confirms actual borrower request",
+    "mobile: committed approval notification delivered and marked read",
+    "mobile: custodian physical checkout and damaged return with required note",
+    "mobile: auto-created linked maintenance assigned, diagnosed, repaired and resolved",
+    "mobile: equipment restored and actual administrator report page loads",
+    "mobile: real dual-role login and own pending browser reservation",
+    "mobile: own-request marker and UI block both decision controls",
+    "mobile: browser-forged self APPROVED is 403 with no persisted side effects",
+    "mobile: browser-forged self REJECTED is 403 with no persisted side effects",
+    "mobile: a different real approver can decide the same request exactly once",
+    "temporary dual-role assignment restored; pre-existing roles untouched"
+  ],
+  "records": [
+    {
+      "reservationId": "acd2ab15-ff32-442e-a9c3-ed9ea80f83f9",
+      "purpose": "desktop rejection 1792049665244"
+    },
+    {
+      "reservationId": "04c7b5b6-aba7-464b-ba50-da1f31fa80a8",
+      "purpose": "desktop approval-to-damaged-return 1792049667016"
+    },
+    {
+      "reservationId": "5473b3ec-82de-495a-b665-91fe71b924d4",
+      "purpose": "desktop self-approval 1792049765658"
+    },
+    {
+      "reservationId": "5a0dd06c-a0f2-42cc-89c1-20d444482519",
+      "purpose": "mobile rejection 1792049775921"
+    },
+    {
+      "reservationId": "740d014e-3022-4220-ac7a-5207108486fc",
+      "purpose": "mobile approval-to-damaged-return 1792049777432"
+    },
+    {
+      "reservationId": "d78c7353-4691-4999-b8aa-ff3dcd19b2bf",
+      "purpose": "mobile self-approval 1792049885870"
+    }
+  ],
+  "dualRoleAddedByRun": true,
+  "dualRoleRestored": true,
+  "startingHead": "852fc5f5f861e10f955c4f5cd0e6cc178968de4d",
+  "fetchedMainAtStart": "f9596c14529fb67577877b0ac8ba25d758e8bf00",
+  "sourceHashes": [
+    {
+      "path": "scripts/check-uc02-browser.mjs",
+      "sha256": "d34cc9c7d814da426fb7cf84bea1894258cec746799b65c250ca44fdfa2c20cf"
+    },
+    {
+      "path": "scripts/uc02-browser-fixtures.sql",
+      "sha256": "3163e086bdbadaf6ed3334d22977e1c2e4166d321f78c956b39fa047e7c718eb"
+    },
+    {
+      "path": "scripts/uc02-browser-self-snapshot.sql",
+      "sha256": "4e21ccc41ee79b11902e14c2cf1fd47583f7e4b5ed73a0d7d080138e77d01155"
+    },
+    {
+      "path": "scripts/uc02-browser-role-cleanup.sql",
+      "sha256": "b81311250112d813322448bb26f37d5ab7aae10d771e606c9562023e7f7128ba"
+    },
+    {
+      "path": "scripts/lib/uc02-browser-guard.sql",
+      "sha256": "e5fca544ce509e87fbb43e626625374a81eb760a7132f59cf1e93a752f1a5642"
+    },
+    {
+      "path": "frontend/src/app/App.tsx",
+      "sha256": "0617838878e850616e08020639b3322156c56d62fc25660073657be3dca33661"
+    },
+    {
+      "path": "frontend/src/app/RequireRole.tsx",
+      "sha256": "49cc22cead82f15fd219b1160bf779581dbc8cdf402417a14a691072a0d53f41"
+    },
+    {
+      "path": "frontend/src/app/navigation.ts",
+      "sha256": "95dc9d79131079da703823c678346fdfd05b34869ace8633ce54249fe1d09542"
+    },
+    {
+      "path": "frontend/src/styles/shared.css",
+      "sha256": "2f2cb86772ca4ecc3e80a4a555c36252e670ad3c85564dc5ef8753a4381b7d3a"
+    }
+  ]
+}
