@@ -39,12 +39,27 @@ class AdminConsoleApiTest {
   @MockitoBean AuditQueryRepository audit;
   @MockitoBean IdentityService identity;
   final UUID actor = UUID.randomUUID();
+  final UUID target = UUID.randomUUID();
+  final String renameBody = "{\"displayName\":\"Renamed\",\"expectedDisplayName\":\"Original\"}";
+
+  String renameUrl() { return "/api/v1/admin/users/" + target + "/display-name"; }
   final String body = """
       {"email":"person@example.test","displayName":"Person","initialPassword":"correct horse battery","roles":["BORROWER"]}
       """;
 
   RequestPostProcessor as(String... roles) {
     return user(new SermsUserPrincipal(actor, "admin@example.test", "Admin", Set.of(roles)));
+  }
+
+  RequestPostProcessor cookieCsrf(boolean valid) throws Exception {
+    var cookie = mvc.perform(get("/api/v1/auth/csrf")).andExpect(status().isNoContent())
+        .andReturn().getResponse().getCookie("XSRF-TOKEN");
+    assertThat(cookie).isNotNull();
+    return request -> {
+      request.setCookies(cookie);
+      request.addHeader("X-XSRF-TOKEN", valid ? cookie.getValue() : "invalid-token");
+      return request;
+    };
   }
 
   @BeforeEach void setup() {
@@ -57,7 +72,9 @@ class AdminConsoleApiTest {
   @Test void anonymousReadsAndWritesAre401WithValidCsrf() throws Exception {
     mvc.perform(get("/api/v1/admin/users")).andExpect(status().isUnauthorized());
     mvc.perform(get("/api/v1/admin/audit")).andExpect(status().isUnauthorized());
-    mvc.perform(post("/api/v1/admin/users").with(csrf()).contentType("application/json").content(body))
+    mvc.perform(post("/api/v1/admin/users").with(cookieCsrf(true)).contentType("application/json").content(body))
+        .andExpect(status().isUnauthorized());
+    mvc.perform(patch(renameUrl()).with(cookieCsrf(true)).contentType("application/json").content(renameBody))
         .andExpect(status().isUnauthorized());
     verifyNoInteractions(accounts, audit);
   }
@@ -66,8 +83,10 @@ class AdminConsoleApiTest {
   void eachNonAdminRoleCannotListOrCreateOrReadAudit(String role) throws Exception {
     mvc.perform(get("/api/v1/admin/users").with(as(role))).andExpect(status().isForbidden());
     mvc.perform(get("/api/v1/admin/audit").with(as(role))).andExpect(status().isForbidden());
-    mvc.perform(post("/api/v1/admin/users").with(as(role)).with(csrf())
+    mvc.perform(post("/api/v1/admin/users").with(as(role)).with(cookieCsrf(true))
         .contentType("application/json").content(body)).andExpect(status().isForbidden());
+    mvc.perform(patch(renameUrl()).with(as(role)).with(cookieCsrf(true))
+        .contentType("application/json").content(renameBody)).andExpect(status().isForbidden());
     verifyNoInteractions(accounts, audit);
   }
 
@@ -75,7 +94,7 @@ class AdminConsoleApiTest {
     mvc.perform(get("/api/v1/admin/users").with(as("ADMIN"))).andExpect(status().isOk())
         .andExpect(jsonPath("$.content").isArray());
     mvc.perform(get("/api/v1/admin/audit").with(as("ADMIN"))).andExpect(status().isOk());
-    String response = mvc.perform(post("/api/v1/admin/users").with(as("ADMIN")).with(csrf())
+    String response = mvc.perform(post("/api/v1/admin/users").with(as("ADMIN")).with(cookieCsrf(true))
         .contentType("application/json").content(body)).andExpect(status().isCreated())
         .andExpect(jsonPath("$.roles[0]").value("BORROWER")).andReturn().getResponse().getContentAsString();
     assertThat(response).doesNotContain("password", "correct horse battery", "{bcrypt}");
@@ -85,7 +104,7 @@ class AdminConsoleApiTest {
 
   @Test void missingAndInvalidCsrfCannotCreate() throws Exception {
     for (var request : List.of(post("/api/v1/admin/users").with(as("ADMIN")),
-        post("/api/v1/admin/users").with(as("ADMIN")).with(csrf().useInvalidToken())))
+        post("/api/v1/admin/users").with(as("ADMIN")).with(cookieCsrf(false))))
       mvc.perform(request.contentType("application/json").content(body)).andExpect(status().isForbidden())
           .andExpect(jsonPath("$.type").value("/problems/csrf"));
     verifyNoInteractions(accounts);
@@ -98,14 +117,14 @@ class AdminConsoleApiTest {
       "{\"email\":\"a@example.test\",\"displayName\":\"P\",\"initialPassword\":\"correct horse battery\",\"roles\":[]}",
       "{\"email\":\"a@example.test\",\"displayName\":\"P\",\"initialPassword\":\"correct horse battery\",\"roles\":[\"SUPERUSER\"]}"})
   void invalidInputsAre400WithoutWrites(String invalid) throws Exception {
-    mvc.perform(post("/api/v1/admin/users").with(as("ADMIN")).with(csrf())
+    mvc.perform(post("/api/v1/admin/users").with(as("ADMIN")).with(cookieCsrf(true))
         .contentType("application/json").content(invalid)).andExpect(status().isBadRequest());
     verify(accounts, never()).create(any(), any(), any(), any(), any());
   }
 
   @Test void duplicateEmailIsSafe409() throws Exception {
     doThrow(new EmailAlreadyUsedException()).when(accounts).create(any(), any(), any(), any(), any());
-    mvc.perform(post("/api/v1/admin/users").with(as("ADMIN")).with(csrf())
+    mvc.perform(post("/api/v1/admin/users").with(as("ADMIN")).with(cookieCsrf(true))
         .contentType("application/json").content(body)).andExpect(status().isConflict())
         .andExpect(jsonPath("$.type").value("/problems/email-in-use"));
     verify(accounts, never()).auditCreation(any(), any());
@@ -123,11 +142,67 @@ class AdminConsoleApiTest {
     when(accounts.isActiveAdministrator(actor)).thenReturn(false);
     mvc.perform(get("/api/v1/admin/users").with(as("ADMIN"))).andExpect(status().isForbidden());
     mvc.perform(get("/api/v1/admin/audit").with(as("ADMIN"))).andExpect(status().isForbidden());
+    mvc.perform(patch(renameUrl()).with(as("ADMIN")).with(cookieCsrf(true)).contentType("application/json").content(renameBody))
+        .andExpect(status().isForbidden());
   }
 
   @Test void directServiceCallsWithoutAnAdminAuthorityAreDenied() {
     org.springframework.security.core.context.SecurityContextHolder.clearContext();
     assertThatThrownBy(() -> users.list(actor, "", 0, 20))
         .isInstanceOf(org.springframework.security.authentication.AuthenticationCredentialsNotFoundException.class);
+  }
+
+  @Test void adminUpdatesOnlyTheDisplayNameWithRealCsrfCookieAndSafeResponse() throws Exception {
+    var cookie = mvc.perform(get("/api/v1/auth/csrf")).andReturn().getResponse().getCookie("XSRF-TOKEN");
+    assertThat(cookie).isNotNull();
+    when(accounts.lockForDisplayNameUpdate(target)).thenReturn(
+        new AdminUser(target, "target@example.test", "Original", "DISABLED", Set.of(AdminUser.Role.BORROWER)));
+    mvc.perform(patch(renameUrl()).with(as("ADMIN")).cookie(cookie).header("X-XSRF-TOKEN", cookie.getValue())
+        .contentType("application/json").content(renameBody)).andExpect(status().isOk())
+        .andExpect(jsonPath("$.displayName").value("Renamed"))
+        .andExpect(jsonPath("$.accountStatus").value("DISABLED"))
+        .andExpect(jsonPath("$.roles[0]").value("BORROWER"))
+        .andExpect(jsonPath("$.passwordHash").doesNotExist());
+    verify(accounts).updateDisplayName(target, "Original", "Renamed");
+    verify(accounts).auditDisplayNameChange(actor, target);
+  }
+
+  @Test void missingAndInvalidCsrfCannotRename() throws Exception {
+    for (var request : List.of(patch(renameUrl()).with(as("ADMIN")),
+        patch(renameUrl()).with(as("ADMIN")).with(cookieCsrf(false))))
+      mvc.perform(request.contentType("application/json").content(renameBody))
+          .andExpect(status().isForbidden()).andExpect(jsonPath("$.type").value("/problems/csrf"));
+    verifyNoInteractions(accounts);
+  }
+
+  @ParameterizedTest @ValueSource(strings = {
+      "{}", "{\"displayName\":\"New\"}", "{\"displayName\":\" \",\"expectedDisplayName\":\"Old\"}",
+      "{\"displayName\":\"New\",\"expectedDisplayName\":null}",
+      "{\"displayName\":\"New\",\"expectedDisplayName\":\" \"}"})
+  void invalidRenameInputsAre400(String invalid) throws Exception {
+    mvc.perform(patch(renameUrl()).with(as("ADMIN")).with(cookieCsrf(true)).contentType("application/json").content(invalid))
+        .andExpect(status().isBadRequest()).andExpect(jsonPath("$.type").value("/problems/validation"));
+    verifyNoInteractions(accounts);
+  }
+
+  @Test void unknownTargetAndStaleNameHaveDistinctSafeProblems() throws Exception {
+    when(accounts.lockForDisplayNameUpdate(target)).thenThrow(new sg.edu.nus.serms.shared.domain.RecordNotFoundException());
+    mvc.perform(patch(renameUrl()).with(as("ADMIN")).with(cookieCsrf(true)).contentType("application/json").content(renameBody))
+        .andExpect(status().isNotFound()).andExpect(jsonPath("$.type").value("/problems/not-found"));
+    doReturn(new AdminUser(target, "p@example.test", "Another name", "ACTIVE", Set.of(AdminUser.Role.ADMIN)))
+        .when(accounts).lockForDisplayNameUpdate(target);
+    mvc.perform(patch(renameUrl()).with(as("ADMIN")).with(cookieCsrf(true)).contentType("application/json").content(renameBody))
+        .andExpect(status().isConflict()).andExpect(jsonPath("$.type").value("/problems/display-name-conflict"));
+    verify(accounts, never()).updateDisplayName(any(), any(), any());
+    verify(accounts, never()).auditDisplayNameChange(any(), any());
+  }
+
+  @Test void oversizedNameAndMalformedTargetAre400() throws Exception {
+    mvc.perform(patch(renameUrl()).with(as("ADMIN")).with(cookieCsrf(true)).contentType("application/json")
+        .content("{\"displayName\":\"" + "x".repeat(201) + "\",\"expectedDisplayName\":\"Old\"}"))
+        .andExpect(status().isBadRequest());
+    mvc.perform(patch("/api/v1/admin/users/invalid/display-name").with(as("ADMIN")).with(cookieCsrf(true))
+        .contentType("application/json").content(renameBody)).andExpect(status().isBadRequest());
+    verifyNoInteractions(accounts);
   }
 }

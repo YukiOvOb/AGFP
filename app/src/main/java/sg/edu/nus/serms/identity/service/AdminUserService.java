@@ -42,4 +42,20 @@ public class AdminUserService {
     users.auditCreation(actor, id);
     return new AdminUser(id, normalizedEmail, normalizedName, "ACTIVE", assignedRoles);
   }
+
+  @Transactional
+  public AdminUser updateDisplayName(UUID actor, UUID target, String displayName, String expectedDisplayName) {
+    access.requireAdministrator(actor);
+    String normalized = AdminUserRules.displayName(displayName);
+    if (target == null || expectedDisplayName == null || expectedDisplayName.isBlank()
+        || expectedDisplayName.length() > 200)
+      throw new IllegalArgumentException("The current display name is required");
+    var current = users.lockForDisplayNameUpdate(target);
+    if (!current.displayName().equals(expectedDisplayName)) throw new DisplayNameConflictException();
+    // A no-op is idempotent and does not manufacture an audit record for a change that never happened.
+    if (current.displayName().equals(normalized)) return current;
+    users.updateDisplayName(target, expectedDisplayName, normalized);
+    users.auditDisplayNameChange(actor, target);
+    return new AdminUser(target, current.email(), normalized, current.accountStatus(), current.roles());
+  }
 }

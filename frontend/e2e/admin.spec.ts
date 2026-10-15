@@ -20,7 +20,7 @@ test('administrator creates a borrower who can sign in', async ({ page, context 
       ]);
       return route.fulfill({ status: 204 });
     }
-    if (request.method() === 'POST')
+    if (['POST', 'PATCH'].includes(request.method()))
       expect(request.headers()['x-xsrf-token']).toBe('admin-browser-csrf');
     if (path.endsWith('/auth/login')) {
       const body = request.postDataJSON();
@@ -56,6 +56,15 @@ test('administrator creates a borrower who can sign in', async ({ page, context 
       };
       return route.fulfill({ status: 201, json: created });
     }
+    if (path.endsWith('/display-name') && request.method() === 'PATCH') {
+      expect(signedIn.roles).toEqual(['ADMIN']);
+      const body = request.postDataJSON();
+      expect(body.expectedDisplayName).toBe('New Borrower');
+      expect(body.displayName).toBe('Renamed Borrower');
+      expect(created).not.toBeNull();
+      created = { ...created!, displayName: body.displayName };
+      return route.fulfill({ json: created });
+    }
     if (path === '/api/v1/admin/users')
       return route.fulfill({
         json: {
@@ -73,11 +82,18 @@ test('administrator creates a borrower who can sign in', async ({ page, context 
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.getByRole('link', { name: 'Users and roles', exact: true }).click();
   await page.getByLabel('Email').fill('new-borrower@example.test');
-  await page.getByLabel('Display name').fill('New Borrower');
+  await page.getByLabel('Display name', { exact: true }).fill('New Borrower');
   await page.getByLabel('Initial password').fill(password);
   await page.getByRole('button', { name: 'Create account' }).click();
   await expect(page.getByText('Account created. The user can now sign in.')).toBeVisible();
   await expect(page.getByLabel('Initial password')).toHaveValue('');
+  await page
+    .getByRole('button', { name: 'Edit display name for new-borrower@example.test' })
+    .click();
+  await page.getByLabel('New display name').fill('Renamed Borrower');
+  await page.getByRole('button', { name: 'Save name' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('cell', { name: 'Renamed Borrower', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Sign out' }).click();
   await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible();
   // Start a fresh sign-in rather than returning the borrower to the previous ADMIN-only URL.
@@ -88,5 +104,8 @@ test('administrator creates a borrower who can sign in', async ({ page, context 
   await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
   await page.getByRole('link', { name: 'Overview', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: /^Welcome,/ })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: /^Welcome, Renamed Borrower/ }),
+  ).toBeVisible();
   await expect(page.getByRole('link', { name: 'Users and roles', exact: true })).toHaveCount(0);
 });

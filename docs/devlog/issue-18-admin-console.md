@@ -81,17 +81,89 @@ and account-creation denial; all user/business/audit/notification-read/role fing
 unchanged. [Source-bound matrix and workflow evidence](../evidence/role-access-admin-foundation-20261015/README.md).
 No synthetic accounts or immutable audit history were removed to satisfy the old fixture guard.
 
-### Deviations and follow-ups
+### Deviations and follow-ups (first slice)
 
-This is **partial #18**, not completion: display-name editing, existing-account role changes,
-activation/deactivation, password reset, last-active-admin concurrency and global next-request
-session revocation remain. Existing login/session behavior is not modified before Wang's affected-
-owner confirmation. The [contract proposal](../contracts/admin-console.md) gives concrete choices.
-No Wang confirmation, member check, deployment or team Done is claimed. The new contract itself
-also remains a proposal until affected-owner confirmation; this delivery must stay draft.
+This first slice is **partial #18**, not completion: display-name editing, existing-account role
+changes, activation/deactivation, password reset, last-active-admin concurrency and global
+next-request session revocation remained at that point. Existing login/session behavior was not
+modified. The [contract proposal](../contracts/admin-console.md) gives concrete choices.
+No Wang confirmation, member check, deployment or team Done was claimed; the delivery stayed draft.
 
-### Authorship
+### Authorship (first slice)
 
 Implementation and verification are Codex-assisted for Zhang Hanming. No hours, meetings,
 personal review or teammate approval are invented. No remote Issue comments, teammate messages,
-repository settings or production changes are part of this implementation.
+repository settings or production changes were part of this implementation.
+
+## 2026-10-15 Display-name editing while session confirmation is pending
+
+### Scope and baseline
+
+The user reports sending the session questions to Wang and explicitly authorizes the independent
+work meanwhile. Sole writer and worktree remain the same. Start HEAD `f79be6b98528664bb90151d41066f1fe74b05768`;
+fetched main `2d19ef9b4e7b7e38c7241e8b5f9e4dcf524db9cf` differs from `350085a` only by the
+#71 coordination devlog. Previous #72 HEAD `f79be6b` passed all 11 hosted workflows (verified
+through GitHub Actions metadata this turn); that historical result does not apply to new code.
+Wang's reply is **not received or assumed**. Existing sessions/authorities remain untouched.
+
+### What was built
+
+- `PATCH /api/v1/admin/users/{userId}/display-name`, ADMIN-only in controller and service,
+  with the existing current-database active-administrator check and actual CSRF cookie/header.
+- A focused shared Dialog editor in the user table, validation, cancel/focus restoration, safe
+  error handling and conflict recovery. API types regenerated from the actual backend specification.
+- Fixed-text `USER_DISPLAY_NAME_CHANGED` audit, atomically committed with the name update.
+- Unit/API, real PostgreSQL, component and mock/real browser extensions; the read-only role matrix
+  now includes a valid-CSRF PATCH denial and still fingerprints accounts and roles.
+
+### Design notes
+
+Only the stored display name changes. Email, UUID, account state, roles, password hash and notification
+identity do not. No migration or dependency is required. An exact `expectedDisplayName` from opening
+the editor prevents silently overwriting a changed name; stale requests return a specific 409,
+unknown targets 404, invalid input 400, role failures 403 and anonymous requests 401. A no-op has
+no extra audit. This is a compare-current-name guard, not a new global account-version contract.
+
+Row locking uses `FOR NO KEY UPDATE OF u`, followed by a conditional single-row update. Unlike a
+stronger `FOR UPDATE`, it stays compatible with audit foreign-key key-share locks if two admins
+rename each other. The lock compatibility was checked against the official
+[PostgreSQL 18 documentation](https://www.postgresql.org/docs/18/explicit-locking.html#LOCKING-ROWS),
+and a barrier-based PostgreSQL concurrency test exercises both held target locks and audit inserts.
+The existing session Principal/header deliberately retains its original display name until sign-in
+again. The dialog states this; no `/auth` endpoint or shared security configuration changes.
+
+### Problems and fixes
+
+| Symptom / risk | Cause | Fix | Verification |
+| --- | --- | --- | --- |
+| New real-cookie MockMvc assertion initially found no cookie | Existing `csrf()` request processors switched the shared test filter's CSRF repository to a session-based simulator | Use actual `/auth/csrf` cookie/header requests throughout this test class, including invalid-token cases; leave production security unchanged | All 50 targeted unit/API tests passed after repair |
+| Potential cross-admin audit FK deadlock identified during review | `FOR UPDATE` conflicts with the FK key-share lock on the other administrator | Use the non-key-update lock appropriate to this field and add a deterministic two-transaction test | Final PostgreSQL regression recorded below |
+| A background refresh could otherwise replace the concurrency guard while a form stays open | Row props can change independently of an editor's input | Capture the expected name only on opening; block saving after conflict and require close/reopen | Component conflict test checks no implicit retry and the fresh expected value |
+| Real browser creation probe matched seven elements after edit buttons were added | Playwright's partial `Display name` label selector also matched `Edit display name for ...` buttons in the seeded directory | Use exact form-field label matching in real/mock browser probes; preserve accessible action labels | Repeat the actual desktop/mobile create/rename/login flow; first failure retained locally |
+
+### Verification and remaining acceptance
+
+Source inputs initially uncommitted relative to `f79be6b`. Targeted unit/API: 50 passed. Administrator
+components: 21 passed. Complete frontend components: 158 passed. Final full regression, real
+browser source hashes and delivered revision are recorded with the new evidence/PR update.
+No older evidence is relabeled as covering these inputs.
+
+Final verification followed the main documentation-only sync at merge HEAD
+`7afe031209cb6384d080b105e84974c6aff17a93`, with the uncommitted name-edit inputs. Complete
+backend: 657 ordinary + 30 UC02 + 30 UC03/UC05 passed, including all 15 administrator PostgreSQL
+tests; zero failures/errors/skips. Business coverage 1,256 covered / 299 missed (80.77%), original
+70% check and negative/restoration exercise passed. Frontend lint/typecheck/build/API drift passed,
+158 components and all 14 browser contract cases passed. The actual PostgreSQL role matrix
+passed 66 groups / 210 page observations / 350 reads / 140 denied writes / 4 ownership denials,
+then both real administrator create/rename/audit/login device flows passed. No write was run during
+the matrix. [New evidence and exact source hashes](../evidence/admin-display-name-20261015/README.md).
+
+Still pending: existing-role changes, activation/deactivation, password reset and next-request
+global session revocation/last-active-admin guards. Those wait for the agreed Identity contract;
+this slice is deliberately independent. Contract proposal remains pending affected-owner acceptance,
+PR remains draft, and no member check, production deployment or team Done is claimed.
+
+### Authorship
+
+Codex-assisted implementation and checks for Zhang Hanming, at the user's explicit request. No
+teammate message/Issue comment, approval, reallocation, hours or production change was made.

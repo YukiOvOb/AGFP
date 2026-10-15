@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import sg.edu.nus.serms.identity.service.EmailAlreadyUsedException;
+import sg.edu.nus.serms.identity.service.DisplayNameConflictException;
 import sg.edu.nus.serms.shared.api.ApiProblem;
 
 @Order(-1)
@@ -15,5 +16,11 @@ public class AdminUserProblemHandler {
   ResponseEntity<ProblemDetail> duplicateEmail() {
     var problem = ApiProblem.of(409, "email-in-use", "This email address is already in use.");
     return ResponseEntity.status(409).body(problem);
+  }
+
+  @ExceptionHandler(DisplayNameConflictException.class)
+  ResponseEntity<ProblemDetail> displayNameConflict() {
+    return ResponseEntity.status(409).body(ApiProblem.of(409, "display-name-conflict",
+        "This account's display name has changed. Refresh the user list and try again."));
   }
 }

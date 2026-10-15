@@ -16,6 +16,7 @@ An `ADMIN` does not gain any other role. Use the existing session, UUID Principa
 | --- | --- |
 | `GET /api/v1/admin/users?search=&page=0&size=20` | Literal, case-insensitive name/email substring. Email ascending then UUID. Includes active and disabled accounts, with all assigned roles; no credentials |
 | `POST /api/v1/admin/users` | Creates one `ACTIVE` account with initial roles; returns 201 and the account summary |
+| `PATCH /api/v1/admin/users/{userId}/display-name` | Changes only the display name; requires `{displayName, expectedDisplayName}`; returns the updated summary, 200 |
 | `GET /api/v1/admin/audit?actorId=&action=&entityType=&from=&to=&page=0&size=20` | Read-only audit projection; exact actor UUID/action/entity type; UTC Instants in half-open `[from,to)`; newest first then audit UUID ascending |
 
 Both lists return `{content, totalElements, page, size}`. `page` is 0–100000 and `size` 1–100.
@@ -38,6 +39,30 @@ outcome, summary and time. It does not modify or delete audit rows.
 Anonymous calls return 401, non-admin or no longer active/admin actors 403, invalid inputs 400,
 duplicate email 409. Mutations require CSRF (403 if absent/invalid). The existing `/auth` endpoints,
 session lifecycle and login error messages remain unchanged in this slice.
+
+### Additive display-name editing slice
+
+`displayName` is trimmed and must be nonblank, at most 200 characters. `expectedDisplayName` is
+the exact name displayed when the editor opened (required, nonblank, at most 200 characters).
+It is a compare-current-value guard, **not** a general-purpose account version or role mutation API.
+Authorization/current active administrator checks precede target lookup. An unknown target returns
+404 `/problems/not-found`. A different stored name returns 409 `/problems/display-name-conflict`;
+the client blocks another save until closing/reopening against the refreshed list. There is no
+automatic overwrite or retry. An unchanged normalized name returns 200 without a manufactured audit.
+
+The service locks the target account with `FOR NO KEY UPDATE OF u`, checks the expected name,
+conditionally updates only `display_name`, and inserts `USER_DISPLAY_NAME_CHANGED` in the same
+transaction. A failed audit rolls back the name. The lock serializes editors without blocking the
+audit actor foreign-key key-share lock when two administrators rename each other. See
+[PostgreSQL 18 row locks](https://www.postgresql.org/docs/18/explicit-locking.html#LOCKING-ROWS).
+Email, UUID, account status, roles, password hash and notification identity are never changed.
+No migration is needed and no existing migration is edited. The audit summary uses fixed safe text,
+not profile input or credentials. Editing one's own name is allowed; it is not self-deactivation.
+
+This does **not** refresh or invalidate existing sessions or modify `/auth/me`: the current session
+Principal and page header retain their existing name until sign-in again, while directory queries
+read the persisted new name. The UI states this limitation. Login after the edit reads the new name
+with the unchanged password and roles. Session-revocation decisions below still await Wang.
 
 UI: `/admin/users` and `/admin/audit`, both inside `RequireRole role="ADMIN"`, using shared
 navigation/layout/table/form components. Times display in Singapore time. An empty audit actor is

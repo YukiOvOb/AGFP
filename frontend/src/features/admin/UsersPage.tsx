@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Field } from '@/components/ui/field';
 import { EmptyState, ErrorState } from '@/components/Feedback';
 import { roleLabels, roleLabel, ROLES } from '@/lib/roles';
+import { EditDisplayNameDialog } from './EditDisplayNameDialog';
 
 type User = components['schemas']['AdminUser'];
 const column = createColumnHelper<User>();
@@ -27,6 +28,11 @@ const columns = [
   column.accessor('accountStatus', {
     header: 'Account',
     cell: (info) => (info.getValue() === 'ACTIVE' ? 'Active' : 'Disabled'),
+  }),
+  column.display({
+    id: 'actions',
+    header: 'Actions',
+    cell: (info) => <EditDisplayNameDialog user={info.row.original} />,
   }),
 ];
 const schema = z.object({

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import java.util.Set;
+import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,6 +26,10 @@ public class AdminUserController {
     @Override public String toString() { return "CreateUserRequest[REDACTED]"; }
   }
 
+  public record UpdateDisplayNameRequest(
+      @NotBlank @Size(max = 200) String displayName,
+      @NotBlank @Size(max = 200) String expectedDisplayName) {}
+
   private final AdminUserService users;
   public AdminUserController(AdminUserService users) { this.users = users; }
 
@@ -44,5 +49,12 @@ public class AdminUserController {
     var created = users.create(me.getUserId(), request.email(), request.displayName(),
         request.initialPassword(), request.roles());
     return ResponseEntity.status(201).body(created);
+  }
+
+  @PatchMapping("/{userId}/display-name")
+  @Operation(operationId = "adminUpdateDisplayName")
+  public AdminUser updateDisplayName(@AuthenticationPrincipal SermsUserPrincipal me,
+      @PathVariable UUID userId, @Valid @RequestBody UpdateDisplayNameRequest request) {
+    return users.updateDisplayName(me.getUserId(), userId, request.displayName(), request.expectedDisplayName());
   }
 }

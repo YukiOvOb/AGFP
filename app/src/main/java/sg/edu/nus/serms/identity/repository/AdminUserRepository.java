@@ -10,6 +10,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import sg.edu.nus.serms.identity.domain.AdminUser;
 import sg.edu.nus.serms.identity.service.EmailAlreadyUsedException;
+import sg.edu.nus.serms.identity.service.DisplayNameConflictException;
+import sg.edu.nus.serms.shared.domain.RecordNotFoundException;
 
 @Repository
 public class AdminUserRepository {
@@ -71,6 +73,41 @@ public class AdminUserRepository {
         INSERT INTO serms.audit_log
           (audit_id, actor_id, action, entity_type, entity_id, outcome, request_id, change_summary)
         VALUES (?, ?, 'USER_CREATED', 'User', ?, 'SUCCESS', ?, 'Administrator created an active account and assigned its initial roles')
+        """, UUID.randomUUID(), actor, target, "admin-user:" + UUID.randomUUID());
+  }
+
+  /** Serialize name edits without blocking audit FK key-share locks on administrator actors. */
+  public AdminUser lockForDisplayNameUpdate(UUID target) {
+    return jdbc.query("""
+        SELECT u.user_id, u.email, u.display_name, u.account_status, r.code
+        FROM serms.app_user u
+        LEFT JOIN serms.user_role ur USING (user_id) LEFT JOIN serms.role r USING (role_id)
+        WHERE u.user_id = ? FOR NO KEY UPDATE OF u
+        """, rs -> {
+          if (!rs.next()) throw new RecordNotFoundException();
+          String email = rs.getString("email"), name = rs.getString("display_name"),
+              status = rs.getString("account_status");
+          var roles = new TreeSet<AdminUser.Role>();
+          do {
+            String role = rs.getString("code");
+            if (role != null) roles.add(AdminUser.Role.valueOf(role));
+          } while (rs.next());
+          return new AdminUser(target, email, name, status, roles);
+        }, target);
+  }
+
+  public void updateDisplayName(UUID target, String expectedName, String newName) {
+    int changed = jdbc.update("""
+        UPDATE serms.app_user SET display_name = ? WHERE user_id = ? AND display_name = ?
+        """, newName, target, expectedName);
+    if (changed != 1) throw new DisplayNameConflictException();
+  }
+
+  public void auditDisplayNameChange(UUID actor, UUID target) {
+    jdbc.update("""
+        INSERT INTO serms.audit_log
+          (audit_id, actor_id, action, entity_type, entity_id, outcome, request_id, change_summary)
+        VALUES (?, ?, 'USER_DISPLAY_NAME_CHANGED', 'User', ?, 'SUCCESS', ?, 'Administrator changed the account display name')
         """, UUID.randomUUID(), actor, target, "admin-user:" + UUID.randomUUID());
   }
 }

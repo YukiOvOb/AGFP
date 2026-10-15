@@ -170,4 +170,120 @@ class AdminConsolePostgresTest {
     assertThatThrownBy(() -> users.list(admin, "", 0, 20)).isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
     assertThatThrownBy(() -> audit.list(admin, null, "", "", null, null, 0, 20)).isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
   }
+
+  @Test void renameChangesOnlyNameAndCreatesOneAuditWithoutSecretsOrProfileText() {
+    UUID target = new SermsFixtures(jdbc).user("BORROWER", "DISABLED");
+    var before = jdbc.queryForMap("SELECT * FROM serms.app_user WHERE user_id=?", target);
+    var rolesBefore = jdbc.queryForList("SELECT role_id FROM serms.user_role WHERE user_id=?", UUID.class, target);
+    var result = users.updateDisplayName(admin, target, "  Renamed person  ", (String) before.get("display_name"));
+    var after = jdbc.queryForMap("SELECT * FROM serms.app_user WHERE user_id=?", target);
+    assertThat(result.displayName()).isEqualTo("Renamed person");
+    assertThat(after.remove("display_name")).isEqualTo("Renamed person");
+    before.remove("display_name");
+    assertThat(after).isEqualTo(before);
+    assertThat(jdbc.queryForList("SELECT role_id FROM serms.user_role WHERE user_id=?", UUID.class, target)).isEqualTo(rolesBefore);
+    var entries = audit.list(admin, admin, "USER_DISPLAY_NAME_CHANGED", "User", null, null, 0, 20);
+    assertThat(entries.content()).singleElement().satisfies(entry -> {
+      assertThat(entry.entityId()).isEqualTo(target);
+      assertThat(entry.changeSummary()).doesNotContain("Renamed person", "TEST_ONLY_NOT_A_LOGIN_HASH");
+    });
+  }
+
+  @Test void noOpRenameAndStaleRenameDoNotCreateExtraAuditRows() {
+    UUID target = new SermsFixtures(jdbc).user("BORROWER");
+    users.updateDisplayName(admin, target, " UC01 test user ", "UC01 test user");
+    assertThat(audit.list(admin, admin, "USER_DISPLAY_NAME_CHANGED", "User", null, null, 0, 20).totalElements()).isZero();
+    users.updateDisplayName(admin, target, "Changed", "UC01 test user");
+    assertThatThrownBy(() -> users.updateDisplayName(admin, target, "Stale edit", "UC01 test user"))
+        .isInstanceOf(DisplayNameConflictException.class);
+    assertThat(jdbc.queryForObject("SELECT display_name FROM serms.app_user WHERE user_id=?", String.class, target))
+        .isEqualTo("Changed");
+    assertThat(audit.list(admin, admin, "USER_DISPLAY_NAME_CHANGED", "User", null, null, 0, 20).totalElements()).isOne();
+  }
+
+  @Test void renameOfUnknownAccountIs404WithoutAudit() {
+    assertThatThrownBy(() -> users.updateDisplayName(admin, UUID.randomUUID(), "New", "Old"))
+        .isInstanceOf(sg.edu.nus.serms.shared.domain.RecordNotFoundException.class);
+    assertThat(audit.list(admin, admin, "USER_DISPLAY_NAME_CHANGED", "User", null, null, 0, 20).totalElements()).isZero();
+  }
+
+  @Test void auditFailureRollsBackTheRenamedDisplayName() {
+    UUID target = new SermsFixtures(jdbc).user("BORROWER");
+    var transactions = new TransactionTemplate(context.getBean(DataSourceTransactionManager.class));
+    assertThatThrownBy(() -> transactions.execute(status -> {
+      jdbc.execute("CREATE FUNCTION pg_temp.reject_name_audit() RETURNS trigger LANGUAGE plpgsql AS $$"
+          + " BEGIN IF NEW.entity_id = '" + target + "'::uuid AND NEW.action='USER_DISPLAY_NAME_CHANGED' THEN "
+          + " RAISE EXCEPTION 'test name audit failure'; END IF; RETURN NEW; END $$");
+      jdbc.execute("CREATE TRIGGER name_test_" + target.toString().replace("-", "")
+          + " BEFORE INSERT ON serms.audit_log FOR EACH ROW EXECUTE FUNCTION pg_temp.reject_name_audit()");
+      return users.updateDisplayName(admin, target, "Must roll back", "UC01 test user");
+    })).isInstanceOf(org.springframework.dao.DataAccessException.class);
+    assertThat(jdbc.queryForObject("SELECT display_name FROM serms.app_user WHERE user_id=?", String.class, target))
+        .isEqualTo("UC01 test user");
+    assertThat(audit.list(admin, admin, "USER_DISPLAY_NAME_CHANGED", "User", null, null, 0, 20).totalElements()).isZero();
+  }
+
+  @Test void twoEditorsUsingTheSameOldNameHaveOneWinnerAndOneConflict() throws Exception {
+    UUID target = new SermsFixtures(jdbc).user("BORROWER");
+    var pool = Executors.newFixedThreadPool(2);
+    var ready = new CountDownLatch(2); var go = new CountDownLatch(1);
+    java.util.function.Function<String, Callable<String>> attempt = newName -> () -> {
+      authenticate(admin, "ADMIN"); ready.countDown();
+      try {
+        if (!go.await(10, TimeUnit.SECONDS)) throw new IllegalStateException("Start timeout");
+        users.updateDisplayName(admin, target, newName, "UC01 test user");
+        return "updated";
+      } catch (DisplayNameConflictException expected) { return "conflict"; }
+      finally { SecurityContextHolder.clearContext(); }
+    };
+    try {
+      var first = pool.submit(attempt.apply("Editor A")); var second = pool.submit(attempt.apply("Editor B"));
+      assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue(); go.countDown();
+      assertThat(java.util.List.of(first.get(20, TimeUnit.SECONDS), second.get(20, TimeUnit.SECONDS)))
+          .containsExactlyInAnyOrder("updated", "conflict");
+      assertThat(jdbc.queryForObject("SELECT display_name FROM serms.app_user WHERE user_id=?", String.class, target))
+          .isIn("Editor A", "Editor B");
+      assertThat(audit.list(admin, admin, "USER_DISPLAY_NAME_CHANGED", "User", null, null, 0, 20).totalElements()).isOne();
+    } finally { go.countDown(); pool.shutdownNow(); }
+  }
+
+  @Test void currentAdminCanRenameThemselfWithoutChangingRoleOrAccountStatus() {
+    var renamed = users.updateDisplayName(admin, admin, "Administrator renamed", "UC01 test user");
+    assertThat(renamed.roles()).containsExactly(AdminUser.Role.ADMIN);
+    assertThat(renamed.accountStatus()).isEqualTo("ACTIVE");
+    // This slice deliberately does not refresh or invalidate an existing session Principal.
+    assertThat(((SermsUserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
+        .getDisplayName()).isEqualTo("Operator");
+  }
+
+  @Test void twoAdministratorsCanRenameEachOtherWithoutAuditForeignKeyDeadlock() throws Exception {
+    UUID otherAdmin = new SermsFixtures(jdbc).user("ADMIN");
+    var transactions = new TransactionTemplate(context.getBean(DataSourceTransactionManager.class));
+    var pool = Executors.newFixedThreadPool(2);
+    var ready = new CountDownLatch(2); var go = new CountDownLatch(1);
+    java.util.function.BiFunction<UUID, UUID, Callable<AdminUser>> attempt = (operator, target) -> () -> {
+      authenticate(operator, "ADMIN");
+      try {
+        return transactions.execute(status -> {
+          context.getBean(AdminUserRepository.class).lockForDisplayNameUpdate(target);
+          ready.countDown();
+          try {
+            if (!go.await(10, TimeUnit.SECONDS)) throw new IllegalStateException("Start timeout");
+          } catch (InterruptedException failure) {
+            Thread.currentThread().interrupt(); throw new IllegalStateException(failure);
+          }
+          return users.updateDisplayName(operator, target, "Renamed " + target, "UC01 test user");
+        });
+      } finally { SecurityContextHolder.clearContext(); }
+    };
+    try {
+      var first = pool.submit(attempt.apply(admin, otherAdmin));
+      var second = pool.submit(attempt.apply(otherAdmin, admin));
+      assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue(); go.countDown();
+      assertThat(first.get(20, TimeUnit.SECONDS).displayName()).isEqualTo("Renamed " + otherAdmin);
+      assertThat(second.get(20, TimeUnit.SECONDS).displayName()).isEqualTo("Renamed " + admin);
+      assertThat(audit.list(admin, admin, "USER_DISPLAY_NAME_CHANGED", "User", null, null, 0, 20).totalElements()).isOne();
+      assertThat(audit.list(admin, otherAdmin, "USER_DISPLAY_NAME_CHANGED", "User", null, null, 0, 20).totalElements()).isOne();
+    } finally { go.countDown(); pool.shutdownNow(); }
+  }
 }

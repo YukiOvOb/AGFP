@@ -84,4 +84,57 @@ class AdminUserServiceTest {
     when(users.isActiveAdministrator(actor)).thenReturn(true);
     realAccess.requireAdministrator(actor);
   }
+
+  @Test void updatesOnlyTheNameAndAuditsItAfterTheConditionalWrite() {
+    var target = new AdminUser(UUID.randomUUID(), "p@example.test", "Original", "DISABLED",
+        Set.of(AdminUser.Role.BORROWER, AdminUser.Role.APPROVER));
+    when(users.lockForDisplayNameUpdate(target.userId())).thenReturn(target);
+    var updated = service.updateDisplayName(actor, target.userId(), " Renamed ", "Original");
+    assertThat(updated).isEqualTo(new AdminUser(target.userId(), target.email(), "Renamed",
+        target.accountStatus(), target.roles()));
+    var order = inOrder(access, users);
+    order.verify(access).requireAdministrator(actor);
+    order.verify(users).lockForDisplayNameUpdate(target.userId());
+    order.verify(users).updateDisplayName(target.userId(), "Original", "Renamed");
+    order.verify(users).auditDisplayNameChange(actor, target.userId());
+    verifyNoInteractions(passwords);
+  }
+
+  @Test void staleNameDoesNotWriteOrAuditEvenWhenTheDesiredNameAlreadyMatches() {
+    UUID target = UUID.randomUUID();
+    when(users.lockForDisplayNameUpdate(target)).thenReturn(
+        new AdminUser(target, "p@example.test", "Renamed", "ACTIVE", Set.of(AdminUser.Role.ADMIN)));
+    assertThatThrownBy(() -> service.updateDisplayName(actor, target, "Renamed", "Original"))
+        .isInstanceOf(DisplayNameConflictException.class);
+    verify(users, never()).updateDisplayName(any(), any(), any());
+    verify(users, never()).auditDisplayNameChange(any(), any());
+  }
+
+  @Test void unchangedNameDoesNotManufactureAnAudit() {
+    UUID target = UUID.randomUUID();
+    var current = new AdminUser(target, "p@example.test", "Original", "ACTIVE", Set.of(AdminUser.Role.ADMIN));
+    when(users.lockForDisplayNameUpdate(target)).thenReturn(current);
+    assertThat(service.updateDisplayName(actor, target, " Original ", "Original")).isEqualTo(current);
+    verify(users, never()).updateDisplayName(any(), any(), any());
+    verify(users, never()).auditDisplayNameChange(any(), any());
+  }
+
+  @Test void validatesNamesAndIdentifierWithoutLookingUpTheTarget() {
+    for (String invalid : new String[]{null, " ", "x".repeat(201)}) {
+      assertThatThrownBy(() -> service.updateDisplayName(actor, actor, invalid, "Old"))
+          .isInstanceOf(IllegalArgumentException.class);
+      assertThatThrownBy(() -> service.updateDisplayName(actor, actor, "New", invalid))
+          .isInstanceOf(IllegalArgumentException.class);
+    }
+    assertThatThrownBy(() -> service.updateDisplayName(actor, null, "New", "Old"))
+        .isInstanceOf(IllegalArgumentException.class);
+    verifyNoInteractions(users, passwords);
+  }
+
+  @Test void permissionCheckPrecedesNameValidationAndTargetLookup() {
+    doThrow(new AccessDeniedException("disabled")).when(access).requireAdministrator(actor);
+    assertThatThrownBy(() -> service.updateDisplayName(actor, actor, null, null))
+        .isInstanceOf(AccessDeniedException.class);
+    verifyNoInteractions(users, passwords);
+  }
 }

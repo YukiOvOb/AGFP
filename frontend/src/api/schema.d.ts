@@ -273,6 +273,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/users/{userId}/display-name": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["adminUpdateDisplayName"];
+        trace?: never;
+    };
     "/api/v1/reservations/{id}": {
         parameters: {
             query?: never;
@@ -880,6 +896,10 @@ export interface components {
             displayName: string;
             accountStatus: string;
             roles: ("BORROWER" | "APPROVER" | "CUSTODIAN" | "MAINTAINER" | "ADMIN")[];
+        };
+        UpdateDisplayNameRequest: {
+            displayName: string;
+            expectedDisplayName: string;
         };
         ReservationPage: {
             content: components["schemas"]["ReservationView"][];
@@ -1683,6 +1703,32 @@ export interface operations {
         responses: {
             /** @description Account created */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUser"];
+                };
+            };
+        };
+    };
+    adminUpdateDisplayName: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateDisplayNameRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

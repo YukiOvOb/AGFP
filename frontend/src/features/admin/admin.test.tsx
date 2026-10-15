@@ -163,9 +163,7 @@ describe('admin account foundation', () => {
       expect(
         await screen.findByText('Your account does not have access to this page.'),
       ).toBeVisible();
-      expect(
-        screen.queryByRole('link', { name: 'Audit log' }),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Audit log' })).not.toBeInTheDocument();
     },
   );
 });
@@ -212,5 +210,198 @@ describe('read-only audit log', () => {
     await userEvent.type(screen.getByLabelText('Actor UUID'), 'invalid');
     await userEvent.click(screen.getByRole('button', { name: 'Apply filters' }));
     expect(await screen.findByText('Enter a valid actor UUID.')).toBeVisible();
+  });
+});
+
+describe('administrator display-name editor', () => {
+  it('uses the opening name as a concurrency guard and refreshes the directory after saving', async () => {
+    const mount = setup('/admin/users');
+    let current = account;
+    let body: Record<string, unknown> | undefined;
+    server.use(
+      http.get('/api/v1/admin/users', () =>
+        HttpResponse.json({ content: [current], totalElements: 1, page: 0, size: 20 }),
+      ),
+      http.patch('/api/v1/admin/users/:userId/display-name', async ({ request, params }) => {
+        body = (await request.json()) as Record<string, unknown>;
+        expect(params.userId).toBe(account.userId);
+        expect(request.headers.get('X-XSRF-TOKEN')).toBe('test-csrf');
+        current = { ...account, displayName: body.displayName as string };
+        return HttpResponse.json(current);
+      }),
+    );
+    mount();
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Edit display name for person@example.test' }),
+    );
+    expect(screen.getByLabelText('New display name')).toHaveValue('Person');
+    await userEvent.clear(screen.getByLabelText('New display name'));
+    await userEvent.type(screen.getByLabelText('New display name'), ' Renamed Person ');
+    await userEvent.click(screen.getByRole('button', { name: 'Save name' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(await screen.findByText('Renamed Person')).toBeVisible();
+    expect(body).toEqual({ displayName: 'Renamed Person', expectedDisplayName: 'Person' });
+  });
+
+  it('validates whitespace-only names without submitting', async () => {
+    const mount = setup('/admin/users');
+    let patches = 0;
+    server.use(
+      http.patch('/api/v1/admin/users/:userId/display-name', () => {
+        patches++;
+        return HttpResponse.json(account);
+      }),
+    );
+    mount();
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Edit display name for person@example.test' }),
+    );
+    await userEvent.clear(screen.getByLabelText('New display name'));
+    await userEvent.type(screen.getByLabelText('New display name'), '   ');
+    await userEvent.click(screen.getByRole('button', { name: 'Save name' }));
+    expect(await screen.findByText('Enter a display name.')).toBeVisible();
+    expect(patches).toBe(0);
+  });
+
+  it('cancels without a write and restores keyboard focus to the edit button', async () => {
+    setup('/admin/users')();
+    const trigger = await screen.findByRole('button', {
+      name: 'Edit display name for person@example.test',
+    });
+    await userEvent.click(trigger);
+    await userEvent.clear(screen.getByLabelText('New display name'));
+    await userEvent.type(screen.getByLabelText('New display name'), 'Not saved');
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(trigger).toHaveFocus();
+    await userEvent.click(trigger);
+    expect(screen.getByLabelText('New display name')).toHaveValue('Person');
+  });
+
+  it('blocks stale re-submission until the editor is reopened with the refreshed name', async () => {
+    const mount = setup('/admin/users');
+    let name = 'Person';
+    const bodies: Record<string, unknown>[] = [];
+    server.use(
+      http.get('/api/v1/admin/users', () =>
+        HttpResponse.json({
+          content: [{ ...account, displayName: name }],
+          totalElements: 1,
+          page: 0,
+          size: 20,
+        }),
+      ),
+      http.patch('/api/v1/admin/users/:userId/display-name', async ({ request }) => {
+        const body = (await request.json()) as Record<string, unknown>;
+        bodies.push(body);
+        if (bodies.length === 1) {
+          name = 'Changed elsewhere';
+          return HttpResponse.json({ detail: 'Conflict' }, { status: 409 });
+        }
+        name = body.displayName as string;
+        return HttpResponse.json({ ...account, displayName: name });
+      }),
+    );
+    mount();
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Edit display name for person@example.test' }),
+    );
+    await userEvent.clear(screen.getByLabelText('New display name'));
+    await userEvent.type(screen.getByLabelText('New display name'), 'My change');
+    await userEvent.click(screen.getByRole('button', { name: 'Save name' }));
+    expect(await screen.findByText(/This name was changed by another administrator/)).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Save name' })).toBeDisabled();
+    expect(bodies).toHaveLength(1);
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await screen.findByText('Changed elsewhere');
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Edit display name for person@example.test' }),
+    );
+    expect(screen.getByLabelText('New display name')).toHaveValue('Changed elsewhere');
+    await userEvent.clear(screen.getByLabelText('New display name'));
+    await userEvent.type(screen.getByLabelText('New display name'), 'Final name');
+    await userEvent.click(screen.getByRole('button', { name: 'Save name' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(bodies[1]).toEqual({
+      displayName: 'Final name',
+      expectedDisplayName: 'Changed elsewhere',
+    });
+  });
+
+  it('preserves input and displays server field validation beside the control', async () => {
+    const mount = setup('/admin/users');
+    server.use(
+      http.patch('/api/v1/admin/users/:userId/display-name', () =>
+        HttpResponse.json(
+          {
+            detail: 'Check fields',
+            errors: [{ field: 'displayName', message: 'Choose a different display name.' }],
+          },
+          { status: 400 },
+        ),
+      ),
+    );
+    mount();
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Edit display name for person@example.test' }),
+    );
+    await userEvent.clear(screen.getByLabelText('New display name'));
+    await userEvent.type(screen.getByLabelText('New display name'), 'My input');
+    await userEvent.click(screen.getByRole('button', { name: 'Save name' }));
+    expect(await screen.findByText('Choose a different display name.')).toBeVisible();
+    expect(screen.getByLabelText('New display name')).toHaveValue('My input');
+    expect(screen.getByRole('button', { name: 'Save name' })).toBeEnabled();
+  });
+
+  it('keeps an unavailable account blocked until the editor is closed', async () => {
+    const mount = setup('/admin/users');
+    server.use(
+      http.patch('/api/v1/admin/users/:userId/display-name', () =>
+        HttpResponse.json({ detail: 'Missing' }, { status: 404 }),
+      ),
+    );
+    mount();
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Edit display name for person@example.test' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Save name' }));
+    expect(await screen.findByText(/This account is unavailable/)).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Save name' })).toBeDisabled();
+  });
+
+  it('does not refresh or invalidate an existing administrator session after self-rename', async () => {
+    const mount = setup('/admin/users');
+    let name = currentUser.displayName;
+    let meReads = 0;
+    server.use(
+      http.get('/api/v1/auth/me', () => {
+        meReads++;
+        return HttpResponse.json({ ...currentUser, roles: ['ADMIN'] });
+      }),
+      http.get('/api/v1/admin/users', () =>
+        HttpResponse.json({
+          content: [{ ...account, userId: currentUser.userId, displayName: name }],
+          totalElements: 1,
+          page: 0,
+          size: 20,
+        }),
+      ),
+      http.patch('/api/v1/admin/users/:userId/display-name', async ({ request }) => {
+        name = ((await request.json()) as { displayName: string }).displayName;
+        return HttpResponse.json({ ...account, userId: currentUser.userId, displayName: name });
+      }),
+    );
+    mount();
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Edit display name for person@example.test' }),
+    );
+    await userEvent.clear(screen.getByLabelText('New display name'));
+    await userEvent.type(screen.getByLabelText('New display name'), 'New administrator name');
+    await userEvent.click(screen.getByRole('button', { name: 'Save name' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(await screen.findByText('New administrator name')).toBeVisible();
+    expect(screen.getByText(currentUser.displayName)).toBeVisible();
+    expect(meReads).toBe(1);
+    expect(screen.getByRole('button', { name: 'Sign out' })).toBeEnabled();
   });
 });

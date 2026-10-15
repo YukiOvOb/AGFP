@@ -65,6 +65,8 @@ export function deniedWrites(f) {
   return [
     { id: 'admin account creation', route: '/api/v1/admin/users', roles: ['ADMIN'],
       body: { email: 'rbac-denial-probe@example.test', displayName: 'Must not be created', initialPassword: 'browser-denial-test-only', roles: ['BORROWER'] } },
+    { id: 'admin display name update', route: '/api/v1/admin/users/' + f.borrowerId + '/display-name', method: 'PATCH', roles: ['ADMIN'],
+      body: { displayName: 'Must not be renamed', expectedDisplayName: 'Borrower' } },
     { id: 'reservation submission', route: '/api/v1/reservations', roles: ['BORROWER'],
       body: { equipmentId: f.equipmentId, startAt: new Date(Date.now() + 86400000).toISOString(), endAt: new Date(Date.now() + 90000000).toISOString(), purpose: 'RBAC denial probe; must not persist' } },
     { id: 'reservation cancellation', route: '/api/v1/reservations/' + f.reservationId + '/cancel', roles: ['BORROWER'] },
