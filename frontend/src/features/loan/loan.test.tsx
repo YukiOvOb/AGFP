@@ -49,6 +49,23 @@ function mount(roles = ['CUSTODIAN']) {
   );
 }
 describe('UC03 handover', () => {
+  it.each(['APPROVER', 'MAINTAINER', 'ADMIN'])('blocks direct loan navigation for %s without requesting loan data', async (role) => {
+    let reads = 0;
+    mount([role]);
+    server.use(http.get('/api/v1/loans', () => {
+      reads++;
+      return HttpResponse.json([loan]);
+    }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Your account does not have access to this page.');
+    expect(screen.queryByRole('heading', { name: 'My loans' })).not.toBeInTheDocument();
+    expect(reads).toBe(0);
+  });
+  it('allows an explicitly assigned borrower role alongside ADMIN', async () => {
+    mount(['ADMIN', 'BORROWER']);
+    expect(await screen.findByRole('heading', { name: 'My loans' })).toBeInTheDocument();
+    expect(await screen.findByText('UC03 camera')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Receive return' })).not.toBeInTheDocument();
+  });
   it('requires physical identity confirmation and sends server version', async () => {
     let submitted: unknown;
     server.use(

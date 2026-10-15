@@ -85,6 +85,17 @@ class ApprovalApiTest {
         "Course project", status, version, DECIDED_AT.minusSeconds(7200), expired);
   }
 
+  @Test void duplicateDecisionUsesFreshSnapshotForContracted409Metadata() throws Exception {
+    when(decisions.record(eq(RESERVATION), eq(APPROVER), any(), any()))
+        .thenThrow(new ApprovalDecisionAlreadyRecordedException(RESERVATION, new IllegalStateException("test constraint")));
+    mvc.perform(decide(approve()))
+        .andExpect(status().isConflict()).andExpect(jsonPath("$.type").value("/problems/state-conflict"))
+        .andExpect(jsonPath("$.currentStatus").value("PENDING_APPROVAL"))
+        .andExpect(jsonPath("$.currentVersion").value(4));
+    verify(reservations, times(2)).get(RESERVATION);
+    assertThat(events.seen).isEmpty();
+  }
+
   private RecordedApprovalDecision recorded(ApprovalDecisionType type, String comment) {
     return new RecordedApprovalDecision(DECISION, RESERVATION, APPROVER, type, comment, DECIDED_AT);
   }

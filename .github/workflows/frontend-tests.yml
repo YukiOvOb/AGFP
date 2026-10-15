@@ -29,6 +29,8 @@ jobs:
           package_json_file: frontend/package.json
       - run: pnpm install --frozen-lockfile
         working-directory: frontend
+      - name: Check explicit role and route inventory
+        run: node --test scripts/role-access.test.mjs
       - run: pnpm check:api
         working-directory: frontend
         env:

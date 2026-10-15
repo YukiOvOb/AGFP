@@ -1,0 +1,112 @@
+{
+  "status": "passed",
+  "mocked": false,
+  "runId": "3aebf50674",
+  "startedAt": "2026-10-15T02:37:57.840Z",
+  "finishedAt": "2026-10-15T02:42:06.771Z",
+  "command": "node scripts/check-uc02-browser.mjs --publishable-evidence",
+  "startingHead": "f7bf0f11b82a8d429c19e5c95f8b243767ac8d77",
+  "fetchedMain": "2e9eda35973f0929c19fa3e613688d902a361f9d",
+  "verificationInputs": "Starting HEAD plus the listed working-tree script/SQL hashes; application production code unchanged.",
+  "sourceHashes": [
+    {
+      "path": "scripts/check-uc02-browser.mjs",
+      "sha256": "A7B4CBD794ADA65CC73E2F1E3DB2C4FAFD6ABD719C003B85BD79BE30ADFAC8A9"
+    },
+    {
+      "path": "scripts/uc02-browser-fixtures.sql",
+      "sha256": "3163E086BDBADAF6ED3334D22977E1C2E4166D321F78C956B39FA047E7C718EB"
+    },
+    {
+      "path": "scripts/lib/uc02-browser-guard.sql",
+      "sha256": "E5FCA544CE509E87FBB43E626625374A81EB760A7132F59CF1E93A752F1A5642"
+    },
+    {
+      "path": "scripts/uc02-browser-role-cleanup.sql",
+      "sha256": "B81311250112D813322448BB26F37D5AB7AAE10D771E606C9562023E7F7128BA"
+    },
+    {
+      "path": "scripts/uc02-browser-self-snapshot.sql",
+      "sha256": "4E21CCC41EE79B11902E14C2CF1FD47583F7E4B5ED73A0D7D080138E77D01155"
+    }
+  ],
+  "dualRoleAddedByRun": true,
+  "dualRoleRestored": true,
+  "freshLoginRolesAfterCleanup": [
+    "BORROWER"
+  ],
+  "checks": [
+    "desktop: borrower real UI login, menu and backend permissions",
+    "desktop: approver real UI login, menu and backend permissions",
+    "desktop: custodian real UI login, menu and backend permissions",
+    "desktop: maintainer real UI login, menu and backend permissions",
+    "desktop: admin real UI login, menu and backend permissions",
+    "desktop: real empty approval queue",
+    "desktop: required rejection comment, persisted rejection and borrower status",
+    "desktop: rejection releases real allocation",
+    "desktop: separate approver confirms actual borrower request",
+    "desktop: committed approval notification delivered and marked read",
+    "desktop: custodian physical checkout and damaged return with required note",
+    "desktop: auto-created linked maintenance assigned, diagnosed, repaired and resolved",
+    "desktop: equipment restored and actual administrator report page loads",
+    "desktop: real dual-role login and own pending browser reservation",
+    "desktop: own-request marker and UI block both decision controls",
+    "desktop: browser-forged self APPROVED is 403 with no persisted side effects",
+    "desktop: browser-forged self REJECTED is 403 with no persisted side effects",
+    "desktop: a different real approver can decide the same request exactly once",
+    "mobile: borrower real UI login, menu and backend permissions",
+    "mobile: approver real UI login, menu and backend permissions",
+    "mobile: custodian real UI login, menu and backend permissions",
+    "mobile: maintainer real UI login, menu and backend permissions",
+    "mobile: admin real UI login, menu and backend permissions",
+    "mobile: real empty approval queue",
+    "mobile: required rejection comment, persisted rejection and borrower status",
+    "mobile: rejection releases real allocation",
+    "mobile: separate approver confirms actual borrower request",
+    "mobile: committed approval notification delivered and marked read",
+    "mobile: custodian physical checkout and damaged return with required note",
+    "mobile: auto-created linked maintenance assigned, diagnosed, repaired and resolved",
+    "mobile: equipment restored and actual administrator report page loads",
+    "mobile: real dual-role login and own pending browser reservation",
+    "mobile: own-request marker and UI block both decision controls",
+    "mobile: browser-forged self APPROVED is 403 with no persisted side effects",
+    "mobile: browser-forged self REJECTED is 403 with no persisted side effects",
+    "mobile: a different real approver can decide the same request exactly once",
+    "temporary dual-role assignment restored; pre-existing roles untouched"
+  ],
+  "records": [
+    {
+      "reservationId": "34d00cc7-5036-4302-b8bf-8e9486224fdd",
+      "purpose": "desktop rejection 1792031885267"
+    },
+    {
+      "reservationId": "1b626772-3a7d-48bc-adda-c2cab2ba2bd5",
+      "purpose": "desktop approval-to-damaged-return 1792031886448"
+    },
+    {
+      "reservationId": "7ed85e2d-c707-409e-bb5e-cc64a7d081b9",
+      "purpose": "desktop self-approval 1792032003294"
+    },
+    {
+      "reservationId": "7e76d02c-5648-4952-a872-11035eb2de0f",
+      "purpose": "mobile rejection 1792032009224"
+    },
+    {
+      "reservationId": "45cc3dcd-f1ce-443a-961b-423007125a1e",
+      "purpose": "mobile approval-to-damaged-return 1792032010203"
+    },
+    {
+      "reservationId": "5159cfee-fe77-4556-b331-bd74bab29c87",
+      "purpose": "mobile self-approval 1792032123892"
+    }
+  ],
+  "publicScreenshots": [
+    "desktop-self-decision-blocked.png",
+    "mobile-self-decision-blocked.png"
+  ],
+  "remaining": [
+    "Admin users/audit pages (#18)",
+    "Overdue page/scanner (#19)",
+    "Remote CI and independent member/deployment acceptance"
+  ]
+}
