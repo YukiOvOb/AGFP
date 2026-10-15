@@ -67,6 +67,7 @@ class ApprovalApiTest {
 
   @BeforeEach
   void setup() {
+    when(identity.isSessionCurrent(any(), anyLong())).thenReturn(true);
     events.seen.clear();
     when(reservations.get(RESERVATION)).thenReturn(view("PENDING_APPROVAL", 4L, false, REQUESTER));
     when(reservations.confirm(eq(RESERVATION), anyLong()))

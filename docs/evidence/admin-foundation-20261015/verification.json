@@ -1,0 +1,38 @@
+{
+  "status": "passed",
+  "mocked": false,
+  "startedAt": "2026-10-15T08:37:38.781Z",
+  "checks": [
+    "desktop: administrator creates a borrower; password cleared; literal search; audit visible; new borrower signs in and cannot read administrator UI/API; no overflow",
+    "mobile: administrator creates a borrower; password cleared; literal search; audit visible; new borrower signs in and cannot read administrator UI/API; no overflow"
+  ],
+  "startingHead": "350085a8adf4a2cf9d593347d37cacd02ff61547",
+  "fetchedMain": "350085a8adf4a2cf9d593347d37cacd02ff61547",
+  "sourceHashes": [
+    {
+      "path": "scripts/check-admin-browser.mjs",
+      "sha256": "bbc4c0c30183c94f720135e9edf00c22c7f681717cfb9598fa601a0ae56083a0"
+    },
+    {
+      "path": "frontend/src/features/admin/UsersPage.tsx",
+      "sha256": "e141f534215fa7faaa22bd72f45ba03df923bc7035f9bcef0b9e7a252968f805"
+    },
+    {
+      "path": "frontend/src/features/admin/AuditPage.tsx",
+      "sha256": "105b8aa248c9ca25aed69e241cd64da4e1239b18fb9547f9a8a4a94fa6e2bb22"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/identity/service/AdminUserService.java",
+      "sha256": "ee6516cbc26c9d80e472ad1003b05bbb4bc56eec5d8cd00e146295fdced3fabd"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/identity/repository/AdminUserRepository.java",
+      "sha256": "bccc2345e7e7191504b476dcb983240a9ac477b8036bf115e03ed833579bb9c6"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/audit/repository/AuditQueryRepository.java",
+      "sha256": "ee0e875df3aabeb39fefe4bbe49f27993d8deac12f7bedad3ac61c1c449f641e"
+    }
+  ],
+  "finishedAt": "2026-10-15T08:37:47.748Z"
+}

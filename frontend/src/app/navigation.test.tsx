@@ -53,7 +53,7 @@ describe('role names', () => {
 describe('navigation list', () => {
   it('hides reserved pages until their route exists', () => {
     const reserved = navigation.filter((item) => !item.available).map((item) => item.to);
-    expect(reserved).toEqual(['/manage/equipment', '/admin/users', '/admin/audit']);
+    expect(reserved).toEqual(['/manage/equipment']);
     expect(visibleNavigation(['ADMIN', 'CUSTODIAN']).some((item) => !item.available)).toBe(false);
   });
   it('shows a reserved page to its roles once it is switched on', () => {
@@ -115,7 +115,7 @@ describe('overview and menu', () => {
       within(screen.getByRole('navigation', { name: 'Management' }))
         .getAllByRole('link')
         .map((link) => link.textContent),
-    ).toEqual(['Overdue', 'Reports']);
+    ).toEqual(['Overdue', 'Reports', 'Users and roles', 'Audit log']);
   });
   it('opens a page from its card and returns through the brand link', async () => {
     mount('/', ['BORROWER']);

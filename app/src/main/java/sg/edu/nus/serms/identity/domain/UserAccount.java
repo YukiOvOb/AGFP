@@ -10,7 +10,12 @@ public record UserAccount(
     String passwordHash,
     boolean active,
     String notificationPrincipal,
-    Set<String> roles) {
+    Set<String> roles,
+    long sessionVersion) {
+  public UserAccount(UUID userId, String email, String displayName, String passwordHash,
+      boolean active, String notificationPrincipal, Set<String> roles) {
+    this(userId, email, displayName, passwordHash, active, notificationPrincipal, roles, 0L);
+  }
   public UserAccount {
     roles = Set.copyOf(roles);
   }

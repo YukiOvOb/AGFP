@@ -261,7 +261,16 @@ class NotificationContractTest {
             .defaultSchema("public").table("serms_flyway_history").baselineVersion("2")
             .locations("classpath:db/migration").load();
         flyway.baseline(); flyway.migrate(); flyway.validate();
-        assertEquals(6,upgrade.queryForObject("SELECT max(version) FROM serms.schema_version",Integer.class));
+        assertEquals(7,upgrade.queryForObject("SELECT max(version) FROM serms.schema_version",Integer.class));
+        assertEquals(org.flywaydb.core.api.MigrationVersion.fromVersion("7"),flyway.info().current().getVersion());
+        // V007 must safely backfill pre-existing V002 users without changing notification history.
+        assertEquals("bigint",upgrade.queryForObject("""
+            SELECT data_type FROM information_schema.columns
+            WHERE table_schema='serms' AND table_name='app_user' AND column_name='session_version'
+            """,String.class));
+        assertEquals(0,upgrade.queryForObject("""
+            SELECT count(*) FROM serms.app_user WHERE session_version IS NULL OR session_version <> 0
+            """,Integer.class));
         assertEquals(3,upgrade.queryForObject("SELECT count(*) FROM serms.notification_legacy_v2",Integer.class));
         assertEquals(3,upgrade.queryForObject("SELECT count(*) FROM serms.notification_request",Integer.class));
         assertEquals("DELIVERED",upgrade.queryForObject("""

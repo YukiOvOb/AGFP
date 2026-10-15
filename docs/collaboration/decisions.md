@@ -182,3 +182,19 @@ Source: [checkout-and-return contract](../contracts/checkout-and-return.md#uc05-
 Confirmed scope: UC05 owns GET /api/v1/overdue; ACTIVE CUSTODIAN/ADMIN operators may read its global Loan/Reservation/User/Equipment projection, while other roles cannot. Membership is ACTIVE with persisted due_at strictly before the server Instant, excluding returned loans and equality. Rows contain loanId, reservationId, borrowerName, equipmentName, dueAt (UTC Instant) and overdueSeconds (whole seconds). Defaults are page 0, size 20 and duration order desc; page is 0-100000, size 1-100, asc reverses duration order, and loanId is the stable ascending tie-breaker. The response is content/totalElements/page/size; the UI displays Singapore time. Existing UC03 endpoints, Loan states, migrations, events and write/reminder lock semantics remain as contracted.
 
 Codex performs and records the technical contract review under this delegation, and comments identify that agency. No Zhou Fanhao sign-off, personally executed human test, new mandatory approval gate, deployment or team Done is implied. Local checks, CI, delegated owner acceptance and member/deployment evidence remain separate.
+
+## Identity Session Revocation Confirmation (2026-10-15)
+
+Source: Zhang Hanming pasted Identity owner Wang Yuanmeng's reply in this implementation conversation.
+Wang explicitly accepted the three administrator-triggered invalidation behaviours: disabled accounts,
+actual role changes, and password resets revoke every old session on its next protected API request.
+The response is existing 401 ProblemDetail with authentication/session cleared; ordinary missing-role
+access remains 403 and ADMIN inherits nothing. `/auth/csrf` remains anonymous and logout idempotent
+with valid CSRF. Wang recommended a monotonic database version and atomic security data/version/audit.
+
+This resolves the session decisions previously pending in the [administrator contract](../contracts/admin-console.md).
+Zhang's existing #18 implementation authorization now permits the dependent local implementation and
+test bench. Migration uses the next free number at integration, never edits merged migrations, and
+real PostgreSQL/cross-session tests accompany the change. This records the reply supplied by the user;
+it does not claim a GitHub owner comment, personally executed human checks, whole-PR approval,
+main merge, release or additional permission to contact teammates.

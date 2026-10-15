@@ -47,6 +47,7 @@ class IdentityApiTest {
 
   @BeforeEach
   void setup() {
+    when(identity.isSessionCurrent(any(), anyLong())).thenReturn(true);
     when(identity.findByEmail("wang@example.com"))
         .thenReturn(
             Optional.of(

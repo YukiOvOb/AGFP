@@ -19,13 +19,13 @@ export const pages = [
   { route: '/maintenance/report', title: '^Maintenance report$', roles: ['ADMIN'] },
   { route: '/reports', title: '^Reports$', roles: ['ADMIN'], menu: 'Reports' },
   { route: '/overdue', title: '^Overdue loans$', roles: ['CUSTODIAN', 'ADMIN'], menu: 'Overdue' },
+  { route: '/admin/users', title: '^Users and roles$', roles: ['ADMIN'], menu: 'Users and roles' },
+  { route: '/admin/audit', title: '^Audit log$', roles: ['ADMIN'], menu: 'Audit log' },
 ];
 export const unavailablePages = [
   { route: '/manage/equipment', issue: 17, owner: 'Zhou Fanhao' },
-  { route: '/admin/users', issue: 18, owner: 'Zhang Hanming' },
-  { route: '/admin/audit', issue: 18, owner: 'Zhang Hanming' },
 ];
-export const menuOrder = ['/', '/equipment', '/loans', '/reservations', '/maintenance', '/approvals', '/notifications', '/overdue', '/reports'];
+export const menuOrder = ['/', '/equipment', '/loans', '/reservations', '/maintenance', '/approvals', '/notifications', '/overdue', '/reports', '/admin/users', '/admin/audit'];
 const read = (id, route, roles) => ({ id, route, roles });
 export const reads = [
   read('identity', '/api/v1/auth/me', all),
@@ -51,6 +51,8 @@ export const reads = [
   read('maintenance report', '/api/v1/maintenance/report?:period', ['ADMIN']),
   read('combined report', '/api/v1/reports?:period', ['ADMIN']),
   read('overdue projection', '/api/v1/overdue', ['CUSTODIAN', 'ADMIN']),
+  read('admin user directory', '/api/v1/admin/users', ['ADMIN']),
+  read('admin audit reader', '/api/v1/admin/audit', ['ADMIN']),
 ];
 export function resolveRoute(route, fixture, period) {
   return route.replace(/:([A-Za-z]+)/g, (_, key) => {
@@ -61,6 +63,16 @@ export function resolveRoute(route, fixture, period) {
 }
 export function deniedWrites(f) {
   return [
+    { id: 'admin account creation', route: '/api/v1/admin/users', roles: ['ADMIN'],
+      body: { email: 'rbac-denial-probe@example.test', displayName: 'Must not be created', initialPassword: 'browser-denial-test-only', roles: ['BORROWER'] } },
+    { id: 'admin display name update', route: '/api/v1/admin/users/' + f.borrowerId + '/display-name', method: 'PATCH', roles: ['ADMIN'],
+      body: { displayName: 'Must not be renamed', expectedDisplayName: 'Borrower' } },
+    { id: 'admin role update', route: '/api/v1/admin/users/' + f.borrowerId + '/roles', method: 'PATCH', roles: ['ADMIN'],
+      body: { roles: ['APPROVER'], expectedVersion: 0 } },
+    { id: 'admin status update', route: '/api/v1/admin/users/' + f.borrowerId + '/status', method: 'PATCH', roles: ['ADMIN'],
+      body: { active: false, expectedVersion: 0 } },
+    { id: 'admin password reset', route: '/api/v1/admin/users/' + f.borrowerId + '/password-reset', roles: ['ADMIN'],
+      body: { newPassword: 'denial-probe-test-only', expectedVersion: 0 } },
     { id: 'reservation submission', route: '/api/v1/reservations', roles: ['BORROWER'],
       body: { equipmentId: f.equipmentId, startAt: new Date(Date.now() + 86400000).toISOString(), endAt: new Date(Date.now() + 90000000).toISOString(), purpose: 'RBAC denial probe; must not persist' } },
     { id: 'reservation cancellation', route: '/api/v1/reservations/' + f.reservationId + '/cancel', roles: ['BORROWER'] },
