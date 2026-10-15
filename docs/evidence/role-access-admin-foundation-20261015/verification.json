@@ -1,0 +1,4706 @@
+{
+  "status": "passed",
+  "mocked": false,
+  "startedAt": "2026-10-15T08:44:09.969Z",
+  "checks": [
+    "route inventory covers every implemented application page; future pages explicitly excluded",
+    "desktop anonymous: all 25 real read APIs match permissions/ownership",
+    "desktop anonymous: all 15 direct page routes, deny states and viewport fit",
+    "desktop borrower: actual login and exact role menu",
+    "desktop borrower: all 25 real read APIs match permissions/ownership",
+    "desktop borrower: all 15 direct page routes, deny states and viewport fit",
+    "desktop borrower: valid-CSRF role-denied mutations and missing-CSRF protection",
+    "desktop borrower: actual logout invalidates browser session",
+    "desktop approver: actual login and exact role menu",
+    "desktop approver: all 25 real read APIs match permissions/ownership",
+    "desktop approver: all 15 direct page routes, deny states and viewport fit",
+    "desktop approver: valid-CSRF role-denied mutations and missing-CSRF protection",
+    "desktop approver: actual logout invalidates browser session",
+    "desktop custodian: actual login and exact role menu",
+    "desktop custodian: all 25 real read APIs match permissions/ownership",
+    "desktop custodian: all 15 direct page routes, deny states and viewport fit",
+    "desktop custodian: valid-CSRF role-denied mutations and missing-CSRF protection",
+    "desktop custodian: actual logout invalidates browser session",
+    "desktop maintainer: actual login and exact role menu",
+    "desktop maintainer: all 25 real read APIs match permissions/ownership",
+    "desktop maintainer: all 15 direct page routes, deny states and viewport fit",
+    "desktop maintainer: valid-CSRF role-denied mutations and missing-CSRF protection",
+    "desktop maintainer: actual logout invalidates browser session",
+    "desktop admin: actual login and exact role menu",
+    "desktop admin: all 25 real read APIs match permissions/ownership",
+    "desktop admin: all 15 direct page routes, deny states and viewport fit",
+    "desktop admin: valid-CSRF role-denied mutations and missing-CSRF protection",
+    "desktop admin: actual logout invalidates browser session",
+    "desktop borrower2: actual login and exact role menu",
+    "desktop borrower2: all 25 real read APIs match permissions/ownership",
+    "desktop borrower2: all 15 direct page routes, deny states and viewport fit",
+    "desktop borrower2: valid-CSRF role-denied mutations and missing-CSRF protection",
+    "desktop borrower2: actual logout invalidates browser session",
+    "mobile anonymous: all 25 real read APIs match permissions/ownership",
+    "mobile anonymous: all 15 direct page routes, deny states and viewport fit",
+    "mobile borrower: actual login and exact role menu",
+    "mobile borrower: all 25 real read APIs match permissions/ownership",
+    "mobile borrower: all 15 direct page routes, deny states and viewport fit",
+    "mobile borrower: valid-CSRF role-denied mutations and missing-CSRF protection",
+    "mobile borrower: actual logout invalidates browser session",
+    "mobile approver: actual login and exact role menu",
+    "mobile approver: all 25 real read APIs match permissions/ownership",
+    "mobile approver: all 15 direct page routes, deny states and viewport fit",
+    "mobile approver: valid-CSRF role-denied mutations and missing-CSRF protection",
+    "mobile approver: actual logout invalidates browser session",
+    "mobile custodian: actual login and exact role menu",
+    "mobile custodian: all 25 real read APIs match permissions/ownership",
+    "mobile custodian: all 15 direct page routes, deny states and viewport fit",
+    "mobile custodian: valid-CSRF role-denied mutations and missing-CSRF protection",
+    "mobile custodian: actual logout invalidates browser session",
+    "mobile maintainer: actual login and exact role menu",
+    "mobile maintainer: all 25 real read APIs match permissions/ownership",
+    "mobile maintainer: all 15 direct page routes, deny states and viewport fit",
+    "mobile maintainer: valid-CSRF role-denied mutations and missing-CSRF protection",
+    "mobile maintainer: actual logout invalidates browser session",
+    "mobile admin: actual login and exact role menu",
+    "mobile admin: all 25 real read APIs match permissions/ownership",
+    "mobile admin: all 15 direct page routes, deny states and viewport fit",
+    "mobile admin: valid-CSRF role-denied mutations and missing-CSRF protection",
+    "mobile admin: actual logout invalidates browser session",
+    "mobile borrower2: actual login and exact role menu",
+    "mobile borrower2: all 25 real read APIs match permissions/ownership",
+    "mobile borrower2: all 15 direct page routes, deny states and viewport fit",
+    "mobile borrower2: valid-CSRF role-denied mutations and missing-CSRF protection",
+    "mobile borrower2: actual logout invalidates browser session",
+    "all business/audit/notification-read/role snapshots unchanged"
+  ],
+  "pages": [
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "route": "/",
+      "result": "login redirect"
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "route": "/equipment",
+      "result": "login redirect"
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "route": "/equipment/:equipmentId/reserve",
+      "result": "login redirect"
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "route": "/reservations",
+      "result": "login redirect"
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "route": "/loans",
+      "result": "login redirect"
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "route": "/approvals",
+      "result": "login redirect"
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "route": "/approvals/:reservationId",
+      "result": "login redirect"
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "route": "/notifications",
+      "result": "login redirect"
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "route": "/maintenance",
+      "result": "login redirect"
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "route": "/maintenance/cases/:caseId",
+      "result": "login redirect"
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "route": "/maintenance/report",
+      "result": "login redirect"
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "route": "/reports",
+      "result": "login redirect"
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "route": "/overdue",
+      "result": "login redirect"
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "route": "/admin/users",
+      "result": "login redirect"
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "route": "/admin/audit",
+      "result": "login redirect"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "route": "/",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "route": "/equipment",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "route": "/equipment/:equipmentId/reserve",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "route": "/reservations",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "route": "/loans",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "route": "/approvals",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "route": "/approvals/:reservationId",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "route": "/notifications",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "route": "/maintenance",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "route": "/maintenance/cases/:caseId",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "route": "/maintenance/report",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "route": "/reports",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "route": "/overdue",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "route": "/admin/users",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "route": "/admin/audit",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "route": "/",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "route": "/equipment",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "route": "/equipment/:equipmentId/reserve",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "route": "/reservations",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "route": "/loans",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "route": "/approvals",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "route": "/approvals/:reservationId",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "route": "/notifications",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "route": "/maintenance",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "route": "/maintenance/cases/:caseId",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "route": "/maintenance/report",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "route": "/reports",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "route": "/overdue",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "route": "/admin/users",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "route": "/admin/audit",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "route": "/",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "route": "/equipment",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "route": "/equipment/:equipmentId/reserve",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "route": "/reservations",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "route": "/loans",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "route": "/approvals",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "route": "/approvals/:reservationId",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "route": "/notifications",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "route": "/maintenance",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "route": "/maintenance/cases/:caseId",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "route": "/maintenance/report",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "route": "/reports",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "route": "/overdue",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "route": "/admin/users",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "route": "/admin/audit",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "route": "/",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "route": "/equipment",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "route": "/equipment/:equipmentId/reserve",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "route": "/reservations",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "route": "/loans",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "route": "/approvals",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "route": "/approvals/:reservationId",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "route": "/notifications",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "route": "/maintenance",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "route": "/maintenance/cases/:caseId",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "route": "/maintenance/report",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "route": "/reports",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "route": "/overdue",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "route": "/admin/users",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "route": "/admin/audit",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "route": "/",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "route": "/equipment",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "route": "/equipment/:equipmentId/reserve",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "route": "/reservations",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "route": "/loans",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "route": "/approvals",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "route": "/approvals/:reservationId",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "route": "/notifications",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "route": "/maintenance",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "route": "/maintenance/cases/:caseId",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "route": "/maintenance/report",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "route": "/reports",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "route": "/overdue",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "route": "/admin/users",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "route": "/admin/audit",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "route": "/",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "route": "/equipment",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "route": "/equipment/:equipmentId/reserve",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "route": "/reservations",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "route": "/loans",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "route": "/approvals",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "route": "/approvals/:reservationId",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "route": "/notifications",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "route": "/maintenance",
+      "result": "allowed"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "route": "/maintenance/cases/:caseId",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "route": "/maintenance/report",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "route": "/reports",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "route": "/overdue",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "route": "/admin/users",
+      "result": "denied"
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "route": "/admin/audit",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "route": "/",
+      "result": "login redirect"
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "route": "/equipment",
+      "result": "login redirect"
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "route": "/equipment/:equipmentId/reserve",
+      "result": "login redirect"
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "route": "/reservations",
+      "result": "login redirect"
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "route": "/loans",
+      "result": "login redirect"
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "route": "/approvals",
+      "result": "login redirect"
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "route": "/approvals/:reservationId",
+      "result": "login redirect"
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "route": "/notifications",
+      "result": "login redirect"
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "route": "/maintenance",
+      "result": "login redirect"
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "route": "/maintenance/cases/:caseId",
+      "result": "login redirect"
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "route": "/maintenance/report",
+      "result": "login redirect"
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "route": "/reports",
+      "result": "login redirect"
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "route": "/overdue",
+      "result": "login redirect"
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "route": "/admin/users",
+      "result": "login redirect"
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "route": "/admin/audit",
+      "result": "login redirect"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "route": "/",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "route": "/equipment",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "route": "/equipment/:equipmentId/reserve",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "route": "/reservations",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "route": "/loans",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "route": "/approvals",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "route": "/approvals/:reservationId",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "route": "/notifications",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "route": "/maintenance",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "route": "/maintenance/cases/:caseId",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "route": "/maintenance/report",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "route": "/reports",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "route": "/overdue",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "route": "/admin/users",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "route": "/admin/audit",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "route": "/",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "route": "/equipment",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "route": "/equipment/:equipmentId/reserve",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "route": "/reservations",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "route": "/loans",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "route": "/approvals",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "route": "/approvals/:reservationId",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "route": "/notifications",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "route": "/maintenance",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "route": "/maintenance/cases/:caseId",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "route": "/maintenance/report",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "route": "/reports",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "route": "/overdue",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "route": "/admin/users",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "route": "/admin/audit",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "route": "/",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "route": "/equipment",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "route": "/equipment/:equipmentId/reserve",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "route": "/reservations",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "route": "/loans",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "route": "/approvals",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "route": "/approvals/:reservationId",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "route": "/notifications",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "route": "/maintenance",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "route": "/maintenance/cases/:caseId",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "route": "/maintenance/report",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "route": "/reports",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "route": "/overdue",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "route": "/admin/users",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "route": "/admin/audit",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "route": "/",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "route": "/equipment",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "route": "/equipment/:equipmentId/reserve",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "route": "/reservations",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "route": "/loans",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "route": "/approvals",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "route": "/approvals/:reservationId",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "route": "/notifications",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "route": "/maintenance",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "route": "/maintenance/cases/:caseId",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "route": "/maintenance/report",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "route": "/reports",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "route": "/overdue",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "route": "/admin/users",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "route": "/admin/audit",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "route": "/",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "route": "/equipment",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "route": "/equipment/:equipmentId/reserve",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "route": "/reservations",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "route": "/loans",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "route": "/approvals",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "route": "/approvals/:reservationId",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "route": "/notifications",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "route": "/maintenance",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "route": "/maintenance/cases/:caseId",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "route": "/maintenance/report",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "route": "/reports",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "route": "/overdue",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "route": "/admin/users",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "route": "/admin/audit",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "route": "/",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "route": "/equipment",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "route": "/equipment/:equipmentId/reserve",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "route": "/reservations",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "route": "/loans",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "route": "/approvals",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "route": "/approvals/:reservationId",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "route": "/notifications",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "route": "/maintenance",
+      "result": "allowed"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "route": "/maintenance/cases/:caseId",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "route": "/maintenance/report",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "route": "/reports",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "route": "/overdue",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "route": "/admin/users",
+      "result": "denied"
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "route": "/admin/audit",
+      "result": "denied"
+    }
+  ],
+  "apiReads": [
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "identity",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "catalogue",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "catalogue filters",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "availability",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "own reservations",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "reservation detail",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "pending approvals",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "approval detail",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "loan list",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "loan detail",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "checkout queue",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "notification inbox",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "notification unread count",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "maintenance queue",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "technician directory",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "assigned maintenance",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "maintenance detail",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "maintenance history",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "equipment cases",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "equipment maintenance history",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "maintenance report",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "combined report",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "overdue projection",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "admin user directory",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "anonymous",
+      "endpoint": "admin audit reader",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "identity",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "catalogue",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "catalogue filters",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "availability",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "own reservations",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "reservation detail",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "pending approvals",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "approval detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "loan list",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "loan detail",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "checkout queue",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "notification inbox",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "notification unread count",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "maintenance queue",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "technician directory",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "assigned maintenance",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "maintenance detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "maintenance history",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "equipment cases",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "equipment maintenance history",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "maintenance report",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "combined report",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "overdue projection",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "admin user directory",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "admin audit reader",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "identity",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "catalogue",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "catalogue filters",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "availability",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "own reservations",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "reservation detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "pending approvals",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "approval detail",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "loan list",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "loan detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "checkout queue",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "notification inbox",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "notification unread count",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "maintenance queue",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "technician directory",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "assigned maintenance",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "maintenance detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "maintenance history",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "equipment cases",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "equipment maintenance history",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "maintenance report",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "combined report",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "overdue projection",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "admin user directory",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "admin audit reader",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "identity",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "catalogue",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "catalogue filters",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "availability",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "own reservations",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "reservation detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "pending approvals",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "approval detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "loan list",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "loan detail",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "checkout queue",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "notification inbox",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "notification unread count",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "maintenance queue",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "technician directory",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "assigned maintenance",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "maintenance detail",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "maintenance history",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "equipment cases",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "equipment maintenance history",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "maintenance report",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "combined report",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "overdue projection",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "admin user directory",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "admin audit reader",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "identity",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "catalogue",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "catalogue filters",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "availability",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "own reservations",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "reservation detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "pending approvals",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "approval detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "loan list",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "loan detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "checkout queue",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "notification inbox",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "notification unread count",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "maintenance queue",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "technician directory",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "assigned maintenance",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "maintenance detail",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "maintenance history",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "equipment cases",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "equipment maintenance history",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "maintenance report",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "combined report",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "overdue projection",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "admin user directory",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "admin audit reader",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "identity",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "catalogue",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "catalogue filters",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "availability",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "own reservations",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "reservation detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "pending approvals",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "approval detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "loan list",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "loan detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "checkout queue",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "notification inbox",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "notification unread count",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "maintenance queue",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "technician directory",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "assigned maintenance",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "maintenance detail",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "maintenance history",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "equipment cases",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "equipment maintenance history",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "maintenance report",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "combined report",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "overdue projection",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "admin user directory",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "admin audit reader",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "identity",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "catalogue",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "catalogue filters",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "availability",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "own reservations",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "reservation detail",
+      "expected": 404,
+      "actual": 404
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "pending approvals",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "approval detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "loan list",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "loan detail",
+      "expected": 404,
+      "actual": 404
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "checkout queue",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "notification inbox",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "notification unread count",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "maintenance queue",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "technician directory",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "assigned maintenance",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "maintenance detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "maintenance history",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "equipment cases",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "equipment maintenance history",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "maintenance report",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "combined report",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "overdue projection",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "admin user directory",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "admin audit reader",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "identity",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "catalogue",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "catalogue filters",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "availability",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "own reservations",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "reservation detail",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "pending approvals",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "approval detail",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "loan list",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "loan detail",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "checkout queue",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "notification inbox",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "notification unread count",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "maintenance queue",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "technician directory",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "assigned maintenance",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "maintenance detail",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "maintenance history",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "equipment cases",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "equipment maintenance history",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "maintenance report",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "combined report",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "overdue projection",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "admin user directory",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "anonymous",
+      "endpoint": "admin audit reader",
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "identity",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "catalogue",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "catalogue filters",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "availability",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "own reservations",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "reservation detail",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "pending approvals",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "approval detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "loan list",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "loan detail",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "checkout queue",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "notification inbox",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "notification unread count",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "maintenance queue",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "technician directory",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "assigned maintenance",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "maintenance detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "maintenance history",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "equipment cases",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "equipment maintenance history",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "maintenance report",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "combined report",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "overdue projection",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "admin user directory",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "admin audit reader",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "identity",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "catalogue",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "catalogue filters",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "availability",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "own reservations",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "reservation detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "pending approvals",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "approval detail",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "loan list",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "loan detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "checkout queue",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "notification inbox",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "notification unread count",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "maintenance queue",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "technician directory",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "assigned maintenance",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "maintenance detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "maintenance history",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "equipment cases",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "equipment maintenance history",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "maintenance report",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "combined report",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "overdue projection",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "admin user directory",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "admin audit reader",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "identity",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "catalogue",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "catalogue filters",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "availability",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "own reservations",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "reservation detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "pending approvals",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "approval detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "loan list",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "loan detail",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "checkout queue",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "notification inbox",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "notification unread count",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "maintenance queue",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "technician directory",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "assigned maintenance",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "maintenance detail",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "maintenance history",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "equipment cases",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "equipment maintenance history",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "maintenance report",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "combined report",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "overdue projection",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "admin user directory",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "admin audit reader",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "identity",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "catalogue",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "catalogue filters",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "availability",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "own reservations",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "reservation detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "pending approvals",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "approval detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "loan list",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "loan detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "checkout queue",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "notification inbox",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "notification unread count",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "maintenance queue",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "technician directory",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "assigned maintenance",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "maintenance detail",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "maintenance history",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "equipment cases",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "equipment maintenance history",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "maintenance report",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "combined report",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "overdue projection",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "admin user directory",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "admin audit reader",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "identity",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "catalogue",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "catalogue filters",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "availability",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "own reservations",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "reservation detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "pending approvals",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "approval detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "loan list",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "loan detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "checkout queue",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "notification inbox",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "notification unread count",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "maintenance queue",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "technician directory",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "assigned maintenance",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "maintenance detail",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "maintenance history",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "equipment cases",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "equipment maintenance history",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "maintenance report",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "combined report",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "overdue projection",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "admin user directory",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "admin audit reader",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "identity",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "catalogue",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "catalogue filters",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "availability",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "own reservations",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "reservation detail",
+      "expected": 404,
+      "actual": 404
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "pending approvals",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "approval detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "loan list",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "loan detail",
+      "expected": 404,
+      "actual": 404
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "checkout queue",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "notification inbox",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "notification unread count",
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "maintenance queue",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "technician directory",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "assigned maintenance",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "maintenance detail",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "maintenance history",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "equipment cases",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "equipment maintenance history",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "maintenance report",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "combined report",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "overdue projection",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "admin user directory",
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "admin audit reader",
+      "expected": 403,
+      "actual": 403
+    }
+  ],
+  "deniedWrites": [
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "admin account creation",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "approval decision",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "checkout",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "return",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "technician assignment",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "maintenance start",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "maintenance diagnosis",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "maintenance repair-actions",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "maintenance notes",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "maintenance resolve",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower",
+      "endpoint": "maintenance unrepairable",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "admin account creation",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "reservation submission",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "reservation cancellation",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "checkout",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "return",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "fault report",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "technician assignment",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "maintenance start",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "maintenance diagnosis",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "maintenance repair-actions",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "maintenance notes",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "maintenance resolve",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "approver",
+      "endpoint": "maintenance unrepairable",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "admin account creation",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "reservation submission",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "reservation cancellation",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "approval decision",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "maintenance start",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "maintenance diagnosis",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "maintenance repair-actions",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "maintenance notes",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "maintenance resolve",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "endpoint": "maintenance unrepairable",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "admin account creation",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "reservation submission",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "reservation cancellation",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "approval decision",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "checkout",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "return",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "fault report",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "maintainer",
+      "endpoint": "technician assignment",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "reservation submission",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "reservation cancellation",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "approval decision",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "checkout",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "return",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "fault report",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "maintenance start",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "maintenance diagnosis",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "maintenance repair-actions",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "maintenance notes",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "maintenance resolve",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "endpoint": "maintenance unrepairable",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "admin account creation",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "approval decision",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "checkout",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "return",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "technician assignment",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "maintenance start",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "maintenance diagnosis",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "maintenance repair-actions",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "maintenance notes",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "maintenance resolve",
+      "actual": 403
+    },
+    {
+      "device": "desktop",
+      "account": "borrower2",
+      "endpoint": "maintenance unrepairable",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "admin account creation",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "approval decision",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "checkout",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "return",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "technician assignment",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "maintenance start",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "maintenance diagnosis",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "maintenance repair-actions",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "maintenance notes",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "maintenance resolve",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower",
+      "endpoint": "maintenance unrepairable",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "admin account creation",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "reservation submission",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "reservation cancellation",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "checkout",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "return",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "fault report",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "technician assignment",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "maintenance start",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "maintenance diagnosis",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "maintenance repair-actions",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "maintenance notes",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "maintenance resolve",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "approver",
+      "endpoint": "maintenance unrepairable",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "admin account creation",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "reservation submission",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "reservation cancellation",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "approval decision",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "maintenance start",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "maintenance diagnosis",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "maintenance repair-actions",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "maintenance notes",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "maintenance resolve",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "endpoint": "maintenance unrepairable",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "admin account creation",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "reservation submission",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "reservation cancellation",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "approval decision",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "checkout",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "return",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "fault report",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "maintainer",
+      "endpoint": "technician assignment",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "reservation submission",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "reservation cancellation",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "approval decision",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "checkout",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "return",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "fault report",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "maintenance start",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "maintenance diagnosis",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "maintenance repair-actions",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "maintenance notes",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "maintenance resolve",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "endpoint": "maintenance unrepairable",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "admin account creation",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "approval decision",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "checkout",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "return",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "technician assignment",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "maintenance start",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "maintenance diagnosis",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "maintenance repair-actions",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "maintenance notes",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "maintenance resolve",
+      "actual": 403
+    },
+    {
+      "device": "mobile",
+      "account": "borrower2",
+      "endpoint": "maintenance unrepairable",
+      "actual": 403
+    }
+  ],
+  "ownership": [
+    {
+      "device": "desktop",
+      "endpoint": "other reservation cancel",
+      "actual": 404
+    },
+    {
+      "device": "desktop",
+      "endpoint": "other notification read",
+      "actual": 404
+    },
+    {
+      "device": "mobile",
+      "endpoint": "other reservation cancel",
+      "actual": 404
+    },
+    {
+      "device": "mobile",
+      "endpoint": "other notification read",
+      "actual": 404
+    }
+  ],
+  "overdueChecks": [
+    {
+      "device": "desktop",
+      "account": "custodian",
+      "totalElements": 0,
+      "emptyState": true,
+      "sortStatus": 200
+    },
+    {
+      "device": "desktop",
+      "account": "admin",
+      "totalElements": 0,
+      "emptyState": true,
+      "sortStatus": 200
+    },
+    {
+      "device": "mobile",
+      "account": "custodian",
+      "totalElements": 0,
+      "emptyState": true,
+      "sortStatus": 200
+    },
+    {
+      "device": "mobile",
+      "account": "admin",
+      "totalElements": 0,
+      "emptyState": true,
+      "sortStatus": 200
+    }
+  ],
+  "unavailable": [
+    {
+      "route": "/manage/equipment",
+      "issue": 17,
+      "owner": "Zhou Fanhao",
+      "status": "not implemented at tested baseline"
+    }
+  ],
+  "sourceHashes": [
+    {
+      "path": "scripts/check-role-browser.mjs",
+      "sha256": "8716bb875f55e30b5f52af98b336216bb50ac23a132b89e5204c659b4996ac5b"
+    },
+    {
+      "path": "scripts/lib/role-access.mjs",
+      "sha256": "6f6ea8f5683f907725fc383d8827b4e58a327c1ce940529f8a7b035850a995f1"
+    },
+    {
+      "path": "scripts/lib/local-demo-client.mjs",
+      "sha256": "ced7e6694180dd2aa1095bce998aa0006bbb9f728935ccff25e21fa94f71e71c"
+    },
+    {
+      "path": "scripts/lib/uc02-browser-guard.sql",
+      "sha256": "e5fca544ce509e87fbb43e626625374a81eb760a7132f59cf1e93a752f1a5642"
+    },
+    {
+      "path": "scripts/role-browser-fixture.sql",
+      "sha256": "74f36dab81d99ce416c8a363235fead92b165c7cd4d4b897bb75140c5745982b"
+    },
+    {
+      "path": "scripts/role-browser-snapshot.sql",
+      "sha256": "dddc8f1a9faaa684763cdc10bb4ae36b803a176853cf3d94f11d3ca4e6556dea"
+    },
+    {
+      "path": "frontend/src/app/App.tsx",
+      "sha256": "3b936259b3e33b8df4f812c5da0213170302c2c6d8633df023ad90e1446a23d5"
+    },
+    {
+      "path": "frontend/src/app/RequireRole.tsx",
+      "sha256": "49cc22cead82f15fd219b1160bf779581dbc8cdf402417a14a691072a0d53f41"
+    },
+    {
+      "path": "frontend/src/app/navigation.ts",
+      "sha256": "95b6c77380514b70b7c958be1940b91302eb19bbf28484fa63137a8155e4be89"
+    },
+    {
+      "path": "frontend/src/styles/shared.css",
+      "sha256": "2f2cb86772ca4ecc3e80a4a555c36252e670ad3c85564dc5ef8753a4381b7d3a"
+    },
+    {
+      "path": "frontend/src/features/overdue/OverduePage.tsx",
+      "sha256": "b6c94afde0c67ca6c558cd7736fffd8f4a8499e0fcd448418244afb198167614"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/notification/api/OverdueController.java",
+      "sha256": "bf73ecc46df14b9a12bb2d63fedddd56e5ff96224f6a6c6443ef2b4593b404cd"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/notification/service/OverdueLoanService.java",
+      "sha256": "09f994f5985012a3a63b6dc1ed3c7f1129f544d8356cdff1819c127119421d67"
+    },
+    {
+      "path": "frontend/src/features/admin/UsersPage.tsx",
+      "sha256": "e141f534215fa7faaa22bd72f45ba03df923bc7035f9bcef0b9e7a252968f805"
+    },
+    {
+      "path": "frontend/src/features/admin/AuditPage.tsx",
+      "sha256": "105b8aa248c9ca25aed69e241cd64da4e1239b18fb9547f9a8a4a94fa6e2bb22"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/identity/service/AdminUserService.java",
+      "sha256": "ee6516cbc26c9d80e472ad1003b05bbb4bc56eec5d8cd00e146295fdced3fabd"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/identity/service/AdminAccess.java",
+      "sha256": "6c5abf5cae86981515a6b2ec2562e6aafe647412249241afe52ce6bd0fb4431b"
+    },
+    {
+      "path": "app/src/main/java/sg/edu/nus/serms/audit/service/AuditQueryService.java",
+      "sha256": "058220baa962c1450d13d995d92d75b97ac97f1681b0d27faef707e17555650b"
+    }
+  ],
+  "startingHead": "350085a8adf4a2cf9d593347d37cacd02ff61547",
+  "fetchedMain": "350085a8adf4a2cf9d593347d37cacd02ff61547",
+  "finishedAt": "2026-10-15T08:46:01.805Z"
+}

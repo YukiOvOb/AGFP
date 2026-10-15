@@ -42,6 +42,9 @@ import sg.edu.nus.serms.shared.security.SermsUserPrincipal;
     properties = "serms.security.secure-cookies=false")
 @Import({SecurityConfig.class, IdentityAuthenticationProvider.class, SecurityProblemWriter.class})
 class ReservationApiTest {
+  @org.junit.jupiter.api.BeforeEach void currentIdentitySession() {
+    when(identity.isSessionCurrent(any(), anyLong())).thenReturn(true);
+  }
   static final UUID ME = UUID.fromString("00000000-0000-0000-0000-0000000000b1");
   static final UUID ITEM = UUID.fromString("00000000-0000-0000-0000-0000000000e1");
   static final UUID RES = UUID.fromString("00000000-0000-0000-0000-0000000000c1");

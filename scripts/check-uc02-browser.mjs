@@ -37,7 +37,7 @@ const roles = {
   approver: ['Overview', 'Find equipment', 'Approvals', 'Notifications'],
   custodian: ['Overview', 'Find equipment', 'Loans and returns', 'Maintenance', 'Notifications', 'Overdue'],
   maintainer: ['Overview', 'Find equipment', 'Maintenance', 'Notifications'],
-  admin: ['Overview', 'Find equipment', 'Maintenance', 'Notifications', 'Overdue', 'Reports'],
+  admin: ['Overview', 'Find equipment', 'Maintenance', 'Notifications', 'Overdue', 'Reports', 'Users and roles', 'Audit log'],
 };
 const localTime = ms => new Date(ms + 8 * 3600000).toISOString().slice(0, 16);
 async function signIn(context, account) {

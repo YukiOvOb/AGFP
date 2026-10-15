@@ -392,8 +392,12 @@ class Uc05PostgresIT {
     mvc.perform(get("/api/v1/overdue").session(custodianSession)).andExpect(status().isOk());
     mvc.perform(get("/api/v1/overdue").session(adminSession)).andExpect(status().isOk());
     jdbc.update("UPDATE serms.app_user SET account_status='DISABLED' WHERE user_id=?",custodian);
-    mvc.perform(get("/api/v1/overdue").session(custodianSession)).andExpect(status().isForbidden());
+    // Confirmed Identity contract: disabled old sessions expire globally before module authorization.
+    mvc.perform(get("/api/v1/overdue").session(custodianSession)).andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.type").value("/problems/unauthenticated"));
+    assertThat(custodianSession.isInvalid()).isTrue();
     jdbc.update("DELETE FROM serms.user_role WHERE user_id=?",admin);
+    // Direct fixture-only role deletion without a version bump still exercises the module's DB guard.
     mvc.perform(get("/api/v1/overdue").session(adminSession)).andExpect(status().isForbidden());
   }
 

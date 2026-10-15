@@ -82,6 +82,20 @@ Status: **Confirmed**. This repository file is authoritative. Changes require a 
 | Authenticated but missing the required role | 403 |
 | Missing or invalid CSRF header | 403 |
 
+### 2.6 Administrator-triggered session revocation
+
+Wang Yuanmeng confirmed the following through Zhang Hanming's pasted reply on 2026-10-15.
+Administrator account deactivation, actual role changes and password resets revoke all older
+sessions on each session's next protected API request: clear authentication/session and return
+the existing 401 ProblemDetail. Disabled accounts cannot log in. A fresh authorized session
+without the requested role still receives 403, and ADMIN gains no implicit roles.
+Use a database monotonic session version compared with the login snapshot, not password hashes
+in the Session. Security changes, version increments and audits use one transaction. `/auth/csrf`
+remains available before login and `/auth/logout` remains idempotent with valid CSRF.
+Implementation/endpoints, additive migration numbering and test scope are in the
+[administrator console contract](admin-console.md#confirmed-identitysession-continuation--2026-10-15).
+This records the communicated behaviour confirmation, not a whole-PR review or deployment acceptance.
+
 ---
 
 ## 3. Public Service Provided by the Reservation Module

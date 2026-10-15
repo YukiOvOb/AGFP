@@ -3,6 +3,7 @@
 BEGIN READ ONLY;
 \ir lib/uc02-browser-guard.sql
 SELECT json_build_object(
+  'users', (SELECT md5(coalesce(string_agg(to_jsonb(t)::text, '' ORDER BY user_id), '')) FROM serms.app_user t),
   'equipment', (SELECT md5(coalesce(string_agg(to_jsonb(t)::text, '' ORDER BY equipment_id), '')) FROM serms.equipment t),
   'reservations', (SELECT md5(coalesce(string_agg(to_jsonb(t)::text, '' ORDER BY reservation_id), '')) FROM serms.reservation t),
   'decisions', (SELECT md5(coalesce(string_agg(to_jsonb(t)::text, '' ORDER BY approval_id), '')) FROM serms.approval_decision t),

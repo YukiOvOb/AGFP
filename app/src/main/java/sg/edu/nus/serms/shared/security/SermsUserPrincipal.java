@@ -13,17 +13,26 @@ public final class SermsUserPrincipal implements UserDetails {
   private final String email;
   private final String displayName;
   private final Set<String> roles;
+  private final long sessionVersion;
 
   public SermsUserPrincipal(UUID userId, String email, String displayName, Set<String> roles) {
+    this(userId, email, displayName, roles, 0L);
+  }
+
+  public SermsUserPrincipal(UUID userId, String email, String displayName, Set<String> roles, long sessionVersion) {
     this.userId = userId;
     this.email = email;
     this.displayName = displayName;
     this.roles = Set.copyOf(roles);
+    this.sessionVersion = sessionVersion;
   }
 
   public static SermsUserPrincipal from(UserAccount u) {
-    return new SermsUserPrincipal(u.userId(), u.email(), u.displayName(), u.roles());
+    return new SermsUserPrincipal(u.userId(), u.email(), u.displayName(), u.roles(), u.sessionVersion());
   }
+
+  @JsonIgnore
+  public long getSessionVersion() { return sessionVersion; }
 
   public UUID getUserId() {
     return userId;

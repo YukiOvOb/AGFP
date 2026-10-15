@@ -70,6 +70,7 @@ class ReportApiTest {
 
   @BeforeEach
   void setUp() {
+    when(identity.isSessionCurrent(any(), anyLong())).thenReturn(true);
     when(clock.instant()).thenReturn(NOW);
     when(maintenance.getMaintenanceReport(any(), any()))
         .thenAnswer(

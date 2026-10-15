@@ -100,3 +100,60 @@ Cleanup on the owner's decision: the agent worktree used for #30 and the merged 
 ### Authorship
 
 The Issue and PR comments, the sync and merge of #46, the #27 updates, the cleanup and this entry were produced by an AI agent (Claude Code) under Liu Tongyao's instruction. The re-split, the deadlines, the merges and parking #29 were Liu Tongyao's decisions. The content of Shi Wenqi's branch is his own. No teammate review, sign-off or acceptance is claimed.
+
+## 2026-10-15 Evening: #73 reverted, release pipeline fixed, first gated release
+
+### What happened
+
+| Time (SGT) | Event |
+| --- | --- |
+| 18:16 | Shi Wenqi merged his own PR #73 (`fdb69f5`) after all 17 checks passed. Besides the UC01 browser check, evidence, diagrams and UC01 document, it changed shared documents: D-013 as first proposed (not updated as requested on #10), the shared-responsibility table in section 1 of `docs/agile/backlog.md` (back to the Sprint-plan version, reversing Zhou Fanhao's edit of 2026-10-07), the Sprint status, `README.md` and `docs/testing.md`. |
+| 18:47 | The repository owner did not accept these changes: they alter the project's direction and the team's division of work. A scope instruction on #10, with a block for his AI agent, limits his work to #10 and the UC01 part of #9; notes on #73 and on #74 (hold). |
+| 18:48 | Shi Wenqi opened #75, reverting the shared documents but keeping 18 files from #73. |
+| 19:06 | The owner asked for `main` to return exactly to its state before his first PR. Agent PR #76 (`git revert -m 1 fdb69f5`) merged as `f2ea51e`, with a tree identical to `2d19ef9`; #75 was closed as superseded. |
+| 19:08 | Shi Wenqi on #10: scope confirmed, deployment option A, values sent privately. He had already released `2d19ef9` at about 18:13 with the option B commands while 9 of the 12 required checks were green. |
+| 20:13 | #74 reviewed (one commit, two workflow files), synced with `main` (`809b0f2`) and merged as `0be0a29` on the owner's instruction. |
+| 20:29-20:31 | The owner set the five `DEPLOY_*` Secrets. |
+| 20:39 | The owner set `SERMS_PRODUCTION_READY=true`, deciding to skip the isolated restore rehearsal. |
+| 20:40-20:55 | Deploy #25 on `0be0a29`: attempts 1 to 3 stopped at `ssh: host key fingerprint mismatch`; the owner replaced `DEPLOY_HOST_FINGERPRINT` (last update 20:52); attempt 4 released `0be0a29`. |
+
+### Design notes
+
+- **Full instead of partial revert.** Reverting the merge commit with `-m 1` gives exactly the parent's tree and keeps history, so nothing from the author is lost and the result is checkable by tree hash. Merging the same branch again would not bring #73 back (its commits are already in `main`); reverting the revert would.
+- **Why #74 was needed.** `release-gate` requires all twelve `requiredChecks` on the exact `main` SHA, but `ci.yml` skipped gitleaks, Trivy and Dependency review on documentation-only pushes, so a release of such a SHA could only time out. #74 runs them on every push to `main`; `deploy.yml` still starts no automatic run for documentation-only pushes.
+- **Host-key fingerprint.** `appleboy/ssh-action` compares `DEPLOY_HOST_FINGERPRINT` with the SHA256 fingerprint of the host key the server presents during the handshake. The value must be exactly `SHA256:...`, and the Go client may negotiate an ECDSA or RSA host key instead of the Ed25519 key read first. The corrected value is private, so which of the two applied is not recorded.
+- **Automatic deployment from now on.** With the Secrets and `SERMS_PRODUCTION_READY` set, every merge to `main` that changes more than documentation deploys to production after `release-gate`.
+
+### Problems and fixes
+
+| Symptom | Root cause | Fix | How it was verified |
+| --- | --- | --- | --- |
+| A self-merged PR changed the decision record and the division of work | `write` collaborators may merge their own PRs after green CI; the PR mixed UC01 work with shared documents | Scope instruction on #10; full revert #76 | `main` tree `7c25386` equals `2d19ef9^{tree}`; no D-013 in `decisions.md` |
+| The author's own revert #75 kept 18 changed files | It reverted only the shared documents | #76 reverted the whole merge; #75 closed | Tree comparison above |
+| A manual release went out with 9 of 12 required checks | The documentation-only push skipped the three CI security checks | #74; manual releases stopped once option A worked | Deploy #25 `release-gate` passed with all twelve checks on `0be0a29` |
+| Deploy #25 stopped at `host key fingerprint mismatch` (three attempts) | `DEPLOY_HOST_FINGERPRINT` did not match the presented host key | The owner replaced the Secret | Attempt 4: handshake passed, release completed |
+
+### Verification
+
+- `0be0a29`: all twelve `requiredChecks` passed. Deploy #25 attempt 4 log: pre-release `pg_dump` and `pg_restore --list`, image build, `docker compose up --wait` with `db`, `app` and `web` healthy, `Released 0be0a29…`.
+- External check after the release: `/` and `/equipment` 200, `/api/v1/health` `UP`, `/api/v1/auth/me` 401 without sign-in, Swagger and OpenAPI disabled; the served `index-kFp6Em8F.js` and `index-Yx5iaf_c.css` match a local `pnpm build` of `main`.
+- Local demo of the same code started on Windows (PostgreSQL 18.6, JDK 25.0.4, Node.js 24.20.0) after `clean package`; health `UP`.
+
+### Deviations
+
+- The isolated restore rehearsal required by gate 1 of [the release runbook](../server-release.md) was skipped by the owner's decision. Each release still dumps the database and checks the archive with `pg_restore --list`, which is not a restore test.
+- The manual release of about 18:13 ran with 9 of 12 required checks green; its code equals `350085a`, where all twelve passed.
+
+### Follow-ups
+
+| Item | Owner |
+| --- | --- |
+| Deployed acceptance (sign-in and the five use-case flows), the #10 PR with inventory facts and devlog, hardening headers, first administrator's sign-in to the owner | Shi Wenqi |
+| The two UC01 items of #9 | Shi Wenqi |
+| ZAP baseline against the deployed system, due 24 hours after deployment (#25); two CodeQL warnings in `scripts/check-collaboration.mjs` | Wang Yuanmeng |
+| Admin-console proposal awaiting the Identity owner's confirmation before the rest of #18 (#72) | Zhang Hanming, Wang Yuanmeng |
+| Shared-responsibility differences (D-002) remain open | Liu Tongyao |
+
+### Authorship
+
+The reviews, the revert PR #76, the sync and merge of #74, the Issue and PR comments, the external checks and this section were produced by an AI agent (Claude Code) under Liu Tongyao's instruction. Rejecting the #73 changes, the full revert, merging #74, setting the Secrets and the release variable, and skipping the rehearsal were Liu Tongyao's decisions; the server work and the first manual release were Shi Wenqi's. No teammate review or acceptance is claimed.

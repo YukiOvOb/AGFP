@@ -80,6 +80,7 @@ class MaintenanceApiTest {
 
   @BeforeEach
   void setup() {
+    when(identity.isSessionCurrent(any(), anyLong())).thenReturn(true);
     when(cases.insert(any())).thenAnswer(call -> call.<MaintenanceCase>getArgument(0).copy());
     when(cases.update(any())).thenAnswer(call -> call.<MaintenanceCase>getArgument(0).copy());
     when(cases.findById(CASE)).thenReturn(Optional.of(item(ME, MaintenanceStatus.IN_PROGRESS)));

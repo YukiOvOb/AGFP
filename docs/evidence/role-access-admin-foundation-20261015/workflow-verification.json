@@ -1,0 +1,81 @@
+{
+  "status": "passed",
+  "mocked": false,
+  "runId": "ff6523bb2f",
+  "baseURL": "http://127.0.0.1:5198",
+  "checks": [
+    "desktop: borrower real UI login, menu and backend permissions",
+    "desktop: approver real UI login, menu and backend permissions",
+    "desktop: custodian real UI login, menu and backend permissions",
+    "desktop: maintainer real UI login, menu and backend permissions",
+    "desktop: admin real UI login, menu and backend permissions",
+    "desktop: real empty approval queue",
+    "desktop: required rejection comment, persisted rejection and borrower status",
+    "desktop: rejection releases real allocation",
+    "desktop: separate approver confirms actual borrower request",
+    "desktop: committed approval notification delivered and marked read",
+    "desktop: custodian physical checkout and damaged return with required note",
+    "desktop: auto-created linked maintenance assigned, diagnosed, repaired and resolved",
+    "desktop: equipment restored and actual administrator report page loads",
+    "desktop: real dual-role login and own pending browser reservation",
+    "desktop: own-request marker and UI block both decision controls",
+    "desktop: browser-forged self APPROVED is 403 with no persisted side effects",
+    "desktop: browser-forged self REJECTED is 403 with no persisted side effects",
+    "desktop: a different real approver can decide the same request exactly once",
+    "mobile: borrower real UI login, menu and backend permissions",
+    "mobile: approver real UI login, menu and backend permissions",
+    "mobile: custodian real UI login, menu and backend permissions",
+    "mobile: maintainer real UI login, menu and backend permissions",
+    "mobile: admin real UI login, menu and backend permissions",
+    "mobile: real empty approval queue",
+    "mobile: required rejection comment, persisted rejection and borrower status",
+    "mobile: rejection releases real allocation",
+    "mobile: separate approver confirms actual borrower request",
+    "mobile: committed approval notification delivered and marked read",
+    "mobile: custodian physical checkout and damaged return with required note",
+    "mobile: auto-created linked maintenance assigned, diagnosed, repaired and resolved",
+    "mobile: equipment restored and actual administrator report page loads",
+    "mobile: real dual-role login and own pending browser reservation",
+    "mobile: own-request marker and UI block both decision controls",
+    "mobile: browser-forged self APPROVED is 403 with no persisted side effects",
+    "mobile: browser-forged self REJECTED is 403 with no persisted side effects",
+    "mobile: a different real approver can decide the same request exactly once",
+    "temporary dual-role assignment restored; pre-existing roles untouched"
+  ],
+  "records": [
+    {
+      "reservationId": "a1392622-7d62-46a6-8cb4-995b4b09e648",
+      "purpose": "desktop rejection 1792053634411"
+    },
+    {
+      "reservationId": "1130f720-df74-460e-ac07-b43c72f8d0f1",
+      "purpose": "desktop approval-to-damaged-return 1792053636267"
+    },
+    {
+      "reservationId": "fb49c362-2c4c-4070-a02d-e502a5b0dd0a",
+      "purpose": "desktop self-approval 1792053726739"
+    },
+    {
+      "reservationId": "d37a11ed-8ee6-4cae-aaf8-14a0d83a26be",
+      "purpose": "mobile rejection 1792053739426"
+    },
+    {
+      "reservationId": "3b1b26c0-fe54-4136-994b-b272962b3b58",
+      "purpose": "mobile approval-to-damaged-return 1792053741102"
+    },
+    {
+      "reservationId": "8c9751e1-c78d-4680-b050-297618b82041",
+      "purpose": "mobile self-approval 1792053844817"
+    }
+  ],
+  "startedAt": "2026-10-15T08:40:22.200Z",
+  "remaining": [
+    "Admin users/audit pages (#18)",
+    "Equipment management pages (#17)",
+    "Remote CI and independent member/deployment acceptance"
+  ],
+  "dualRoleAddedByRun": true,
+  "dualRoleRestored": true,
+  "finishedAt": "2026-10-15T08:44:08.587Z",
+  "evidence": "C:\\Users\\LENOVO\\Documents\\ChatGPT\\Dev\\SERMS-hanming-admin-20261015\\.cache\\local-demo\\uc02-browser-1792053622199"
+}
